@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Anton&family=Bebas+Neue&family=Montserrat:wght@500;700;900&family=Poppins:wght@500;700&family=Oswald:wght@500;700&family=Permanent+Marker&family=Bangers&display=swap" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
       :root{
         --bg:#000; --panel:#101012; --panel2:#17171a; --line:#26262b;
@@ -70,6 +71,13 @@
 
       /* ---------- editor ---------- */
       #paneEdit{flex-direction:row;}
+      /* Edit mode = full-screen: tinatakpan ng editor ang header, export
+         options at tabs habang nag-e-edit, para ang stage ang pinakamalaking
+         parte ng screen (lalo na sa phone portrait, kung saan dati strip
+         lang ang natitira sa canvas). Bumalik sa 3D Preview / downloads
+         gamit ang "‹ 3D" button sa optHandle. */
+      #paneEdit.on{position:fixed; inset:0; z-index:40; background:var(--panel2);
+        padding-top:env(safe-area-inset-top);}
       #rail{width:var(--rail); flex:none; background:var(--panel); border-right:1px solid var(--line);
         display:flex; flex-direction:column; align-items:center; padding:8px 0; gap:6px; overflow-y:auto;}
       #rail button{width:52px; height:52px; min-height:52px; padding:0; border-radius:14px; background:transparent; border-color:transparent;}
@@ -79,18 +87,30 @@
       #rail .sep{width:26px; height:1px; background:var(--line); margin:3px 0;}
       #rail .rlabel{font-size:9.5px; color:var(--dim); margin-top:-3px; font-weight:700;}
       #editMain{flex:1; display:flex; flex-direction:column; min-width:0;}
-      #optbar{display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; padding:8px 10px; background:var(--panel); border-bottom:1px solid var(--line); max-height:48vh; overflow-y:auto;}
+      #optbar{display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; padding:8px 10px; background:var(--panel); border-bottom:1px solid var(--line); max-height:40vh; overflow-y:auto;}
       #optbar button.on{background:var(--accent); border-color:var(--accent); color:#161006;}
       #optbar .grp{display:flex; flex-direction:column; gap:2px;}
       #optbar .row{display:flex; gap:8px; align-items:center;}
       #optbar:empty{display:none;}
       #optbar.collapsed{display:none;}
       #shareWarn{display:flex; gap:8px; align-items:flex-start; padding:9px 12px; background:#2b2008; border-bottom:1px solid #7a5a14; color:#ffd98c; font-size:12.5px; line-height:1.5;}
-      #optHandle{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:4px 10px; background:var(--panel); border-bottom:1px solid var(--line);}
+      #optHandle{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:4px 10px; background:var(--panel); border-bottom:1px solid var(--line); flex-wrap:wrap;}
       #optHandle .htitle{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.04em; text-transform:uppercase;}
       #btnOptToggle{min-height:44px; font-size:13px; padding:0 14px;}
+      #btnBack3d{min-height:44px; font-size:13px; padding:0 12px; flex:none;}
       #btnTexLock{min-height:44px; font-size:13px; padding:0 14px;}
       #btnTexLock.on{background:var(--accent); border-color:var(--accent); color:#161006;}
+      /* zoom bar: dito lang ang zoom sa Edit mode (walang pinch) */
+      #zoomBar{display:flex; align-items:center; gap:6px; padding:5px 10px; background:var(--panel); border-bottom:1px solid var(--line);}
+      #zoomBar input[type=range]{flex:1; min-width:70px; height:44px;}
+      #zoomBar button{min-height:44px; min-width:44px; padding:0 10px; font-size:16px; font-weight:700;}
+      #zoomBar #zoomPct{font-size:13px; font-weight:700; color:var(--txt); min-width:44px; text-align:center;}
+      /* lock badge sa ibabaw ng stage: laging kita kung naka-lock ang texture */
+      #stageLockBadge{position:absolute; top:10px; right:10px; z-index:6; pointer-events:none;
+        background:rgba(10,10,12,.88); border:1px solid var(--accent); color:var(--accent);
+        border-radius:999px; padding:7px 12px; font-size:12px; font-weight:700; display:none; align-items:center; gap:6px;}
+      #stageLockBadge.show{display:inline-flex;}
+      #stageLockBadge.off{border-color:var(--line); color:var(--dim);}
       /* parts bars (3D preview + edit mode) */
       #partsBar{display:flex; align-items:center; gap:8px; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); background:var(--panel); border-top:1px solid var(--line);}
       #partsList, #editPartsList{display:flex; gap:8px; overflow-x:auto; flex:1; padding:4px 2px; -webkit-overflow-scrolling:touch; scrollbar-width:none; align-items:center;}
@@ -112,14 +132,33 @@
       #overlayCv{position:absolute; inset:0; pointer-events:none;}
       #stageMsg{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--dim); font-size:14.5px; text-align:center; padding:20px; line-height:1.5;}
       /* texture strip */
-      #texstrip{display:flex; gap:10px; overflow-x:auto; padding:10px 12px calc(10px + env(safe-area-inset-bottom)); background:var(--panel); border-top:1px solid var(--line); min-height:100px; -webkit-overflow-scrolling:touch;}
+      #texstrip{display:flex; gap:10px; overflow-x:auto; padding:8px 12px calc(8px + env(safe-area-inset-bottom)); background:var(--panel); border-top:1px solid var(--line); min-height:84px; -webkit-overflow-scrolling:touch;}
       .texthumb{flex:none; width:88px; text-align:center; cursor:pointer;}
-      .texthumb .thumbbox{width:88px; height:60px; border-radius:10px; border:2px solid var(--line); overflow:hidden; position:relative; background:#000;}
+      .texthumb .thumbbox{width:88px; height:50px; border-radius:10px; border:2px solid var(--line); overflow:hidden; position:relative; background:#000;}
       .texthumb.on .thumbbox{border-color:var(--accent);}
       .texthumb canvas{width:100%; height:100%; object-fit:contain; display:block;}
       .texthumb .tname{font-size:11px; color:var(--txt); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
       .texthumb .tsize{font-size:10.5px; color:var(--dim);}
       .texthumb .edot{position:absolute; top:4px; right:4px; width:9px; height:9px; border-radius:50%; background:var(--accent); display:none;}
+      /* ---------- layers panel ---------- */
+      #layersPanel{background:var(--panel); border-top:1px solid var(--line); display:flex; flex-direction:column; max-height:34vh;}
+      #layersHead{display:flex; align-items:center; gap:8px; padding:6px 10px;}
+      #layersHead .ltitle{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.04em; text-transform:uppercase; flex:1;}
+      #layersHead button{min-height:44px; font-size:13px; padding:0 12px;}
+      #layersList{overflow-y:auto; padding:0 8px 8px; display:flex; flex-direction:column; gap:6px;}
+      #layersList:empty{display:none;}
+      .layer-row{display:flex; align-items:center; gap:6px; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:6px 8px; min-height:52px; cursor:pointer;}
+      .layer-row.on{border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent);}
+      .layer-row.is-hidden{opacity:.45;}
+      .layer-row .lname{flex:1; font-size:13.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;}
+      .layer-row .ltype{font-size:10.5px; color:var(--dim); font-weight:700; letter-spacing:.03em; text-transform:uppercase; flex:none;}
+      .layer-row button{min-height:44px; min-width:44px; width:44px; padding:0; font-size:16px; flex:none; border-radius:10px;}
+      .layer-empty{font-size:12.5px; color:var(--dim); padding:4px 6px 8px; line-height:1.5;}
+      /* export options row (compression) */
+      #exportOpts{display:flex; align-items:center; gap:8px; padding:7px 10px; background:var(--panel); border-bottom:1px solid var(--line); flex-wrap:wrap;}
+      #exportOpts .lbl{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.04em; text-transform:uppercase;}
+      #exportOpts select{flex:1; min-width:180px; max-width:420px;}
+      #exportOpts .ehint{font-size:11.5px; color:var(--dim); line-height:1.4;}
       .texthumb.edited .edot{display:block;}
 
       #toast{position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(20px);
@@ -133,6 +172,7 @@
       body.gate-locked header#topbar,
       body.gate-locked nav#tabs,
       body.gate-locked #dlAllNotice,
+      body.gate-locked #exportOpts,
       body.gate-locked main{visibility:hidden; pointer-events:none;}
       /* ---------- download-all notice ---------- */
       #dlAllNotice{display:flex; flex-direction:column; gap:8px; padding:10px 12px;
@@ -237,6 +277,7 @@
         <button id="btnTxd" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-9 9"/></svg>TXD</button>
         <button id="btnDlTxd" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12m0 0l-5-5m5 5l5-5"/><path d="M4 21h16"/></svg>TXD</button>
         <button id="btnDlDff" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12m0 0l-5-5m5 5l5-5"/><path d="M4 21h16"/></svg>DFF</button>
+        <button id="btnDlZip" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>ZIP</button>
         <button id="btnDlAll" class="primary" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12m0 0l-5-5m5 5l5-5"/><path d="M4 21h16"/></svg><span id="btnDlAllLabel">I-download Lahat</span></button>
       </div>
       <div id="fileinfo">Sample model ang naka-load — mag-upload ng DFF + TXD mo para mag-edit ng totoong file.</div>
@@ -244,6 +285,17 @@
       <input type="file" id="fileTxd" accept=".txd" class="hidden" />
       <input type="file" id="fileImg" accept="image/png,image/jpeg,image/webp" class="hidden" />
     </header>
+
+    <div id="exportOpts">
+      <span class="lbl">Compression ng edited textures</span>
+      <select id="exportFmt" aria-label="Compression ng edited textures">
+        <option value="raw" selected>Walang compression — A8R8G8B8 (pinaka-safe)</option>
+        <option value="auto">Auto — DXT1 pag opaque, DXT5 pag may alpha (maliit)</option>
+        <option value="dxt1">DXT1 — pinakamaliit, walang alpha</option>
+        <option value="dxt5">DXT5 — maliit, may alpha</option>
+      </select>
+      <span class="ehint">DXT: mas maliit ang TXD at mas mabilis mag-load sa game. Ang hindi na-edit na textures, original pa rin.</span>
+    </div>
 
     <div id="dlAllNotice" class="hidden" role="status">
       <span id="dlAllMsg"></span>
@@ -310,9 +362,17 @@
         </div>
         <div id="editMain">
           <div id="optHandle">
+            <button id="btnBack3d" type="button" title="Bumalik sa 3D Preview at downloads">‹ 3D Preview</button>
             <span class="htitle">Settings ng tool</span>
-            <button id="btnTexLock" class="on" type="button">🔒 Texture lock</button>
+            <button id="btnTexLock" class="on" type="button">🔒 Texture lock: ON</button>
             <button id="btnOptToggle" type="button">▲ Itago</button>
+          </div>
+          <div id="zoomBar">
+            <button id="btnZoomOut2" type="button" title="Zoom out" aria-label="Zoom out">−</button>
+            <input type="range" id="zoomRange" min="10" max="1000" step="5" value="100" aria-label="Zoom level" />
+            <button id="btnZoomIn2" type="button" title="Zoom in" aria-label="Zoom in">+</button>
+            <span id="zoomPct">100%</span>
+            <button id="btnFit2" type="button" title="Fit sa screen">Fit</button>
           </div>
           <div id="optbar"></div>
           <div id="shareWarn" class="hidden"><span aria-hidden="true">⚠</span><span>Ang spot na ito ng texture ay ginagamit ng model sa <b>magkabilang side</b> (mirrored UV ng DFF) — ang ilalagay mo rito, lalabas din sa kabilang side, baliktad. Ganyan din ang lalabas sa mismong laro.</span></div>
@@ -331,7 +391,15 @@
               <canvas id="cvObj"></canvas>
             </div>
             <canvas id="overlayCv"></canvas>
+            <div id="stageLockBadge" class="show">🔒 Texture naka-lock</div>
             <div id="stageMsg">Walang texture pa.<br/>Mag-upload ng <b>.txd</b> file para makapag-edit.</div>
+          </div>
+          <div id="layersPanel">
+            <div id="layersHead">
+              <span class="ltitle">Layers — <span id="layersCount">0</span> sa texture na ito</span>
+              <button id="btnLayersToggle" type="button">▲ Itago</button>
+            </div>
+            <div id="layersList"></div>
           </div>
           <div id="texstrip"></div>
         </div>
@@ -610,7 +678,73 @@ const RW = (() => {
     }
     return { data: out, w: nw, h: nh };
   }
-  function buildNativeEdited(t, version){
+
+  /* ---------------- DXT encoding (DXT1 / DXT5) ----------------
+     Standard 4x4 block compression. Endpoints are chosen as the
+     farthest-apart pair of block colors, quantized to RGB565 and
+     expanded back before index assignment so the palette the decoder
+     will rebuild is what pixels are matched against. DXT5 alpha uses
+     an 8-value interpolated palette with 3-bit indices. */
+  function rgb565Of(r, g, b){ return ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3); }
+  function encodeDXT(rgba, w, h, is5){
+    const bw = Math.ceil(w/4), bh = Math.ceil(h/4);
+    const blockBytes = is5 ? 16 : 8;
+    const out = new Uint8Array(bw * bh * blockBytes);
+    const dv = new DataView(out.buffer);
+    let o = 0;
+    const px = new Array(16);
+    for (let by = 0; by < bh; by++) for (let bx = 0; bx < bw; bx++){
+      for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++){
+        const sx = Math.min(w-1, bx*4+x), sy = Math.min(h-1, by*4+y);
+        const i = (sy*w + sx) * 4;
+        px[y*4+x] = [rgba[i], rgba[i+1], rgba[i+2], rgba[i+3]];
+      }
+      if (is5){
+        let aMin = 255, aMax = 0;
+        for (const q of px){ if (q[3] < aMin) aMin = q[3]; if (q[3] > aMax) aMax = q[3]; }
+        out[o] = aMax; out[o+1] = aMin;
+        const alphas = [aMax, aMin];
+        if (aMax > aMin){ for (let i = 1; i <= 6; i++) alphas.push(Math.floor(((7-i)*aMax + i*aMin)/7)); }
+        else { for (let i = 1; i <= 4; i++) alphas.push(Math.floor(((5-i)*aMax + i*aMin)/5)); alphas.push(0, 255); }
+        let bits = 0n;
+        for (let i = 0; i < 16; i++){
+          let best = 0, bd = 1e18;
+          for (let j = 0; j < 8; j++){ const d = (px[i][3] - alphas[j]) * (px[i][3] - alphas[j]); if (d < bd){ bd = d; best = j; } }
+          bits |= BigInt(best) << BigInt(3*i);
+        }
+        for (let i = 0; i < 6; i++) out[o+2+i] = Number((bits >> BigInt(8*i)) & 0xFFn);
+        o += 8;
+      }
+      // farthest pair as endpoints
+      let e0 = px[0], e1 = px[0], bestD = -1;
+      for (let i = 0; i < 16; i++) for (let j = i+1; j < 16; j++){
+        const dr = px[i][0]-px[j][0], dg = px[i][1]-px[j][1], db = px[i][2]-px[j][2];
+        const d = dr*dr + dg*dg + db*db;
+        if (d > bestD){ bestD = d; e0 = px[i]; e1 = px[j]; }
+      }
+      let c0 = rgb565Of(e0[0], e0[1], e0[2]), c1 = rgb565Of(e1[0], e1[1], e1[2]);
+      if (c0 < c1){ const tc = c0; c0 = c1; c1 = tc; const tq = e0; e0 = e1; e1 = tq; }
+      const col0 = c565(c0), col1 = c565(c1);
+      const cols = [col0, col1,
+        [(2*col0[0]+col1[0])/3|0, (2*col0[1]+col1[1])/3|0, (2*col0[2]+col1[2])/3|0],
+        [(col0[0]+2*col1[0])/3|0, (col0[1]+2*col1[1])/3|0, (col0[2]+2*col1[2])/3|0]];
+      let idxBits = 0;
+      for (let i = 0; i < 16; i++){
+        let best = 0, bd = 1e18;
+        for (let j = 0; j < 4; j++){
+          const dr = px[i][0]-cols[j][0], dg = px[i][1]-cols[j][1], db = px[i][2]-cols[j][2];
+          const d = dr*dr + dg*dg + db*db;
+          if (d < bd){ bd = d; best = j; }
+        }
+        idxBits |= best << (2*i);
+      }
+      dv.setUint16(o, c0, true); dv.setUint16(o+2, c1, true); dv.setUint32(o+4, idxBits >>> 0, true);
+      o += 8;
+    }
+    return out;
+  }
+  function buildNativeEdited(t, version, exportFmt){
+
     const w = t.width, h = t.height, rgba = t.rgba;
     // Rebuild the mip chain the original texture had. The original filter
     // mode is kept verbatim, so a texture authored with a mipmap filter
@@ -622,8 +756,16 @@ const RW = (() => {
       const p = levels[levels.length-1];
       levels.push(downsampleLevel(p.data, p.w, p.h));
     }
+    let hasA = false;
+    for (let i = 3; i < rgba.length; i += 4) if (rgba[i] < 255){ hasA = true; break; }
+    let encFmt = null;
+    if (exportFmt === "dxt1") encFmt = "DXT1";
+    else if (exportFmt === "dxt5") encFmt = "DXT5";
+    else if (exportFmt === "auto") encFmt = hasA ? "DXT5" : "DXT1";
+    const encLevels = encFmt ? levels.map(L => encodeDXT(L.data, L.w, L.h, encFmt === "DXT5")) : null;
     let dataSize = 0;
-    for (const L of levels) dataSize += 4 + L.w * L.h * 4;
+    if (encLevels){ for (const e of encLevels) dataSize += 4 + e.length; }
+    else for (const L of levels) dataSize += 4 + L.w * L.h * 4;
     // Real TXD layout: the raster levels live INSIDE the struct chunk,
     // right after the 88-byte header — that is where the game and every
     // TXD tool read them from. (Writing them after the struct chunk made
@@ -642,17 +784,33 @@ const RW = (() => {
     out[s+6] = t.vAddr != null ? t.vAddr : 1;
     writeName(out, s+8, t.name || "", 32);
     writeName(out, s+40, t.maskName || "", 32);
-    // Raster format: 8888 (0x0500) + MIPMAP flag off, keep automipmap off
-    let hasA = false;
-    for (let i = 3; i < rgba.length; i += 4) if (rgba[i] < 255){ hasA = true; break; }
-    dv.setUint32(s+72, 0x0500, true);
-    dv.setUint32(s+76, 21, true); // D3DFMT_A8R8G8B8
+    if (encFmt === "DXT1"){
+      // Same field values real DXT1 TXDs carry (bullet.txd etc.):
+      // rasterFormat 565 (0x0200), depth 16, flags byte 8.
+      dv.setUint32(s+72, 0x0200, true);
+      dv.setUint32(s+76, 0x31545844, true); // "DXT1"
+      out[s+84] = 16; out[s+87] = 8;
+    } else if (encFmt === "DXT5"){
+      dv.setUint32(s+72, 0x0500, true);
+      dv.setUint32(s+76, 0x35545844, true); // "DXT5"
+      out[s+84] = 32; out[s+87] = 9;
+    } else {
+      // Raster format: 8888 (0x0500) + MIPMAP flag off, keep automipmap off
+      dv.setUint32(s+72, 0x0500, true);
+      dv.setUint32(s+76, 21, true); // D3DFMT_A8R8G8B8
+      out[s+84] = 32; out[s+87] = hasA ? 1 : 0;
+    }
     dv.setUint16(s+80, w, true); dv.setUint16(s+82, h, true);
-    out[s+84] = 32; out[s+85] = levels.length;
+    out[s+85] = levels.length;
     out[s+86] = t.rasterType != null ? t.rasterType : 4;
-    out[s+87] = hasA ? 1 : 0;
     o = s + 88; // levels start right after the header, inside the struct chunk
-    for (const L of levels){
+    if (encLevels){
+      for (const e of encLevels){
+        dv.setUint32(o, e.length, true);
+        out.set(e, o + 4);
+        o += 4 + e.length;
+      }
+    } else for (const L of levels){
       dv.setUint32(o, L.w * L.h * 4, true);
       const d = o + 4, px = L.data;
       for (let i = 0; i < L.w * L.h; i++){
@@ -668,9 +826,10 @@ const RW = (() => {
     return out;
   }
 
-  function buildTXD(txd){
+  function buildTXD(txd, opts){
     const version = txd.version || 0x36003;
-    const parts = txd.textures.map(t => (t.edited || !t.raw) ? buildNativeEdited(t, version) : t.raw);
+    const exportFmt = (opts && opts.format) || "raw";
+    const parts = txd.textures.map(t => (t.edited || !t.raw) ? buildNativeEdited(t, version, exportFmt) : t.raw);
     let total = 12 + (12 + 4);
     for (const p of parts) total += p.length;
     total += 12; // dictionary extension
@@ -1179,6 +1338,7 @@ const state = {
   uvPristine: new Map(),// gi -> Float32Array copy of the original UVs
   uvVersion: 0,         // bumps on every UV change (wireframe cache key)
   viewLock: true,       // texture lock: one-finger empty drag never pans
+  exportFormat: "raw", // raw | auto | dxt1 | dxt5 — para sa edited textures lang
 };
 
 function toast(msg, ms){
@@ -1749,9 +1909,11 @@ function clampObjToTex(o, tex){
 function drawObjectsTo(ctx, tex, clear){
   if (clear !== false) ctx.clearRect(0, 0, tex.width, tex.height);
   for (const o of tex.objects || []){
+    if (o.hidden) continue;
     objBox(o);
     ctx.save();
     ctx.translate(o.x, o.y); ctx.rotate(o.rot * Math.PI/180);
+    if (o.flipH || o.flipV) ctx.scale(o.flipH ? -1 : 1, o.flipV ? -1 : 1);
     ctx.globalAlpha = o.opacity != null ? o.opacity : 1;
     if (o.type === "text"){
       ctx.font = `${o.size}px "${o.font}", sans-serif`;
@@ -1845,21 +2007,29 @@ function selectTexture(i){
   drawObjectsTo(cvObj.getContext("2d"), t);
   $("#stageMsg").style.display = "none";
   fitView();
+  syncLockBadge();
   renderTexStrip(); if (state.uvMode) computeUvParts(); renderOptbar(); updateUndoBtns(); drawOverlay();
 }
 
 /* ---------------- view transform ---------------- */
 function applyView(){
   stageWrap.style.transform = `translate(${state.view.tx}px, ${state.view.ty}px) scale(${state.view.s})`;
+  syncZoomUI();
   drawOverlay();
 }
 function fitView(){
   const t = curTex(); if (!t) return;
   const r = stageVp.getBoundingClientRect();
+  // Nakatago o sobrang liit pa ang stage (hal. pinili ang texture habang
+  // nasa 3D Preview): HUWAG mag-fit laban sa 0-size na rect — yun ang
+  // nag-iiwan ng sirang/stale na zoom. Tandaan na lang na kailangan ng
+  // fit; gagawin ito pag nakita na ang stage (tab switch / resize).
+  if (r.width < 10 || r.height < 10){ state._needFit = true; return; }
   const s = Math.min((r.width - 24)/t.width, (r.height - 24)/t.height);
   state.view.s = Math.min(Math.max(s, 0.02), 8);
   state.view.tx = (r.width - t.width*state.view.s)/2;
   state.view.ty = (r.height - t.height*state.view.s)/2;
+  state._needFit = false; state.viewFit = true;
   applyView();
 }
 function zoomAt(cx, cy, factor){
@@ -1867,7 +2037,33 @@ function zoomAt(cx, cy, factor){
   const ns = Math.min(24, Math.max(0.02, v.s * factor));
   const k = ns / v.s;
   v.tx = cx - (cx - v.tx) * k; v.ty = cy - (cy - v.ty) * k; v.s = ns;
+  state.viewFit = false; // sariling zoom na ito ng user, hindi na fit
   applyView();
+}
+/* ---------------- zoom controls (panel slider) ----------------
+   Sa Edit mode, slider / + / − / Fit LANG ang zoom — walang pinch at
+   walang scroll-wheel zoom dito (sa 3D Preview lang ang pinch).
+   Ang 100% ng slider ay ang fit-sa-screen na laki. */
+function fitScale(){
+  const t = curTex(); if (!t) return 1;
+  const r = stageVp.getBoundingClientRect();
+  const s = Math.min((r.width - 24)/t.width, (r.height - 24)/t.height);
+  return Math.min(Math.max(s, 0.02), 8);
+}
+function setZoomPct(pct){
+  if (!curTex()) return;
+  const target = Math.min(24, Math.max(0.02, fitScale() * pct / 100));
+  const r = stageVp.getBoundingClientRect();
+  zoomAt(r.width/2, r.height/2, target / Math.max(0.0001, state.view.s));
+}
+function syncZoomUI(){
+  const zr = $("#zoomRange"), zp = $("#zoomPct");
+  if (!zr && !zp) return;
+  if (!curTex()){ if (zp) zp.textContent = "—"; return; }
+  const pct = Math.max(1, Math.round(state.view.s / fitScale() * 100));
+  if (zp) zp.textContent = pct + "%";
+  // Huwag agawin ang slider habang hinihila ito ng user.
+  if (zr && document.activeElement !== zr) zr.value = Math.min(1000, Math.max(10, pct));
 }
 function screenToTex(e){
   const r = stageWrap.getBoundingClientRect();
@@ -1880,6 +2076,7 @@ function texToScreen(x, y){
 }
 
 /* ---------------- overlay (selection) ---------------- */
+let stagePtrPos = null; // huling posisyon ng pointer sa stage (brush cursor)
 function drawOverlay(){
   const dpr = Math.min(devicePixelRatio, 2);
   const r = stageVp.getBoundingClientRect();
@@ -1901,6 +2098,31 @@ function drawOverlay(){
   if (state.uvMode){ drawUVOverlay(g, r); return; }
   updateShareWarn(); // mirrored-UV warning follows selection and drags
   const o = state.sel, t = curTex();
+  if (t){
+    // Lock badge sa BAWAT naka-lock na object, hindi lang sa napili —
+    // agad nakikita kung alin ang hindi magagalaw. (Ang napiling locked
+    // object ay may sarili nang mas malaking badge sa ibaba.)
+    for (const lo of t.objects || []){
+      if (!lo.locked || lo.hidden || lo === o) continue;
+      objBox(lo);
+      const lr = lo.rot * Math.PI/180, lc = Math.cos(lr), ls = Math.sin(lr);
+      const bp = texToScreen(lo.x - lo.w/2 * lc + lo.h/2 * ls, lo.y - lo.w/2 * ls - lo.h/2 * lc);
+      g.fillStyle = "#ffb02e";
+      g.beginPath(); g.arc(bp.x, bp.y, 9, 0, 7); g.fill();
+      g.fillStyle = "#161006"; g.font = "9px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillText("🔒", bp.x, bp.y + .5);
+    }
+    // Brush / eraser cursor: bilog na kasinglaki ng totoong stroke, para
+    // makita ng user kung gaano kalaki ang ipipinta bago pa mag-draw.
+    if ((state.tool === "brush" || state.tool === "eraser") && stagePtrPos){
+      const sz = (state.tool === "eraser" ? state.eraserSize : state.brush.size) * state.view.s;
+      g.strokeStyle = state.tool === "eraser" ? "#ffffff" : state.brush.color;
+      g.lineWidth = 1.6;
+      g.beginPath(); g.arc(stagePtrPos.x, stagePtrPos.y, Math.max(2, sz/2), 0, 7); g.stroke();
+      g.fillStyle = g.strokeStyle;
+      g.beginPath(); g.arc(stagePtrPos.x, stagePtrPos.y, 1.8, 0, 7); g.fill();
+    }
+  }
   if (!o || !t) return;
   objBox(o);
   const rot = o.rot * Math.PI/180, cos = Math.cos(rot), sin = Math.sin(rot);
@@ -1997,14 +2219,17 @@ $("#btnRedo").addEventListener("click", () => {
 /* ---------------- pointer interaction on the stage ---------------- */
 let drag = null;
 const stagePtrs = new Map();
-let pinch = null;
-let lastEmptyTap = null;
 
-function hitObject(p){
+/* Hit test ng objects. Ang naka-LOCK na object ay hindi nasasali by
+   default: hindi siya mapipili o magagalaw sa canvas (ang tap ay
+   dadaan sa kanya papunta sa object sa ilalim o sa bakanteng lugar).
+   includeLocked=true ay para lang ma-detect na "may tinamaang locked"
+   at makapagpakita ng paliwanag na toast. */
+function hitObject(p, includeLocked){
   const t = curTex(); if (!t) return null;
   const objs = t.objects || [];
   for (let i = objs.length - 1; i >= 0; i--){
-    const o = objs[i]; objBox(o);
+    const o = objs[i]; if (o.hidden) continue; if (o.locked && !includeLocked) continue; objBox(o);
     const rot = -o.rot * Math.PI/180, cos = Math.cos(rot), sin = Math.sin(rot);
     const dx = p.x - o.x, dy = p.y - o.y;
     const lx = dx*cos - dy*sin, ly = dx*sin + dy*cos;
@@ -2014,37 +2239,50 @@ function hitObject(p){
   }
   return null;
 }
+/* Isang segment ng brush/eraser stroke. Bukod sa linya, may bilog na
+   ini-stamp sa bawat hakbang na mas maliit kaysa brush size — kaya
+   walang butas ang stroke kahit kalat-kalat ang pointermove events ng
+   phone, at ang simpleng tap ay siguradong may maiiwang tuldok. */
 function paintStroke(from, to){
   const g = cvPaint.getContext("2d");
+  const erase = state.tool === "eraser";
+  const size = erase ? state.eraserSize : state.brush.size;
   g.lineCap = "round"; g.lineJoin = "round";
-  if (state.tool === "eraser"){
-    g.globalCompositeOperation = "destination-out";
-    g.strokeStyle = "rgba(0,0,0,1)"; g.lineWidth = state.eraserSize;
-  } else {
-    g.globalCompositeOperation = "source-over";
-    g.strokeStyle = state.brush.color; g.lineWidth = state.brush.size;
+  g.globalCompositeOperation = erase ? "destination-out" : "source-over";
+  g.strokeStyle = erase ? "rgba(0,0,0,1)" : state.brush.color;
+  g.fillStyle = g.strokeStyle;
+  g.lineWidth = size;
+  const dist = Math.hypot(to.x - from.x, to.y - from.y);
+  const steps = Math.max(1, Math.ceil(dist / Math.max(1, size * 0.3)));
+  for (let i = 0; i <= steps; i++){
+    const x = from.x + (to.x - from.x) * i / steps, y = from.y + (to.y - from.y) * i / steps;
+    g.beginPath(); g.arc(x, y, size/2, 0, 6.3); g.fill();
   }
-  g.beginPath(); g.moveTo(from.x, from.y); g.lineTo(to.x, to.y); g.stroke();
+  if (dist > 0){ g.beginPath(); g.moveTo(from.x, from.y); g.lineTo(to.x, to.y); g.stroke(); }
   g.globalCompositeOperation = "source-over";
 }
 stageVp.addEventListener("pointerdown", e => {
   const t = curTex(); if (!t) return;
   stageVp.setPointerCapture(e.pointerId);
   stagePtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  if (stagePtrs.size === 2){
-    const [a, b] = [...stagePtrs.values()];
-    pinch = { d: Math.hypot(a.x-b.x, a.y-b.y), cx: (a.x+b.x)/2, cy: (a.y+b.y)/2 };
-    // A second finger cancels the drag; a half-finished UV drag rolls
-    // back instead of leaving un-undoable UV changes behind — and so
-    // does a half-finished object move/rotate/resize, so a pinch can
-    // never strand the object somewhere with no undo entry for it.
+  { const r = stageVp.getBoundingClientRect(); stagePtrPos = { x: e.clientX - r.left, y: e.clientY - r.top }; }
+  if (stagePtrs.size > 1){
+    // WALANG pinch sa Edit mode — ang zoom ay sa panel slider lang.
+    // Ang pangalawang daliri ay CANCEL: ibalik ang anumang in-progress
+    // na drag/paint/UV sa simula nito (para walang maiwang half-finished
+    // na edit na walang undo), tapos huwag pansinin ang lahat ng galaw
+    // hanggang maiangat ang lahat ng daliri.
     if (drag && drag.mode === "uvmove" && drag.moved) rollbackUvOp(drag.op);
+    if (drag && drag.mode === "paint" && drag.snapPre && drag.snapPre.paint){
+      const pg = cvPaint.getContext("2d");
+      pg.clearRect(0, 0, t.width, t.height);
+      pg.drawImage(drag.snapPre.paint, 0, 0);
+    }
     if (drag && drag.orig && drag.moved){
       Object.assign(drag.o, drag.orig);
-      const t2 = curTex();
-      if (t2){ drawObjectsTo(cvObj.getContext("2d"), t2); drawOverlay(); }
+      drawObjectsTo(cvObj.getContext("2d"), t); drawOverlay();
     }
-    drag = null; return;
+    drag = { mode: "ignore" }; return;
   }
   const p = screenToTex(e);
   if (state.uvMode){
@@ -2052,8 +2290,10 @@ stageVp.addEventListener("pointerdown", e => {
     return;
   }
   if (state.tool === "brush" || state.tool === "eraser"){
+    e.preventDefault();
     drag = { mode: "paint", last: p, moved: true, snapPre: snapshot() };
     paintStroke(p, p);
+    drawOverlay();
     return;
   }
   if (state.tool === "text"){
@@ -2082,25 +2322,27 @@ stageVp.addEventListener("pointerdown", e => {
   const hit = hitObject(p);
   if (hit){
     if (state.sel !== hit){ state.sel = hit; renderOptbar(); }
-    if (hit.locked){
-      drag = { mode: "none" };
-      toast("Naka-lock ang object — i-unlock muna (LOCK button) para magalaw.");
-    } else {
-      // Canva-style, one motion: the tap selects AND the same touch drags
-      // the object by its grab offset. A plain tap never shifts the
-      // object (finger down and up at the same point = zero movement),
-      // but a drag no longer lands on a dead first touch that only
-      // selects — the old two-step rule is what made moving text feel
-      // unresponsive. orig lets a pinch cancel roll the drag back.
-      drag = { mode: "move", o: hit, dx: p.x - hit.x, dy: p.y - hit.y, snap: snapshot(), moved: false, sx: e.clientX, sy: e.clientY,
-               orig: { x: hit.x, y: hit.y, rot: hit.rot, size: hit.size, w: hit.w, h: hit.h } };
-    }
+    // Canva-style, one motion: the tap selects AND the same touch drags
+    // the object by its grab offset. A plain tap never shifts the
+    // object (finger down and up at the same point = zero movement),
+    // but a drag no longer lands on a dead first touch that only
+    // selects — the old two-step rule is what made moving text feel
+    // unresponsive. orig lets a cancel (second finger) roll the drag back.
+    drag = { mode: "move", o: hit, dx: p.x - hit.x, dy: p.y - hit.y, snap: snapshot(), moved: false, sx: e.clientX, sy: e.clientY,
+             orig: { x: hit.x, y: hit.y, rot: hit.rot, size: hit.size, w: hit.w, h: hit.h } };
+  } else if (hitObject(p, true)){
+    // Locked object ang tinamaan at walang unlocked na object sa
+    // ibabaw niya: hindi siya mapipili o magagalaw dito — paliwanag
+    // lang. Para i-unlock: piliin siya sa Layers panel, tapos LOCK.
+    if (state.sel){ state.sel = null; renderOptbar(); }
+    drag = { mode: "none" };
+    toast("Naka-lock ang object — hindi siya magagalaw. Para i-unlock: piliin sa Layers panel, tapos pindutin ang LOCK.", 3200);
   } else {
     if (state.sel){ state.sel = null; renderOptbar(); }
     // Texture lock ON (default): a one-finger drag on empty space does
-    // nothing — the texture never slides around while editing. Panning
-    // is two-finger drag / pinch; double-tap fits. Lock OFF restores
-    // the classic one-finger pan.
+    // nothing — the texture NEVER moves while editing. Walang pinch,
+    // two-finger pan, o double-tap dito: ang zoom at fit ay nasa panel
+    // lang (slider, +/−, Fit button). Lock OFF restores one-finger pan.
     drag = { mode: state.viewLock ? "tapwatch" : "pan", sx: e.clientX, sy: e.clientY,
              tx: state.view.tx, ty: state.view.ty, empty: true, t0: performance.now() };
   }
@@ -2108,16 +2350,14 @@ stageVp.addEventListener("pointerdown", e => {
 });
 stageVp.addEventListener("pointermove", e => {
   if (stagePtrs.has(e.pointerId)) stagePtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  if (pinch && stagePtrs.size === 2){
-    const [a, b] = [...stagePtrs.values()];
-    const d = Math.hypot(a.x-b.x, a.y-b.y), cx = (a.x+b.x)/2, cy = (a.y+b.y)/2;
-    const r = stageVp.getBoundingClientRect();
-    state.view.tx += cx - pinch.cx; state.view.ty += cy - pinch.cy;
-    zoomAt(cx - r.left, cy - r.top, d / Math.max(1, pinch.d));
-    pinch = { d, cx, cy };
+  const r = stageVp.getBoundingClientRect();
+  stagePtrPos = { x: e.clientX - r.left, y: e.clientY - r.top };
+  if (!drag){
+    // Walang drag: ang brush/eraser cursor lang ang i-redraw sa hover.
+    if (state.tool === "brush" || state.tool === "eraser") drawOverlay();
     return;
   }
-  if (!drag) return;
+  if (drag.mode === "ignore") return;
   const t = curTex(); if (!t) return;
   const p = screenToTex(e);
   if (drag.mode === "paint"){
@@ -2137,6 +2377,7 @@ stageVp.addEventListener("pointermove", e => {
   } else if (drag.mode === "pan"){
     state.view.tx = drag.tx + (e.clientX - drag.sx);
     state.view.ty = drag.ty + (e.clientY - drag.sy);
+    state.viewFit = false; // sariling galaw na ito ng user, hindi na fit
     applyView();
   } else if (drag.mode === "move"){
     drag.o.x = p.x - drag.dx; drag.o.y = p.y - drag.dy;
@@ -2159,23 +2400,11 @@ stageVp.addEventListener("pointermove", e => {
 });
 function endStagePointer(e){
   stagePtrs.delete(e.pointerId);
-  if (stagePtrs.size < 2) pinch = null;
   if (!drag) return;
   const t = curTex();
   if (drag.mode === "uvmove"){
     if (drag.moved){ uvCommitOp(drag.op); toast("Nailipat ang UV ng napiling parte."); }
     drag = null; return;
-  }
-  if (drag.empty){
-    // Double-tap on empty space zooms back to fit (Canva-style).
-    const quick = performance.now() - drag.t0 < 300;
-    const still = Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 8;
-    if (quick && still){
-      const now = performance.now();
-      if (lastEmptyTap && now - lastEmptyTap.t < 350 && Math.hypot(e.clientX - lastEmptyTap.x, e.clientY - lastEmptyTap.y) < 48){
-        fitView(); lastEmptyTap = null;
-      } else lastEmptyTap = { t: now, x: e.clientX, y: e.clientY };
-    }
   }
   if (drag.mode === "paint"){
     if (t && drag.snapPre){
@@ -2183,7 +2412,7 @@ function endStagePointer(e){
       if (t.undoStack.length > 15) t.undoStack.shift();
       t.redoStack = []; markEdited(); updateUndoBtns();
     }
-    if (t) updateComposite(t);
+    if (t){ saveCurrentPaint(); updateComposite(t); }
   } else if ((drag.mode === "move" || drag.mode === "rotate" || drag.mode === "resize") && drag.moved){
     const t2 = curTex();
     t2.undoStack.push(drag.snap); t2.redoStack = []; markEdited(); updateUndoBtns();
@@ -2194,13 +2423,11 @@ function endStagePointer(e){
 }
 stageVp.addEventListener("pointerup", endStagePointer);
 stageVp.addEventListener("pointercancel", endStagePointer);
-stageVp.addEventListener("wheel", e => {
-  if (!curTex()) return;
-  e.preventDefault();
-  const r = stageVp.getBoundingClientRect();
-  zoomAt(e.clientX - r.left, e.clientY - r.top, e.deltaY < 0 ? 1.12 : 0.89);
-}, { passive: false });
-stageVp.addEventListener("dblclick", () => { if (curTex()) fitView(); });
+stageVp.addEventListener("pointerleave", () => { stagePtrPos = null; drawOverlay(); });
+/* Walang scroll-wheel zoom at walang double-tap/dblclick fit sa Edit
+   mode — slider / + / − / Fit BUTTON lang sa panel ang gagalaw sa zoom
+   dito. (Ang pinch at wheel zoom ng 3D Preview ay hiwalay at
+   nananatili.) */
 
 /* ---------------- adding objects ---------------- */
 function addTextObject(x, y){
@@ -2209,7 +2436,7 @@ function addTextObject(x, y){
   const s = state.text;
   const o = { type: "text", text: s.value || "TEXT", font: s.font, size: s.size,
     color: s.color, outlineColor: s.outlineColor, outlineWidth: s.outlineWidth,
-    x: x != null ? x : t.width/2, y: y != null ? y : t.height/2, rot: 0, opacity: 1 };
+    x: x != null ? x : t.width/2, y: y != null ? y : t.height/2, rot: 0, opacity: 1, flipH: false, flipV: false, hidden: false };
   // Bagong text: paliitin muna para mga 1/3 lang ng lapad ng texture ang
   // sakop (dati halos buong texture ang natatakpan), tapos i-clamp sa loob.
   objBox(o);
@@ -2229,14 +2456,14 @@ function addImageObject(img){
   const maxW = t.width * 0.6;
   const sc = Math.min(1, maxW / img.naturalWidth);
   const o = { type: "image", img, w: img.naturalWidth * sc, h: img.naturalHeight * sc,
-    x: t.width/2, y: t.height/2, rot: 0, opacity: 1 };
+    x: t.width/2, y: t.height/2, rot: 0, opacity: 1, flipH: false, flipV: false, hidden: false };
   clampObjToTex(o, t); // matangkad na larawan: paliitin para pasok sa texture
   (t.objects = t.objects || []).push(o);
   state.sel = o;
   drawObjectsTo(cvObj.getContext("2d"), t);
   updateComposite(t);
   setTool("move");
-  toast("Larawan nailagay — i-drag para igalaw, hilahin ang dilaw na sulok ⤡ o gamitin ang “Laki ng larawan” slider para palakihin o paliitin.");
+  toast("Larawan nailagay — i-drag para igalaw, ⤡ sulok o slider para sa laki, ⟳ handle o Ikot slider para ikutin, at Flip ↔ / ↕ buttons para baligtarin.");
 }
 
 /* ---------------- options bar ---------------- */
@@ -2266,7 +2493,8 @@ function renderOptbar(){
   if (state.tool === "brush"){
     html += `<div class="grp"><label class="lbl">Kulay ng brush</label><input type="color" id="optBrushColor" value="${state.brush.color}" /></div>
       <div class="grp"><label class="lbl">Laki: <span id="optBrushSizeVal">${state.brush.size}</span></label>
-      <input type="range" id="optBrushSize" min="1" max="120" value="${state.brush.size}" style="width:130px" /></div>`;
+      <input type="range" id="optBrushSize" min="1" max="200" value="${state.brush.size}" style="width:130px" /></div>
+      <span style="font-size:12px;color:var(--dim);align-self:center">I-drag sa texture para magpinta — ang bilog sa canvas ang totoong laki ng brush. Undo: kasama ang bawat stroke.</span>`;
   }
   if (state.tool === "eraser"){
     html += `<div class="grp"><label class="lbl">Laki ng eraser: <span id="optEraSizeVal">${state.eraserSize}</span></label>
@@ -2281,7 +2509,10 @@ function renderOptbar(){
   if (o && o.type === "image"){
     html += `<div class="grp"><label class="lbl">Laki ng larawan: <span id="optImgSizeVal">${Math.round(o.w)}</span>px</label>
       <input type="range" id="optImgSize" min="12" max="${t.width}" value="${Math.round(o.w)}" style="width:130px" /></div>
-      <span style="font-size:12px;color:var(--dim);align-self:center">o hilahin ang dilaw na sulok ⤡ ng napiling larawan — proporsyonal ang paglaki/pagliit.</span>`;
+      <div class="grp"><label class="lbl">Flip ng larawan</label>
+      <div class="row"><button id="optFlipH" type="button" class="${o.flipH ? "on" : ""}">Flip ↔</button>
+      <button id="optFlipV" type="button" class="${o.flipV ? "on" : ""}">Flip ↕</button></div></div>
+      <span style="font-size:12px;color:var(--dim);align-self:center">Ikot: ⟳ handle sa canvas o Ikot slider sa ibaba. Laki: dilaw na sulok ⤡ o slider — proporsyonal.</span>`;
   }
   if (o){
     html += `<div class="grp"><label class="lbl">Ikot: <span id="optRotVal">${Math.round(o.rot)}°</span></label>
@@ -2294,12 +2525,114 @@ function renderOptbar(){
       <button id="optDel" type="button">Burahin</button></div></div>`;
   }
   if (!o && state.tool === "move"){
-    html += `<span style="font-size:12.5px;color:var(--dim)">I-tap ang object para piliin, i-drag agad para igalaw ito lang · double-tap: fit sa screen · two-finger drag: pan · pinch: zoom.</span>
+    html += `<span style="font-size:12.5px;color:var(--dim)">I-tap ang object para piliin, i-drag agad para igalaw ito lang · Zoom: slider o +/− sa panel · Fit button: balik sa fit · Texture lock ON: hindi gagalaw ang texture sa drag.</span>
       <div class="grp"><label class="lbl">&nbsp;</label><button id="optResetTex" type="button">I-reset ang texture</button></div>`;
   }
   bar.innerHTML = html;
   wireOptbar();
+  renderLayers();
 }
+
+/* ---------------- layers panel (Canva-style) ----------------
+   Listahan ng lahat ng text/image objects ng current texture, pinaka-
+   itaas (huling iginuhit) ang una. Tap = piliin; ▲/▼ = reorder (una/
+   huli sa drawing order); Kopya = duplicate; 👁 = itago/ipakita;
+   🗑 = burahin. Lahat ng aksyon ay undoable at nase-save sa session
+   snapshot kasama ng object state (hidden/flip kasama sa serObject). */
+function renderLayers(){
+  const list = $("#layersList"), cnt = $("#layersCount");
+  if (!list) return;
+  const t = curTex();
+  const objs = t ? (t.objects || []) : [];
+  if (cnt) cnt.textContent = objs.length;
+  list.innerHTML = "";
+  if (!t){ list.innerHTML = '<div class="layer-empty">Walang texture pa.</div>'; return; }
+  if (!objs.length){
+    list.innerHTML = '<div class="layer-empty">Wala pang text o larawan sa texture na ito — magdagdag gamit ang TEXT o IMAGE tool.</div>';
+    return;
+  }
+  // Topmost first: reverse drawing order.
+  for (let idx = objs.length - 1; idx >= 0; idx--){
+    const o = objs[idx];
+    const row = document.createElement("div");
+    row.className = "layer-row" + (state.sel === o ? " on" : "") + (o.hidden ? " is-hidden" : "");
+    const type = document.createElement("span"); type.className = "ltype";
+    type.textContent = o.type === "text" ? "Text" : "Image";
+    const name = document.createElement("span"); name.className = "lname";
+    name.textContent = o.type === "text" ? (o.text || "TEXT") : "Larawan / sticker";
+    row.appendChild(type);
+    if (o.locked){
+      const lk = document.createElement("span"); lk.textContent = "🔒"; lk.title = "Naka-lock — hindi magagalaw sa canvas";
+      lk.style.flex = "none"; row.appendChild(lk);
+    }
+    row.appendChild(name);
+    const mkBtn = (label, title, fn) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = label; b.title = title; b.setAttribute("aria-label", title);
+      b.addEventListener("click", ev => { ev.stopPropagation(); fn(); });
+      row.appendChild(b);
+      return b;
+    };
+    mkBtn("▲", "Itaas ang layer", () => layerMove(idx, 1));
+    mkBtn("▼", "Ibaba ang layer", () => layerMove(idx, -1));
+    mkBtn("⧉", "I-duplicate ang layer", () => layerDuplicate(idx));
+    mkBtn(o.hidden ? "🙈" : "👁", o.hidden ? "Ipakita ang layer" : "Itago ang layer", () => layerToggleHide(idx));
+    mkBtn("🗑", "Burahin ang layer", () => layerDelete(idx));
+    row.addEventListener("click", () => {
+      state.sel = o;
+      drawObjectsTo(cvObj.getContext("2d"), t);
+      renderOptbar(); drawOverlay();
+    });
+    list.appendChild(row);
+  }
+}
+function layerAfterChange(t){
+  drawObjectsTo(cvObj.getContext("2d"), t);
+  updateComposite(t);
+  renderOptbar(); drawOverlay();
+}
+function layerMove(idx, dir){
+  const t = curTex(); if (!t || !t.objects) return;
+  const j = idx + dir;
+  if (j < 0 || j >= t.objects.length) return;
+  pushUndo();
+  const tmp = t.objects[idx]; t.objects[idx] = t.objects[j]; t.objects[j] = tmp;
+  layerAfterChange(t);
+}
+function layerDuplicate(idx){
+  const t = curTex(); if (!t || !t.objects || !t.objects[idx]) return;
+  pushUndo();
+  const o = t.objects[idx];
+  const c = { ...o, x: o.x + 24, y: o.y + 24, hidden: false };
+  clampObjToTex(c, t);
+  t.objects.splice(idx + 1, 0, c);
+  state.sel = c;
+  layerAfterChange(t);
+  toast("Na-duplicate ang layer.");
+}
+function layerToggleHide(idx){
+  const t = curTex(); if (!t || !t.objects || !t.objects[idx]) return;
+  pushUndo();
+  const o = t.objects[idx];
+  o.hidden = !o.hidden;
+  if (o.hidden && state.sel === o) state.sel = null;
+  layerAfterChange(t);
+}
+function layerDelete(idx){
+  const t = curTex(); if (!t || !t.objects || !t.objects[idx]) return;
+  pushUndo();
+  const o = t.objects[idx];
+  t.objects = t.objects.filter(x => x !== o);
+  if (state.sel === o) state.sel = null;
+  layerAfterChange(t);
+  toast("Nabura ang layer.");
+}
+$("#btnLayersToggle").addEventListener("click", () => {
+  const list = $("#layersList");
+  const hidden = list.classList.toggle("hidden");
+  $("#btnLayersToggle").textContent = hidden ? "▼ Ipakita" : "▲ Itago";
+  requestAnimationFrame(drawOverlay);
+});
 function wireOptbar(){
   const t = curTex(); const o = state.sel;
   const target = () => (state.sel && state.sel.type === "text") ? state.sel : state.text;
@@ -2333,6 +2666,10 @@ function wireOptbar(){
   armPropUndo(isz);
   if (isz) isz.addEventListener("input", () => { if (!o || o.type !== "image") return; const nw = +isz.value; const k = nw / Math.max(1, o.w); o.w = nw; o.h = Math.max(12, Math.round(o.h * k)); clampObjToTex(o, t); isz.value = Math.round(o.w); const lv = $("#optImgSizeVal"); if (lv) lv.textContent = Math.round(o.w); drawObjectsTo(cvObj.getContext("2d"), t); updateComposite(t); drawOverlay(); });
   if (isz) isz.addEventListener("change", () => pushUndoSafe());
+  const fh = $("#optFlipH");
+  if (fh) fh.addEventListener("click", () => { if (!o) return; pushUndo(); o.flipH = !o.flipH; drawObjectsTo(cvObj.getContext("2d"), t); updateComposite(t); renderOptbar(); drawOverlay(); });
+  const fv = $("#optFlipV");
+  if (fv) fv.addEventListener("click", () => { if (!o) return; pushUndo(); o.flipV = !o.flipV; drawObjectsTo(cvObj.getContext("2d"), t); updateComposite(t); renderOptbar(); drawOverlay(); });
   const rot = $("#optRot");
   armPropUndo(rot);
   if (rot) rot.addEventListener("input", () => { if (!o) return; o.rot = +rot.value; $("#optRotVal").textContent = rot.value + "°"; drawObjectsTo(cvObj.getContext("2d"), t); updateComposite(t); drawOverlay(); });
@@ -2400,6 +2737,11 @@ $$("#rail [data-tool]").forEach(b => b.addEventListener("click", () => {
 $("#btnZoomIn").addEventListener("click", () => { const r = stageVp.getBoundingClientRect(); zoomAt(r.width/2, r.height/2, 1.3); });
 $("#btnZoomOut").addEventListener("click", () => { const r = stageVp.getBoundingClientRect(); zoomAt(r.width/2, r.height/2, 0.77); });
 $("#btnFit").addEventListener("click", fitView);
+/* Zoom bar sa panel: slider ang pangunahing zoom ng Edit mode. */
+$("#zoomRange").addEventListener("input", e => setZoomPct(+e.target.value));
+$("#btnZoomIn2").addEventListener("click", () => { const r = stageVp.getBoundingClientRect(); zoomAt(r.width/2, r.height/2, 1.3); });
+$("#btnZoomOut2").addEventListener("click", () => { const r = stageVp.getBoundingClientRect(); zoomAt(r.width/2, r.height/2, 0.77); });
+$("#btnFit2").addEventListener("click", fitView);
 $("#fileImg").addEventListener("change", e => {
   const f = e.target.files[0]; e.target.value = "";
   if (!f) return;
@@ -2415,10 +2757,15 @@ function setTab(which){
   $("#pane3d").classList.toggle("on", which === "3d");
   $("#paneEdit").classList.toggle("on", which === "edit");
   if (which === "3d") resizeGL();
-  else { focusPartInEditor(); requestAnimationFrame(() => { if (!state._fitted){ fitView(); state._fitted = true; } drawOverlay(); }); }
+  // LAGING mag-auto-fit pag pumasok sa Edit Texture: buong texture,
+  // nakagitna, sa totoong laki ng stage. Dati isang beses lang ito
+  // tumatakbo (state._fitted), kaya naiiwan ang lumang zoom (hal. 260%)
+  // na halos hindi na makita ang texture.
+  else { focusPartInEditor(); requestAnimationFrame(() => { fitView(); drawOverlay(); }); }
 }
 $("#tab3d").addEventListener("click", () => setTab("3d"));
 $("#tabEdit").addEventListener("click", () => setTab("edit"));
+$("#btnBack3d").addEventListener("click", () => setTab("3d"));
 
 /* ---------------- file loading ---------------- */
 function updateFileInfo(){
@@ -2429,6 +2776,7 @@ function updateFileInfo(){
     "Sample model ang naka-load — mag-upload ng DFF + TXD mo para mag-edit ng totoong file.";
   $("#btnDlDff").disabled = !state.dffBuffer;
   $("#btnDlAll").disabled = !(state.txd || state.dffBuffer);
+  const zb = $("#btnDlZip"); if (zb) zb.disabled = !(state.txd || state.dffBuffer);
 }
 async function loadDFF(file){
   try {
@@ -2821,14 +3169,25 @@ $("#btnLockObj").addEventListener("click", () => {
   syncLockBtn(); renderOptbar(); drawOverlay();
   toast(o.locked ? "Naka-lock na ang object — hindi siya magagalaw sa canvas." : "Na-unlock ang object — pwede na siyang igalaw.");
 });
+/* Badge sa stage: laging kita kung naka-lock ang texture na ine-edit. */
+function syncLockBadge(){
+  const b = $("#stageLockBadge"); if (!b) return;
+  b.classList.add("show");
+  b.classList.toggle("off", !state.viewLock);
+  b.textContent = state.viewLock ? "🔒 Texture naka-lock" : "🔓 Texture hindi naka-lock — drag = pan";
+}
+function syncTexLockBtn(){
+  const b = $("#btnTexLock"); if (!b) return;
+  b.classList.toggle("on", state.viewLock);
+  b.textContent = state.viewLock ? "🔒 Texture lock: ON" : "🔓 Texture lock: OFF";
+  syncLockBadge();
+}
 $("#btnTexLock").addEventListener("click", () => {
   state.viewLock = !state.viewLock;
-  const b = $("#btnTexLock");
-  b.classList.toggle("on", state.viewLock);
-  b.textContent = state.viewLock ? "🔒 Texture lock" : "🔓 Texture lock";
+  syncTexLockBtn();
   toast(state.viewLock
-    ? "Texture lock ON: hindi gagalaw ang texture sa isang daliri. Pan = two-finger drag, zoom = pinch, fit = double-tap."
-    : "Texture lock OFF: pwede nang i-pan ang bakanteng lugar sa isang daliri.", 3200);
+    ? "Texture lock ON: hindi gagalaw ang texture habang nag-e-edit — kahit i-drag mo ang bakanteng lugar. Zoom = slider o +/− sa panel."
+    : "Texture lock OFF: pwede nang i-drag ang bakanteng lugar para i-pan ang texture.", 3400);
 });
 $("#btnUVMode").addEventListener("click", () => setUvMode(!state.uvMode));
 
@@ -2890,7 +3249,8 @@ function paintNonEmpty(t){
 }
 function serObject(o){
   const base = { type: o.type, x: o.x, y: o.y, rot: o.rot || 0,
-    opacity: o.opacity != null ? o.opacity : 1, locked: !!o.locked, w: o.w, h: o.h };
+    opacity: o.opacity != null ? o.opacity : 1, locked: !!o.locked, w: o.w, h: o.h,
+    flipH: !!o.flipH, flipV: !!o.flipV, hidden: !!o.hidden };
   if (o.type === "text")
     return Object.assign(base, { text: o.text, font: o.font, size: o.size, color: o.color,
       outlineColor: o.outlineColor, outlineWidth: o.outlineWidth });
@@ -2924,7 +3284,7 @@ function buildWorkSnapshot(){
   if (!state.txd) return null;
   saveCurrentPaint();
   const snap = { v: 1, demo: state.demo, txdName: state.txdName || "", dffName: state.dffName || "",
-    cur: state.cur, paintColor: state.paintColor, tex: [], partial: false };
+    cur: state.cur, paintColor: state.paintColor, exportFormat: state.exportFormat || "raw", tex: [], partial: false };
   state.txd.textures.forEach((t, i) => {
     const entry = { i, name: t.name, w: t.width, h: t.height, edited: !!t.edited };
     const objs = (t.objects || []).map(serObject).filter(Boolean);
@@ -3114,6 +3474,10 @@ async function restoreWorkSession(){
     const composite = (typeof usedComposite !== "undefined" && usedComposite);
     if (composite) state.txIncomplete = true; // kulang ang TXD (mga edited lang): naka-pause ang TXD downloads hanggang ma-upload ulit ang original
     const imgWaits = await applyWorkEntries(snap, false, composite);
+    if (snap.exportFormat){
+      state.exportFormat = snap.exportFormat;
+      const ef = $("#exportFmt"); if (ef) ef.value = snap.exportFormat;
+    }
     if (snap.paintColor){
       state.paintColor = snap.paintColor;
       const pc2 = $("#paintColor"); if (pc2) pc2.value = snap.paintColor;
@@ -3158,9 +3522,10 @@ function buildTxdItem(){
       baked.push([t, t.rgba]);
       t.rgba = comp.getContext("2d").getImageData(0, 0, t.width, t.height).data;
     }
-    const buf = RW.buildTXD(state.txd);
+    const buf = RW.buildTXD(state.txd, { format: state.exportFormat || "raw" });
     return { blob: new Blob([buf], { type: "application/octet-stream" }),
              name: state.txdName || "edited.txd",
+             format: state.exportFormat || "raw",
              edited: state.txd.textures.filter(x => x.edited).length };
   } finally { for (const [t, rgba] of baked) t.rgba = rgba; }
 }
@@ -3190,7 +3555,8 @@ $("#btnDlTxd").addEventListener("click", () => {
     const item = buildTxdItem();
     if (!item) return;
     download(item.blob, item.name);
-    toast(item.edited ? `Na-download ang TXD — ${item.edited} texture ang na-edit (uncompressed), ang iba original pa rin.` :
+    const fmtLabel = item.format === "raw" ? "uncompressed" : item.format.toUpperCase() + " compressed";
+    toast(item.edited ? `Na-download ang TXD — ${item.edited} texture ang na-edit (${fmtLabel}), ang iba original pa rin.` :
                    "Na-download ang TXD (walang binago).", 3400);
   } catch(err){ toast("Export error: " + err.message, 3400); }
 });
@@ -3284,6 +3650,43 @@ $("#btnDlAll").addEventListener("click", () => {
   toast(items.length === 2 ? s.sentBoth : s.sentOne, 3000);
 });
 
+
+/* ---------------- export format (DXT compression) ---------------- */
+$("#exportFmt").addEventListener("change", e => {
+  state.exportFormat = e.target.value;
+  scheduleWorkSave();
+  toast(state.exportFormat === "raw"
+    ? "Compression: wala — edited textures ay A8R8G8B8 (uncompressed)."
+    : "Compression: " + state.exportFormat.toUpperCase() + " para sa edited textures sa susunod na download. Ang hindi na-edit, original pa rin.", 3000);
+});
+
+/* ---------------- download as ZIP (isang file: TXD + DFF) ---------------- */
+$("#btnDlZip").addEventListener("click", async () => {
+  if (!state.txd && !state.dffBuffer) return;
+  if (state.txIncomplete){ toast(txIncompleteMsg(), 4600); return; }
+  saveWorkNow();
+  if (typeof JSZip === "undefined"){
+    toast("Hindi na-load ang ZIP library — kailangan ng internet sandali. Subukan ang I-download Lahat habang wala pa.", 3800);
+    return;
+  }
+  let txdItem = null, dffItem = null;
+  try { txdItem = buildTxdItem(); } catch(err){ toast("TXD export error: " + err.message, 3400); }
+  try { dffItem = buildDffItem(); } catch(err){ toast("DFF export error: " + err.message, 3400); }
+  const items = [txdItem, dffItem].filter(Boolean);
+  if (!items.length) return;
+  try {
+    toast("Ginagawa ang ZIP…");
+    const zip = new JSZip();
+    for (const it of items) zip.file(it.name, it.blob);
+    const blob = await zip.generateAsync({ type: "blob", compression: "STORE" });
+    const base = (state.txdName || state.dffName || "xss-txd").replace(/\.[^.]+$/, "");
+    download(blob, base + ".zip");
+    toast(items.length === 2
+      ? "Na-download ang ZIP — laman niya ang edited TXD at ang DFF (UV-patched kung may UV edits)."
+      : "Na-download ang ZIP — " + items[0].name + " lang ang laman (walang isang file na naka-load).", 3600);
+  } catch(err){ toast("ZIP error: " + err.message, 3400); }
+});
+
 /* ---------------- resize ---------------- */
 function resizeGL(){
   if (!renderer) return;
@@ -3321,7 +3724,13 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   restoreWorkSession();
   // Keep the selection overlay aligned whenever the stage changes size
   // (panel collapse, rotation, tab switch) — not just on window resize.
-  if (window.ResizeObserver) new ResizeObserver(() => drawOverlay()).observe(stageVp);
+  // At habang naka-fit ang view (hindi pa nag-zoom/pan ang user), i-fit
+  // ulit sa bagong laki ng stage para hindi maiwan ang stale na zoom
+  // pag nagbago ang screen (rotate, browser chrome, panel toggle).
+  if (window.ResizeObserver) new ResizeObserver(() => {
+    if ($("#paneEdit").classList.contains("on") && (state._needFit || state.viewFit)) fitView();
+    drawOverlay();
+  }).observe(stageVp);
   FONTS.forEach(f => { try { document.fonts.load(`40px "${f}"`, "Ag"); } catch(e){} });
 })();
 </script>
