@@ -1,0 +1,3495 @@
+<!doctype html>
+<html lang="tl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="data:," />
+    <title>XSS TXD</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Anton&family=Bebas+Neue&family=Montserrat:wght@500;700;900&family=Poppins:wght@500;700&family=Oswald:wght@500;700&family=Permanent+Marker&family=Bangers&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+      :root{
+        --bg:#000; --panel:#101012; --panel2:#17171a; --line:#26262b;
+        --txt:#f2f2f4; --dim:#9a9aa3; --accent:#ffb02e; --accent2:#ff7847;
+        --danger:#ff5252; --ok:#52d273;
+        --rail:64px;
+        color-scheme: dark;
+      }
+      *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+      html,body{height:100%;}
+      body{
+        margin:0; background:var(--bg); color:var(--txt);
+        font-family:ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+        overflow:hidden; display:flex; flex-direction:column; overscroll-behavior:none;
+        padding-top:env(safe-area-inset-top);
+      }
+      button{font-family:inherit; color:var(--txt); background:var(--panel2); border:1px solid var(--line);
+        border-radius:12px; min-height:44px; padding:0 14px; font-size:14px; font-weight:600; cursor:pointer;
+        display:inline-flex; align-items:center; justify-content:center; gap:7px;}
+      button:active{transform:scale(.97);}
+      button:disabled{opacity:.38; pointer-events:none;}
+      button.primary{background:var(--accent); border-color:var(--accent); color:#161006;}
+      button.ghost{background:transparent;}
+      button svg{width:19px; height:19px; flex:none;}
+      input[type=text]{background:var(--panel2); border:1px solid var(--line); color:var(--txt);
+        border-radius:10px; min-height:44px; padding:0 12px; font-size:15px; width:100%;}
+      select{background:var(--panel2); border:1px solid var(--line); color:var(--txt); border-radius:10px;
+        min-height:44px; padding:0 10px; font-size:14px; font-weight:600;}
+      input[type=color]{width:44px; height:44px; border:1px solid var(--line); border-radius:10px; background:var(--panel2); padding:4px;}
+      input[type=range]{accent-color:var(--accent); height:44px;}
+      label.lbl{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.04em; text-transform:uppercase;}
+
+      /* ---------- top bar ---------- */
+      header#topbar{display:flex; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid var(--line); background:var(--panel); flex-wrap:wrap;}
+      #brand{font-family:"Russo One",sans-serif; font-size:17px; letter-spacing:.02em; margin-right:2px; white-space:nowrap;}
+      #brand b{color:var(--accent);}
+      #fileinfo{font-size:11px; color:var(--dim); width:100%; order:5; line-height:1.4; overflow-wrap:anywhere;}
+      .topbtns{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+      .topbtns .spacer{flex:1;}
+
+      /* ---------- tabs ---------- */
+      #tabs{display:flex; gap:6px; padding:8px 10px 0;}
+      #tabs button{flex:1; border-radius:12px 12px 0 0; border-bottom:none; background:var(--panel); color:var(--dim); min-height:52px; font-size:16px;}
+      #tabs button.on{background:var(--panel2); color:var(--txt); box-shadow:inset 0 -3px 0 var(--accent);}
+
+      main{flex:1; position:relative; min-height:0; background:var(--panel2); border-top:1px solid var(--line);}
+      .pane{position:absolute; inset:0; display:none;}
+      .pane.on{display:flex;}
+
+      /* ---------- 3D preview ---------- */
+      #pane3d{flex-direction:column;}
+      #glwrap{flex:1; position:relative; min-height:0;}
+      #glwrap canvas{display:block;}
+      #glhint{position:absolute; left:10px; bottom:10px; right:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; pointer-events:none;}
+      #glhint .chip{pointer-events:auto; background:rgba(10,10,12,.82); border:1px solid var(--line); border-radius:999px; padding:8px 12px; font-size:12.5px; color:var(--dim); display:inline-flex; gap:7px; align-items:center; min-height:44px;}
+      #glhint .chip input{width:20px; height:20px; accent-color:var(--accent);}
+      #glempty{position:absolute; inset:0; display:none; align-items:center; justify-content:center; text-align:center; padding:24px; color:var(--dim); font-size:14.5px; line-height:1.55;}
+
+      /* ---------- editor ---------- */
+      #paneEdit{flex-direction:row;}
+      #rail{width:var(--rail); flex:none; background:var(--panel); border-right:1px solid var(--line);
+        display:flex; flex-direction:column; align-items:center; padding:8px 0; gap:6px; overflow-y:auto;}
+      #rail button{width:52px; height:52px; min-height:52px; padding:0; border-radius:14px; background:transparent; border-color:transparent;}
+      #rail button svg{width:23px; height:23px;}
+      #rail button.on{background:var(--accent); color:#161006; border-color:var(--accent);}
+      #rail button:disabled{opacity:.3;}
+      #rail .sep{width:26px; height:1px; background:var(--line); margin:3px 0;}
+      #rail .rlabel{font-size:9.5px; color:var(--dim); margin-top:-3px; font-weight:700;}
+      #editMain{flex:1; display:flex; flex-direction:column; min-width:0;}
+      #optbar{display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; padding:8px 10px; background:var(--panel); border-bottom:1px solid var(--line); max-height:48vh; overflow-y:auto;}
+      #optbar button.on{background:var(--accent); border-color:var(--accent); color:#161006;}
+      #optbar .grp{display:flex; flex-direction:column; gap:2px;}
+      #optbar .row{display:flex; gap:8px; align-items:center;}
+      #optbar:empty{display:none;}
+      #optbar.collapsed{display:none;}
+      #shareWarn{display:flex; gap:8px; align-items:flex-start; padding:9px 12px; background:#2b2008; border-bottom:1px solid #7a5a14; color:#ffd98c; font-size:12.5px; line-height:1.5;}
+      #optHandle{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:4px 10px; background:var(--panel); border-bottom:1px solid var(--line);}
+      #optHandle .htitle{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.04em; text-transform:uppercase;}
+      #btnOptToggle{min-height:44px; font-size:13px; padding:0 14px;}
+      #btnTexLock{min-height:44px; font-size:13px; padding:0 14px;}
+      #btnTexLock.on{background:var(--accent); border-color:var(--accent); color:#161006;}
+      /* parts bars (3D preview + edit mode) */
+      #partsBar{display:flex; align-items:center; gap:8px; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); background:var(--panel); border-top:1px solid var(--line);}
+      #partsList, #editPartsList{display:flex; gap:8px; overflow-x:auto; flex:1; padding:4px 2px; -webkit-overflow-scrolling:touch; scrollbar-width:none; align-items:center;}
+      #partsList::-webkit-scrollbar, #editPartsList::-webkit-scrollbar{display:none;}
+      .partchip{flex:none; min-height:44px; font-size:13.5px; padding:0 16px; border-radius:999px;}
+      .partchip.on{background:var(--accent); border-color:var(--accent); color:#161006;}
+      #btnEditPart{flex:none; min-height:44px;}
+      /* parts bar inside Edit mode + the part-focus banner */
+      #editPartsBar{display:flex; align-items:center; gap:8px; padding:6px 10px; background:var(--panel); border-bottom:1px solid var(--line);}
+      #partFocus{display:flex; align-items:center; gap:10px; padding:8px 12px; background:#2b2008; border-bottom:1px solid #7a5a14; color:#ffd98c; font-size:13px; line-height:1.45;}
+      #partFocusTxt{flex:1; overflow-wrap:anywhere;}
+      #btnPartAll{flex:none; min-height:44px; background:var(--accent); border-color:var(--accent); color:#161006; font-size:13px;}
+      #glhint .chip input[type=color]{width:38px; height:28px; padding:2px;}
+      #stageViewport{flex:1; position:relative; overflow:hidden; min-height:0; touch-action:none;
+        background:
+          repeating-conic-gradient(#19191d 0% 25%, #101013 0% 50%) 0 0/22px 22px;}
+      #stageWrap{position:absolute; left:0; top:0; transform-origin:0 0; box-shadow:0 8px 40px rgba(0,0,0,.65);}
+      #stageWrap canvas{position:absolute; left:0; top:0; display:block;}
+      #overlayCv{position:absolute; inset:0; pointer-events:none;}
+      #stageMsg{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--dim); font-size:14.5px; text-align:center; padding:20px; line-height:1.5;}
+      /* texture strip */
+      #texstrip{display:flex; gap:10px; overflow-x:auto; padding:10px 12px calc(10px + env(safe-area-inset-bottom)); background:var(--panel); border-top:1px solid var(--line); min-height:100px; -webkit-overflow-scrolling:touch;}
+      .texthumb{flex:none; width:88px; text-align:center; cursor:pointer;}
+      .texthumb .thumbbox{width:88px; height:60px; border-radius:10px; border:2px solid var(--line); overflow:hidden; position:relative; background:#000;}
+      .texthumb.on .thumbbox{border-color:var(--accent);}
+      .texthumb canvas{width:100%; height:100%; object-fit:contain; display:block;}
+      .texthumb .tname{font-size:11px; color:var(--txt); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+      .texthumb .tsize{font-size:10.5px; color:var(--dim);}
+      .texthumb .edot{position:absolute; top:4px; right:4px; width:9px; height:9px; border-radius:50%; background:var(--accent); display:none;}
+      .texthumb.edited .edot{display:block;}
+
+      #toast{position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(20px);
+        background:#1e1e22; border:1px solid var(--line); color:var(--txt); padding:11px 18px; border-radius:999px;
+        font-size:13.5px; font-weight:600; opacity:0; pointer-events:none; transition:.25s; z-index:60; max-width:92vw; text-align:center;}
+      #toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+      .hidden{display:none !important;}
+
+      /* ---------- XSS TXD gate (loading + code) ---------- */
+      body.gate-locked{overflow:hidden;}
+      body.gate-locked header#topbar,
+      body.gate-locked nav#tabs,
+      body.gate-locked #dlAllNotice,
+      body.gate-locked main{visibility:hidden; pointer-events:none;}
+      /* ---------- download-all notice ---------- */
+      #dlAllNotice{display:flex; flex-direction:column; gap:8px; padding:10px 12px;
+        background:#2b2008; border-bottom:1px solid #7a5a14; color:#ffd98c;
+        font-size:13px; line-height:1.5;}
+      #dlAllNotice .dlall-btns{display:flex; gap:8px; flex-wrap:wrap;}
+      #dlAllNotice .dlall-btns button{min-height:44px; font-size:13px; background:var(--panel2);}
+      #dlAllNotice .dlall-btns button.ghost{background:transparent;}
+      #gate{position:fixed; inset:0; z-index:1000; background:#000; color:var(--txt);
+        display:flex; align-items:center; justify-content:center; padding:24px 18px calc(24px + env(safe-area-inset-bottom));
+        opacity:1; transition:opacity .35s ease;}
+      #gate.done{opacity:0; pointer-events:none;}
+      .gate-card{width:100%; max-width:340px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:14px;}
+      .gate-logo{font-family:"Russo One",sans-serif; font-size:40px; line-height:1.05; letter-spacing:.02em;}
+      .gate-logo span{color:var(--accent);}
+      .gate-tag{font-size:13.5px; color:var(--dim); line-height:1.45; margin-top:-6px;}
+      .gate-spinner{width:46px; height:46px; border-radius:50%; margin-top:10px;
+        border:4px solid #26262b; border-top-color:var(--accent); animation:gateSpin .8s linear infinite;}
+      @keyframes gateSpin{to{transform:rotate(360deg);}}
+      .gate-bar{width:200px; max-width:70vw; height:6px; border-radius:999px; background:#26262b; overflow:hidden;}
+      .gate-bar-fill{height:100%; width:0; background:var(--accent); border-radius:999px; animation:gateFill 1.15s ease-out forwards;}
+      @keyframes gateFill{to{width:100%;}}
+      .gate-status{font-size:13.5px; color:var(--dim); margin:0; line-height:1.5;}
+      #gateForm{width:100%; display:flex; flex-direction:column; gap:12px; margin-top:6px; text-align:left;}
+      #gateForm label{font-size:12px; color:var(--dim); font-weight:700; letter-spacing:.04em; text-transform:uppercase; text-align:center;}
+      #gateCode{text-align:center; font-size:22px; font-weight:700; letter-spacing:.35em; min-height:56px;
+        background:var(--panel2); border:1px solid var(--line); border-radius:12px; color:var(--txt); width:100%; padding:0 12px 0 calc(12px + .35em);}
+      #gateCode:focus{outline:2px solid var(--accent); outline-offset:1px;}
+      #gateCode::placeholder{letter-spacing:.06em; font-size:16px; font-weight:600; color:var(--dim);}
+      .gate-error{margin:0; color:#ff8a8a; background:#2b1010; border:1px solid #6e2222; border-radius:10px;
+        padding:10px 12px; font-size:13.5px; font-weight:600; text-align:center; line-height:1.45;}
+      .gate-btn{width:100%; min-height:52px; font-size:15.5px; border-radius:12px;}
+      .gate-hint{margin:2px 0 0; font-size:12.5px; color:var(--dim); text-align:center; line-height:1.55;}
+      .gate-lang{display:flex; gap:10px; justify-content:center; align-items:stretch; margin-top:2px; flex-wrap:wrap;}
+      .gate-lang .lang-btn{min-height:52px; padding:8px 16px; border-radius:12px; background:var(--panel2); border:2px solid var(--line); display:inline-flex; align-items:center; gap:8px; font-size:14px; font-weight:700; line-height:1;}
+      .gate-lang .lang-btn .flag{font-size:26px; line-height:1;}
+      .gate-lang .lang-btn.on{border-color:var(--accent); background:#2b2008; color:var(--txt); box-shadow:0 0 0 1px var(--accent);}
+      .gate-lang-label{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.05em; text-transform:uppercase; text-align:center; margin:0;}
+      .gate-shake{animation:gateShake .35s ease;}
+      @keyframes gateShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-7px);}75%{transform:translateX(7px);}}
+      @media (prefers-reduced-motion: reduce){
+        .gate-spinner{animation-duration:2.4s;}
+        .gate-bar-fill{animation:none; width:100%;}
+        .gate-shake{animation:none;}
+        #gate{transition:none;}
+      }
+      @media (max-width:430px){
+        #brand{font-size:15px;}
+        header#topbar button{padding:0 10px; font-size:13px;}
+      }
+      /* Landscape phone: maikling screen — paliitin ang mga bar para
+         mas malaki ang natitira sa canvas / 3D view. */
+      @media (orientation:landscape) and (max-height:520px){
+        header#topbar{padding:4px 10px; gap:6px;}
+        #brand{font-size:15px;}
+        #fileinfo{font-size:10.5px;}
+        #tabs{padding-top:4px;}
+        #tabs button{min-height:42px; font-size:14.5px;}
+        #optbar{max-height:64vh;}
+        #texstrip{min-height:78px; padding-top:6px; padding-bottom:calc(6px + env(safe-area-inset-bottom));}
+        .texthumb{width:72px;}
+        .texthumb .thumbbox{width:72px; height:44px;}
+        #partsBar{padding-top:5px; padding-bottom:calc(5px + env(safe-area-inset-bottom));}
+        #glhint .chip{min-height:44px; padding:6px 10px;}
+      }
+    </style>
+  </head>
+  <body class="gate-locked">
+    <!-- XSS TXD gate: loading screen muna, tapos password entry sa
+         panibagong session. Pag naipasok na ang password, ang session ay
+         naka-save sa sessionStorage — ang reload, pagbalik mula sa
+         download, o pag-close ng notice ay diretso pabalik sa editor at
+         hindi na hihingi ng password. Panibagong session lang (sinara
+         talaga ang tab/app) ang hihingi ulit. -->
+    <div id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+      <div class="gate-card" id="gateCard">
+        <div class="gate-logo" id="gateTitle">XSS <span>TXD</span></div>
+        <p class="gate-lang-label" id="gateLangLabel">Pumili ng wika / Choose language</p>
+        <div class="gate-lang" role="group" aria-label="Language / Wika">
+          <button type="button" id="langEn" class="lang-btn" aria-pressed="false"><span class="flag" aria-hidden="true">🇺🇸</span><span>English</span></button>
+          <button type="button" id="langTl" class="lang-btn on" aria-pressed="true"><span class="flag" aria-hidden="true">🇵🇭</span><span>Tagalog</span></button>
+        </div>
+        <p class="gate-tag" id="gateTag">TXD editor para sa GTA SA-MP — mag-edit ng textures, i-preview sa 3D, i-download ang TXD at DFF.</p>
+        <div id="gateLoading" style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+          <div class="gate-spinner" aria-hidden="true"></div>
+          <div class="gate-bar" aria-hidden="true"><div class="gate-bar-fill"></div></div>
+          <p class="gate-status" id="gateStatus">Naglo-load ang XSS TXD…</p>
+        </div>
+        <form id="gateForm" class="hidden" novalidate>
+          <label for="gateCode" id="gateLabel">Ilagay ang password</label>
+          <input id="gateCode" type="password" inputmode="numeric" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="12" placeholder="Password mo" aria-describedby="gateError gateHint" />
+          <p id="gateError" class="gate-error hidden" role="alert">Mali ang password — pakisuri at subukan ulit.</p>
+          <button type="submit" class="primary gate-btn" id="gateSubmit">Buksan ang XSS TXD</button>
+          <p class="gate-hint" id="gateHint">Makukuha mo ang password kay mavs pag bumili ka ng XSS TXD. Pag naipasok mo na, mananatili kang nasa editor — mag-download ka man at isara ang notice, hindi ka babalik dito. Hihingin lang ulit ang password sa panibagong bukas ng app.</p>
+        </form>
+      </div>
+    </div>
+    <header id="topbar">
+      <div id="brand">XSS <b>TXD</b></div>
+      <div class="topbtns">
+        <button id="btnDff" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>DFF</button>
+        <button id="btnTxd" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-9 9"/></svg>TXD</button>
+        <button id="btnDlTxd" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12m0 0l-5-5m5 5l5-5"/><path d="M4 21h16"/></svg>TXD</button>
+        <button id="btnDlDff" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12m0 0l-5-5m5 5l5-5"/><path d="M4 21h16"/></svg>DFF</button>
+        <button id="btnDlAll" class="primary" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12m0 0l-5-5m5 5l5-5"/><path d="M4 21h16"/></svg><span id="btnDlAllLabel">I-download Lahat</span></button>
+      </div>
+      <div id="fileinfo">Sample model ang naka-load — mag-upload ng DFF + TXD mo para mag-edit ng totoong file.</div>
+      <input type="file" id="fileDff" accept=".dff" class="hidden" />
+      <input type="file" id="fileTxd" accept=".txd" class="hidden" />
+      <input type="file" id="fileImg" accept="image/png,image/jpeg,image/webp" class="hidden" />
+    </header>
+
+    <div id="dlAllNotice" class="hidden" role="status">
+      <span id="dlAllMsg"></span>
+      <div class="dlall-btns">
+        <button id="btnDlPendTxd" type="button"></button>
+        <button id="btnDlPendDff" type="button"></button>
+        <button id="btnDlNoticeClose" type="button" class="ghost">Isara</button>
+      </div>
+    </div>
+
+    <nav id="tabs">
+      <button id="tab3d" class="on" type="button">3D Preview</button>
+      <button id="tabEdit" type="button">Edit Texture</button>
+    </nav>
+
+    <main>
+      <!-- 3D PREVIEW -->
+      <section class="pane on" id="pane3d">
+        <div id="glwrap">
+          <div id="glempty"><span>Walang 3D model pa.<br/>Mag-upload ng <b>.dff</b> file para makita ang model dito.</span></div>
+          <div id="glhint">
+            <span class="chip">I-drag: ikot &nbsp;·&nbsp; Pinch / scroll: zoom</span>
+            <label class="chip"><input type="checkbox" id="chkAllParts" /> Ipakita ang damaged / VLO parts</label>
+            <label class="chip">Kulay ng pintura <input type="color" id="paintColor" value="#ffffff" /></label>
+          </div>
+        </div>
+        <div id="partsBar">
+          <span class="lbl" style="font-size:11px;color:var(--dim);font-weight:700;letter-spacing:.04em">PARTS</span>
+          <div id="partsList"></div>
+          <button id="btnEditPart" type="button" disabled>I-edit ang part →</button>
+        </div>
+      </section>
+
+      <!-- TEXTURE EDITOR -->
+      <section class="pane" id="paneEdit">
+        <div id="rail">
+          <button data-tool="move" class="on" type="button" title="Pili / Galaw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 7-6.5 1.5L9 18 5 3z"/></svg></button>
+          <div class="rlabel">PILI</div>
+          <button data-tool="text" type="button" title="Text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 5h14M12 5v14"/></svg></button>
+          <div class="rlabel">TEXT</div>
+          <button data-tool="image" type="button" title="Larawan / sticker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-9 9"/></svg></button>
+          <div class="rlabel">IMAGE</div>
+          <button data-tool="brush" type="button" title="Brush"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3l4 4L9 19l-5 1 1-5L17 3z"/></svg></button>
+          <div class="rlabel">BRUSH</div>
+          <button data-tool="eraser" type="button" title="Eraser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3l5 5L11 18H5l-2-2L16 3z"/><path d="M8 21h13"/></svg></button>
+          <div class="rlabel">BURAHIN</div>
+          <div class="sep"></div>
+          <button id="btnUndo" type="button" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14L4 9l5-5"/><path d="M4 9h9a7 7 0 017 7v1"/></svg></button>
+          <div class="rlabel">UNDO</div>
+          <button id="btnRedo" type="button" title="Redo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 14l5-5-5-5"/><path d="M20 9h-9a7 7 0 00-7 7v1"/></svg></button>
+          <div class="rlabel">REDO</div>
+          <div class="sep"></div>
+          <button id="btnZoomIn" type="button" title="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg></button>
+          <div class="rlabel">ZOOM +</div>
+          <button id="btnZoomOut" type="button" title="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6"/></svg></button>
+          <div class="rlabel">ZOOM −</div>
+          <button id="btnFit" type="button" title="Fit sa screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+          <div class="rlabel">FIT</div>
+          <div class="sep"></div>
+          <button id="btnUVMode" type="button" title="UV editor — ilipat ang UV ng isang parte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg></button>
+          <div class="rlabel">UV</div>
+          <button id="btnLockObj" type="button" title="I-lock / i-unlock ang napiling object" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></button>
+          <div class="rlabel">LOCK</div>
+        </div>
+        <div id="editMain">
+          <div id="optHandle">
+            <span class="htitle">Settings ng tool</span>
+            <button id="btnTexLock" class="on" type="button">🔒 Texture lock</button>
+            <button id="btnOptToggle" type="button">▲ Itago</button>
+          </div>
+          <div id="optbar"></div>
+          <div id="shareWarn" class="hidden"><span aria-hidden="true">⚠</span><span>Ang spot na ito ng texture ay ginagamit ng model sa <b>magkabilang side</b> (mirrored UV ng DFF) — ang ilalagay mo rito, lalabas din sa kabilang side, baliktad. Ganyan din ang lalabas sa mismong laro.</span></div>
+          <div id="editPartsBar">
+            <span class="lbl" style="font-size:11px;color:var(--dim);font-weight:700;letter-spacing:.04em">PARTS</span>
+            <div id="editPartsList"></div>
+          </div>
+          <div id="partFocus" class="hidden">
+            <span id="partFocusTxt"></span>
+            <button id="btnPartAll" type="button">✕ Lahat</button>
+          </div>
+          <div id="stageViewport">
+            <div id="stageWrap">
+              <canvas id="cvBase"></canvas>
+              <canvas id="cvPaint"></canvas>
+              <canvas id="cvObj"></canvas>
+            </div>
+            <canvas id="overlayCv"></canvas>
+            <div id="stageMsg">Walang texture pa.<br/>Mag-upload ng <b>.txd</b> file para makapag-edit.</div>
+          </div>
+          <div id="texstrip"></div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast"></div>
+
+<script>
+/*__RW_CORE_START__*/
+"use strict";
+/* =====================================================================
+   RenderWare 3.6 core: TXD parse/build + DFF parse.
+   Pure JS — no DOM. Works on ArrayBuffer / Uint8Array only.
+   ===================================================================== */
+const RW = (() => {
+  const CH = { STRUCT:0x01, STRING:0x02, EXTENSION:0x03, TEXTURE:0x06, MATERIAL:0x07,
+    MATERIALLIST:0x08, ATOMIC:0x14, TEXTURENATIVE:0x15, TEXTUREDICTIONARY:0x16,
+    GEOMETRY:0x0F, CLUMP:0x10, FRAMELIST:0x0E, GEOMETRYLIST:0x1A, FRAME:0x253F2FE,
+    SKIN:0x116, HANIM:0x11E };
+
+  function hdr(u8, off){
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    return { type: dv.getUint32(off, true), size: dv.getUint32(off+4, true),
+             version: dv.getUint32(off+8, true), data: off+12, end: off+12+dv.getUint32(off+4, true) };
+  }
+  function* children(u8, start, end){
+    let off = start;
+    while (off + 12 <= end){
+      const h = hdr(u8, off);
+      if (h.size < 0 || h.end > u8.length) break;
+      yield { ...h, off };
+      off = h.end; // always advances >= 12, even for empty chunks (e.g. a Texture's empty struct)
+    }
+  }
+  function readName(u8, off, len){
+    let s = "";
+    for (let i = 0; i < len; i++){
+      const c = u8[off+i];
+      if (c === 0) break;
+      s += String.fromCharCode(c);
+    }
+    return s;
+  }
+
+  /* ---------------- DXT decoding ---------------- */
+  function c565(c){
+    const r = (c >> 11) & 31, g = (c >> 5) & 63, b = c & 31;
+    return [(r<<3)|(r>>2), (g<<2)|(g>>4), (b<<3)|(b>>2)];
+  }
+  function decodeDXT(u8, srcOff, w, h, is5, is3){
+    const out = new Uint8ClampedArray(w*h*4);
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    const bw = Math.ceil(w/4), bh = Math.ceil(h/4);
+    let p = srcOff;
+    for (let by = 0; by < bh; by++) for (let bx = 0; bx < bw; bx++){
+      let alphaBlock = null;
+      if (is5){
+        const a0 = u8[p], a1 = u8[p+1];
+        let bits = 0n;
+        for (let i = 0; i < 6; i++) bits |= BigInt(u8[p+2+i]) << BigInt(8*i);
+        const alphas = [a0, a1];
+        if (a0 > a1){ for (let i = 1; i <= 6; i++) alphas.push(Math.floor(((7-i)*a0 + i*a1)/7)); }
+        else { for (let i = 1; i <= 4; i++) alphas.push(Math.floor(((5-i)*a0 + i*a1)/5)); alphas.push(0, 255); }
+        alphaBlock = [];
+        for (let i = 0; i < 16; i++) alphaBlock.push(alphas[Number((bits >> BigInt(3*i)) & 7n)]);
+        p += 8;
+      } else if (is3){
+        alphaBlock = [];
+        for (let i = 0; i < 8; i++){
+          const byte = u8[p+i];
+          alphaBlock.push((byte & 15) * 17, ((byte >> 4) & 15) * 17);
+        }
+        p += 8;
+      }
+      const c0 = dv.getUint16(p, true), c1 = dv.getUint16(p+2, true);
+      const idx = dv.getUint32(p+4, true);
+      p += 8;
+      const col0 = c565(c0), col1 = c565(c1);
+      const cols = [col0, col1];
+      if (c0 > c1 || is5 || is3){
+        cols.push([(2*col0[0]+col1[0])/3|0, (2*col0[1]+col1[1])/3|0, (2*col0[2]+col1[2])/3|0]);
+        cols.push([(col0[0]+2*col1[0])/3|0, (col0[1]+2*col1[1])/3|0, (col0[2]+2*col1[2])/3|0]);
+      } else {
+        cols.push([(col0[0]+col1[0])/2|0, (col0[1]+col1[1])/2|0, (col0[2]+col1[2])/2|0]);
+        cols.push([0,0,0]);
+      }
+      for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++){
+        const px = bx*4+x, py = by*4+y;
+        if (px >= w || py >= h) continue;
+        const i = y*4+x, ci = (idx >> (2*i)) & 3;
+        const o = (py*w+px)*4;
+        out[o] = cols[ci][0]; out[o+1] = cols[ci][1]; out[o+2] = cols[ci][2];
+        out[o+3] = alphaBlock ? alphaBlock[i] : (ci === 3 && c0 <= c1 && !is5 && !is3 ? 0 : 255);
+      }
+    }
+    return out;
+  }
+
+  /* ---------------- Raster decode (level 0) ---------------- */
+  function decodeRaster(u8, t, dataOff){
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    const w = t.width, h = t.height, fmt = t.d3dFormat;
+    let off = dataOff;
+    // Palette (PAL8 / PAL4 flagged rasters store the palette before mip data)
+    let palette = null;
+    if (t.rasterFormat & 0x2000){ // PAL8
+      palette = new Uint8Array(1024);
+      palette.set(u8.subarray(off, off+1024));
+      off += 1024;
+    } else if (t.rasterFormat & 0x4000){ // PAL4: 16 entries
+      palette = new Uint8Array(64);
+      palette.set(u8.subarray(off, off+64));
+      off += 64;
+    }
+    const levelSize = dv.getUint32(off, true);
+    const src = off + 4;
+    const px = w*h;
+    const out = new Uint8ClampedArray(px*4);
+    const fourcc = fmt >>> 0;
+    if (fourcc === 0x31545844) return decodeDXT(u8, src, w, h, false, false);       // DXT1
+    if (fourcc === 0x33545844) return decodeDXT(u8, src, w, h, false, true);        // DXT3
+    if (fourcc === 0x35545844) return decodeDXT(u8, src, w, h, true, false);        // DXT5
+    switch (fmt){
+      case 21: case 22: { // A8R8G8B8 / X8R8G8B8: bytes B,G,R,A
+        for (let i = 0; i < px; i++){
+          out[i*4] = u8[src+i*4+2]; out[i*4+1] = u8[src+i*4+1]; out[i*4+2] = u8[src+i*4];
+          out[i*4+3] = fmt === 21 ? u8[src+i*4+3] : 255;
+        } return out; }
+      case 34: case 35: { // A8B8G8R8 / X8B8G8R8: bytes R,G,B,A
+        for (let i = 0; i < px; i++){
+          out[i*4] = u8[src+i*4]; out[i*4+1] = u8[src+i*4+1]; out[i*4+2] = u8[src+i*4+2];
+          out[i*4+3] = fmt === 34 ? u8[src+i*4+3] : 255;
+        } return out; }
+      case 23: { // R5G6B5
+        for (let i = 0; i < px; i++){ const c = dv.getUint16(src+i*2, true); const rgb = c565(c);
+          out[i*4]=rgb[0]; out[i*4+1]=rgb[1]; out[i*4+2]=rgb[2]; out[i*4+3]=255; } return out; }
+      case 25: case 24: { // A1R5G5B5 / X1R5G5B5
+        for (let i = 0; i < px; i++){ const c = dv.getUint16(src+i*2, true);
+          const r=(c>>10)&31, g=(c>>5)&31, b=c&31;
+          out[i*4]=(r<<3)|(r>>2); out[i*4+1]=(g<<3)|(g>>2); out[i*4+2]=(b<<3)|(b>>2);
+          out[i*4+3]= fmt===25 ? ((c&0x8000)?255:0) : 255; } return out; }
+      case 26: { // A4R4G4B4
+        for (let i = 0; i < px; i++){ const c = dv.getUint16(src+i*2, true);
+          out[i*4]=(((c>>8)&15)*17); out[i*4+1]=(((c>>4)&15)*17); out[i*4+2]=((c&15)*17);
+          out[i*4+3]=(((c>>12)&15)*17); } return out; }
+      case 28: { // A8 — alpha only
+        for (let i = 0; i < px; i++){ out[i*4]=255; out[i*4+1]=255; out[i*4+2]=255; out[i*4+3]=u8[src+i]; } return out; }
+      case 42: { // L8
+        for (let i = 0; i < px; i++){ const v=u8[src+i]; out[i*4]=v; out[i*4+1]=v; out[i*4+2]=v; out[i*4+3]=255; } return out; }
+      case 43: { // A8L8: L,A
+        for (let i = 0; i < px; i++){ const v=u8[src+i*2]; out[i*4]=v; out[i*4+1]=v; out[i*4+2]=v; out[i*4+3]=u8[src+i*2+1]; } return out; }
+      case 41: { // P8 / P4 paletted
+        if (!palette) break;
+        if (palette.length === 64){ // PAL4: two 4-bit indices per byte
+          for (let i = 0; i < px; i++){ const byte = u8[src + (i >> 1)];
+            const pi = ((i & 1) ? (byte >> 4) : (byte & 15)) * 4;
+            out[i*4]=palette[pi+2]; out[i*4+1]=palette[pi+1]; out[i*4+2]=palette[pi]; out[i*4+3]=palette[pi+3]; }
+        } else {
+          for (let i = 0; i < px; i++){ const pi = u8[src+i]*4;
+            out[i*4]=palette[pi+2]; out[i*4+1]=palette[pi+1]; out[i*4+2]=palette[pi]; out[i*4+3]=palette[pi+3]; }
+        }
+        return out; }
+    }
+    // Unsupported: magenta placeholder so the user sees something is off
+    for (let i = 0; i < px; i++){ out[i*4]=255; out[i*4+1]=0; out[i*4+2]=255; out[i*4+3]=255; }
+    return out;
+  }
+
+  function formatName(t){
+    const f = t.d3dFormat >>> 0;
+    if (f === 0x31545844) return "DXT1";
+    if (f === 0x33545844) return "DXT3";
+    if (f === 0x35545844) return "DXT5";
+    return ({21:"A8R8G8B8",22:"X8R8G8B8",23:"R5G6B5",24:"X1R5G5B5",25:"A1R5G5B5",26:"A4R4G4B4",
+             28:"A8",34:"A8B8G8R8",35:"X8B8G8R8",41:"P8",42:"L8",43:"A8L8"})[f] || ("FMT "+f);
+  }
+
+  /* ---------------- TXD parse ---------------- */
+  /* Byte size of one mip level's pixel data for this texture format. */
+  function levelDataSize(t, w, h){
+    const f = t.d3dFormat >>> 0;
+    if (f === 0x31545844) return Math.ceil(w/4) * Math.ceil(h/4) * 8;              // DXT1
+    if (f === 0x33545844 || f === 0x35545844) return Math.ceil(w/4) * Math.ceil(h/4) * 16; // DXT3 / DXT5
+    return w * h * Math.max(1, (t.depth || 8) >> 3);
+  }
+  /* The native header sits at the start of the struct chunk and the raster
+     data follows it INSIDE the same chunk. The header is 88 bytes on D3D9
+     and 84 on D3D8; verify the candidate against the stored level-0 size
+     so either layout (and minor tool variants) reads correctly. */
+  function nativeHeaderSize(u8, t, structData, structEnd){
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    const palBytes = (t.rasterFormat & 0x2000) ? 1024 : (t.rasterFormat & 0x4000) ? 64 : 0;
+    const want = levelDataSize(t, t.width, t.height);
+    const candidates = t.platform === 8 ? [84, 88] : [88, 84];
+    for (const hs of candidates){
+      const off = structData + hs + palBytes;
+      if (off + 4 <= structEnd && dv.getUint32(off, true) === want) return hs;
+    }
+    return t.platform === 8 ? 84 : 88;
+  }
+
+  function parseNative(u8, chunk){
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    let structChunk = null;
+    for (const c of children(u8, chunk.data, chunk.end)){
+      if (c.type === CH.STRUCT){ structChunk = c; break; }
+    }
+    if (!structChunk) return null;
+    const structData = structChunk.data;
+    const t = {
+      platform: dv.getUint32(structData, true),
+      filterMode: u8[structData+4], uAddr: u8[structData+5], vAddr: u8[structData+6],
+      name: readName(u8, structData+8, 32),
+      maskName: readName(u8, structData+40, 32),
+      rasterFormat: dv.getUint32(structData+72, true),
+      d3dFormat: dv.getUint32(structData+76, true),
+      width: dv.getUint16(structData+80, true),
+      height: dv.getUint16(structData+82, true),
+      depth: u8[structData+84], numLevels: u8[structData+85],
+      rasterType: u8[structData+86], flagsByte: u8[structData+87],
+      raw: u8.slice(chunk.off, chunk.end),
+      edited: false,
+    };
+    // Raster data lives INSIDE the struct chunk, right after the platform
+    // header (palette first when flagged, then each mip level preceded by
+    // its uint32 size). Reading it after the struct chunk instead decodes
+    // the Extension chunk and the following textures' bytes — the rainbow
+    // noise / striped garbage seen with real-world TXDs (game rips and
+    // files written by TXD Workshop / Magic.TXD all use this layout).
+    const rasterOff = structData + nativeHeaderSize(u8, t, structData, structChunk.end);
+    try { t.rgba = decodeRaster(u8, t, rasterOff); }
+    catch(e){ t.rgba = new Uint8ClampedArray(t.width*t.height*4); }
+    t.formatLabel = formatName(t);
+    t.hasAlpha = /DXT5|DXT3|A8R8|A4R4|A1R5|A8$|A8L8/.test(t.formatLabel) || (t.rasterFormat & 0x0500) === 0x0500;
+    return t;
+  }
+
+  function parseTXD(buf){
+    const u8 = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+    const top = hdr(u8, 0);
+    if (top.type !== CH.TEXTUREDICTIONARY) throw new Error("Hindi ito TXD file (walang Texture Dictionary).");
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    const out = { version: top.version, deviceId: 1, textures: [] };
+    for (const c of children(u8, top.data, top.end)){
+      if (c.type === CH.STRUCT){
+        out.deviceId = dv.getUint16(c.data+2, true);
+      } else if (c.type === CH.TEXTURENATIVE){
+        const t = parseNative(u8, c);
+        if (t && t.width > 0 && t.height > 0) out.textures.push(t);
+      }
+    }
+    if (!out.textures.length) throw new Error("Walang nakitang texture sa TXD.");
+    return out;
+  }
+
+  /* ---------------- TXD build ---------------- */
+  function writeName(arr, off, name, len){
+    for (let i = 0; i < len; i++) arr[off+i] = i < name.length ? name.charCodeAt(i) & 0xFF : 0;
+  }
+  /* Downsample one RGBA level by 2 (box filter, edge-clamped).
+     Halving uses floor with a 1px floor — the same chain RW/D3D9 uses,
+     so NPOT sizes (e.g. 200 -> 100 -> 50 -> 25 -> 12 -> 6 -> 3 -> 1) work. */
+  function downsampleLevel(src, w, h){
+    const nw = Math.max(1, w >> 1), nh = Math.max(1, h >> 1);
+    const out = new Uint8ClampedArray(nw*nh*4);
+    for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++){
+      let r = 0, g = 0, b = 0, a = 0, n = 0;
+      for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++){
+        const sx = Math.min(w-1, x*2+dx), sy = Math.min(h-1, y*2+dy);
+        const i = (sy*w + sx) * 4;
+        r += src[i]; g += src[i+1]; b += src[i+2]; a += src[i+3]; n++;
+      }
+      const o = (y*nw + x) * 4;
+      out[o] = r/n; out[o+1] = g/n; out[o+2] = b/n; out[o+3] = a/n;
+    }
+    return { data: out, w: nw, h: nh };
+  }
+  function buildNativeEdited(t, version){
+    const w = t.width, h = t.height, rgba = t.rgba;
+    // Rebuild the mip chain the original texture had. The original filter
+    // mode is kept verbatim, so a texture authored with a mipmap filter
+    // must still carry its levels — writing only level 0 made the game
+    // show black / broken textures for mipmapped originals.
+    const levels = [{ data: rgba, w, h }];
+    let want = t.numLevels || 1;
+    while (levels.length < want && (levels[levels.length-1].w > 1 || levels[levels.length-1].h > 1)){
+      const p = levels[levels.length-1];
+      levels.push(downsampleLevel(p.data, p.w, p.h));
+    }
+    let dataSize = 0;
+    for (const L of levels) dataSize += 4 + L.w * L.h * 4;
+    // Real TXD layout: the raster levels live INSIDE the struct chunk,
+    // right after the 88-byte header — that is where the game and every
+    // TXD tool read them from. (Writing them after the struct chunk made
+    // exports that only this app's old reader could open.)
+    const structSize = 88 + dataSize;
+    const total = 12 + (12 + structSize) + 12; // native hdr + struct chunk (header + levels) + empty ext
+    const out = new Uint8Array(total);
+    const dv = new DataView(out.buffer);
+    dv.setUint32(0, CH.TEXTURENATIVE, true); dv.setUint32(4, total-12, true); dv.setUint32(8, version, true);
+    let o = 12;
+    dv.setUint32(o, CH.STRUCT, true); dv.setUint32(o+4, structSize, true); dv.setUint32(o+8, version, true);
+    const s = o + 12;
+    dv.setUint32(s, t.platform || 9, true);
+    out[s+4] = t.filterMode != null ? t.filterMode : 6;
+    out[s+5] = t.uAddr != null ? t.uAddr : 1;
+    out[s+6] = t.vAddr != null ? t.vAddr : 1;
+    writeName(out, s+8, t.name || "", 32);
+    writeName(out, s+40, t.maskName || "", 32);
+    // Raster format: 8888 (0x0500) + MIPMAP flag off, keep automipmap off
+    let hasA = false;
+    for (let i = 3; i < rgba.length; i += 4) if (rgba[i] < 255){ hasA = true; break; }
+    dv.setUint32(s+72, 0x0500, true);
+    dv.setUint32(s+76, 21, true); // D3DFMT_A8R8G8B8
+    dv.setUint16(s+80, w, true); dv.setUint16(s+82, h, true);
+    out[s+84] = 32; out[s+85] = levels.length;
+    out[s+86] = t.rasterType != null ? t.rasterType : 4;
+    out[s+87] = hasA ? 1 : 0;
+    o = s + 88; // levels start right after the header, inside the struct chunk
+    for (const L of levels){
+      dv.setUint32(o, L.w * L.h * 4, true);
+      const d = o + 4, px = L.data;
+      for (let i = 0; i < L.w * L.h; i++){
+        out[d+i*4]   = px[i*4+2]; // B
+        out[d+i*4+1] = px[i*4+1]; // G
+        out[d+i*4+2] = px[i*4];   // R
+        out[d+i*4+3] = px[i*4+3]; // A
+      }
+      o = d + L.w * L.h * 4;
+    }
+    const e = o;
+    dv.setUint32(e, CH.EXTENSION, true); dv.setUint32(e+4, 0, true); dv.setUint32(e+8, version, true);
+    return out;
+  }
+
+  function buildTXD(txd){
+    const version = txd.version || 0x36003;
+    const parts = txd.textures.map(t => (t.edited || !t.raw) ? buildNativeEdited(t, version) : t.raw);
+    let total = 12 + (12 + 4);
+    for (const p of parts) total += p.length;
+    total += 12; // dictionary extension
+    const out = new Uint8Array(total);
+    const dv = new DataView(out.buffer);
+    dv.setUint32(0, CH.TEXTUREDICTIONARY, true); dv.setUint32(4, total-12, true); dv.setUint32(8, version, true);
+    let o = 12;
+    dv.setUint32(o, CH.STRUCT, true); dv.setUint32(o+4, 4, true); dv.setUint32(o+8, version, true);
+    dv.setUint16(o+12, txd.textures.length, true); dv.setUint16(o+14, txd.deviceId != null ? txd.deviceId : 1, true);
+    o += 16;
+    for (const p of parts){ out.set(p, o); o += p.length; }
+    dv.setUint32(o, CH.EXTENSION, true); dv.setUint32(o+4, 0, true); dv.setUint32(o+8, version, true);
+    return out.buffer;
+  }
+
+  /* ---------------- DFF parse ---------------- */
+  function parseStringChunk(u8, chunk){
+    // Two forms exist in the wild: a Struct chunk wrapping the text (RW SDK),
+    // or the raw text bytes directly in the String chunk (several exporters).
+    for (const c of children(u8, chunk.data, chunk.end)){
+      if (c.type === CH.STRUCT) return readName(u8, c.data, c.size);
+      break;
+    }
+    return readName(u8, chunk.data, chunk.size);
+  }
+  function parseMaterial(u8, chunk, dv){
+    const m = { color: [255,255,255,255], textureName: "" };
+    for (const c of children(u8, chunk.data, chunk.end)){
+      if (c.type === CH.STRUCT){
+        m.color = [u8[c.data+4], u8[c.data+5], u8[c.data+6], u8[c.data+7]];
+        m.textured = dv.getInt32(c.data+12, true);
+      } else if (c.type === CH.TEXTURE){
+        const strs = [];
+        for (const sc of children(u8, c.data, c.end)){
+          if (sc.type === CH.STRING) strs.push(parseStringChunk(u8, sc));
+        }
+        m.textureName = strs[0] || "";
+      }
+    }
+    return m;
+  }
+  function parseGeometry(u8, chunk, dv){
+    let structChunk = null;
+    for (const c of children(u8, chunk.data, chunk.end)) if (c.type === CH.STRUCT){ structChunk = c; break; }
+    if (!structChunk) return null;
+    const s = structChunk.data;
+    const format = dv.getUint32(s, true);
+    const numTris = dv.getUint32(s+4, true);
+    const numVerts = dv.getUint32(s+8, true);
+    const numMorphs = dv.getUint32(s+12, true);
+    const g = { positions: null, normals: null, uvs: null, indices: [], materials: [], groups: [],
+                numVerts, numTris, native: !!(format & 0x01000000), skinned: false,
+                uvOff: -1, rawTris: null };
+    if (g.native) return g;
+    let p = s + 16;
+    if (structChunk.version < 0x34000) p += 12; // legacy surface properties
+    if (format & 0x08) p += numVerts * 4; // prelit colors (skipped)
+    let uvSets = (format >>> 16) & 0xFF;
+    if (!uvSets) uvSets = (format & 0x80) ? 2 : (format & 0x04) ? 1 : 0;
+    // Absolute byte offset of UV set 0 inside the source buffer — the UV
+    // editor patches these floats in place when downloading an edited DFF.
+    if (uvSets > 0) g.uvOff = p;
+    const allUV = [];
+    for (let i = 0; i < uvSets; i++){
+      const uv = new Float32Array(numVerts*2);
+      for (let j = 0; j < numVerts*2; j++) uv[j] = dv.getFloat32(p + j*4, true);
+      allUV.push(uv); p += numVerts*8;
+    }
+    g.uvs = allUV[0] || null;
+    // Triangles come BEFORE morph targets in the struct
+    const tris = [];
+    for (let i = 0; i < numTris; i++){
+      const v2 = dv.getUint16(p, true), v1 = dv.getUint16(p+2, true);
+      const mat = dv.getUint16(p+4, true), v3 = dv.getUint16(p+6, true);
+      tris.push([v1, v2, v3, mat]); p += 8;
+    }
+    // The UV editor works on the ORIGINAL triangle list (both duplicate
+    // layers included), so keep it before the preview dedupe below.
+    g.rawTris = tris;
+    // Morph targets: positions + normals
+    for (let mi = 0; mi < numMorphs; mi++){
+      p += 16; // bounding sphere
+      const hasVerts = dv.getUint32(p, true); p += 4;
+      const hasNormals = dv.getUint32(p, true); p += 4;
+      if (hasVerts){
+        const pos = new Float32Array(numVerts*3);
+        for (let j = 0; j < numVerts*3; j++) pos[j] = dv.getFloat32(p + j*4, true);
+        if (mi === 0) g.positions = pos;
+        p += numVerts*12;
+      }
+      if (hasNormals){
+        const nor = new Float32Array(numVerts*3);
+        for (let j = 0; j < numVerts*3; j++) nor[j] = dv.getFloat32(p + j*4, true);
+        if (mi === 0) g.normals = nor;
+        p += numVerts*12;
+      }
+    }
+    // Some exporters bake every surface twice: an identical copy of each
+    // triangle at the same positions, with the same UVs and material
+    // (26,336 duplicate triangles on the face-texture group of known ped
+    // mods; ~23k in the Bullet car mod). The two coincident layers render
+    // the same texture twice over each other, so anything painted or
+    // placed on the texture — e.g. one text on a cheek — shows up
+    // doubled / ghosted on the model. The copies are pixel-identical, so
+    // dropping them is lossless. Preview-only: Download DFF still returns
+    // the original uploaded bytes untouched.
+    let trisFinal = tris;
+    if (g.positions && tris.length > 1){
+      const uvA = allUV[0];
+      const seen = new Set();
+      const kept = [];
+      for (const t of tris){
+        const parts = [];
+        for (let vi = 0; vi < 3; vi++){
+          const v = t[vi];
+          let s = Math.round(g.positions[v*3]*1e4) + "," + Math.round(g.positions[v*3+1]*1e4) + "," + Math.round(g.positions[v*3+2]*1e4);
+          if (uvA) s += "@" + Math.round(uvA[v*2]*1e5) + "," + Math.round(uvA[v*2+1]*1e5);
+          parts.push(s);
+        }
+        parts.sort();
+        const key = t[3] + "|" + parts.join("|");
+        if (seen.has(key)) continue;
+        seen.add(key); kept.push(t);
+      }
+      if (kept.length < tris.length){ g.deduped = tris.length - kept.length; trisFinal = kept; }
+    }
+    // Group indices by material, preserving order runs
+    const byMat = new Map();
+    for (const [a,b,c,mat] of trisFinal){
+      if (!byMat.has(mat)) byMat.set(mat, []);
+      byMat.get(mat).push(a,b,c);
+    }
+    let start = 0;
+    for (const [mat, idx] of byMat){
+      for (let k = 0; k < idx.length; k++) g.indices.push(idx[k]);
+      g.groups.push({ start, count: idx.length, materialIndex: mat });
+      start += idx.length;
+    }
+    // Materials
+    for (const c of children(u8, chunk.data, chunk.end)){
+      if (c.type === CH.MATERIALLIST){
+        for (const mc of children(u8, c.data, c.end)){
+          if (mc.type === CH.MATERIAL) g.materials.push(parseMaterial(u8, mc, dv));
+        }
+      }
+    }
+    // Skinned geometry (character / ped models) carries a Skin plugin in
+    // its extension; the preview uses that flag to stand the model upright.
+    for (const c of children(u8, chunk.data, chunk.end)){
+      if (c.type === CH.EXTENSION){
+        for (const ec of children(u8, c.data, c.end)) if (ec.type === CH.SKIN) g.skinned = true;
+      }
+    }
+    return g;
+  }
+
+  function parseDFF(buf){
+    const u8 = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    const top = hdr(u8, 0);
+    if (top.type !== CH.CLUMP) throw new Error("Hindi ito DFF file (walang Clump).");
+    const model = { frames: [], geometries: [], atomics: [] };
+    // Some exporters write a bogus size on the Clump struct chunk
+    // (e.g. 0x0100000C instead of 12). The clump struct is always 12 bytes,
+    // so iterate the clump level manually and force that one size.
+    function* clumpChildren(start, end){
+      let off = start;
+      while (off + 12 <= end){
+        const h = hdr(u8, off);
+        if (h.size < 0 || h.end > u8.length) break;
+        if (h.type === CH.STRUCT && h.size !== 12 && off === start){
+          yield { ...h, size: 12, end: off + 24, off };
+          off += 24;
+        } else {
+          yield { ...h, off };
+          off = h.end;
+        }
+      }
+    }
+    (function walk(start, end){
+      for (const c of clumpChildren(start, end)){
+        if (c.type === CH.FRAMELIST){
+          let names = {};
+          let idx = 0;
+          for (const fc of children(u8, c.data, c.end)){
+            if (fc.type === CH.STRUCT){
+              const n = dv.getUint32(fc.data, true);
+              let p = fc.data + 4;
+              for (let i = 0; i < n; i++){
+                const rot = [], pos = [];
+                for (let j = 0; j < 9; j++) rot.push(dv.getFloat32(p + j*4, true));
+                for (let j = 0; j < 3; j++) pos.push(dv.getFloat32(p + 36 + j*4, true));
+                const parent = dv.getInt32(p + 48, true);
+                model.frames.push({ rot, pos, parent, name: "" });
+                p += 56;
+              }
+            } else if (fc.type === CH.EXTENSION){
+              for (const ec of children(u8, fc.data, fc.end)){
+                if (ec.type === CH.FRAME && model.frames[idx]) model.frames[idx].name = readName(u8, ec.data, ec.size);
+                else if (ec.type === CH.HANIM && model.frames[idx]) model.frames[idx].hanim = true;
+              }
+              idx++;
+            }
+          }
+        } else if (c.type === CH.GEOMETRYLIST){
+          for (const gc of children(u8, c.data, c.end)){
+            if (gc.type === CH.GEOMETRY){
+              const g = parseGeometry(u8, gc, dv);
+              if (g) model.geometries.push(g);
+            }
+          }
+        } else if (c.type === CH.ATOMIC){
+          for (const ac of children(u8, c.data, c.end)){
+            if (ac.type === CH.STRUCT){
+              model.atomics.push({ frameIndex: dv.getUint32(ac.data, true),
+                                   geometryIndex: dv.getUint32(ac.data+4, true) });
+            }
+          }
+        } else if (c.type === CH.CLUMP || c.type === CH.EXTENSION){
+          // nested containers ignored (atomics handled above at top level)
+        }
+      }
+    })(top.data, top.end);
+    // The skeleton's root bone: the first HAnim frame whose parent is not
+    // itself a bone. Skinned character geometry is stored lying along the
+    // spine axis; this frame's bind rotation is what stands it upright.
+    model.boneRoot = -1;
+    for (let i = 0; i < model.frames.length; i++){
+      const f = model.frames[i];
+      if (f.hanim && !(f.parent >= 0 && model.frames[f.parent] && model.frames[f.parent].hanim)){ model.boneRoot = i; break; }
+    }
+    if (!model.geometries.length) throw new Error("Walang geometry na nakita sa DFF.");
+    return model;
+  }
+
+  /* ---------------- UV editing helpers (pure) ----------------
+     The UV editor lets the user move one part's UVs (e.g. one cheek of a
+     mirrored face unwrap) to an unused region of the texture, so art
+     placed there shows on that part only. Everything works on the
+     original rawTris — duplicate triangle layers included — and vertex
+     selection expands to position-identical twins, so both layers always
+     move together and no ghost copy stays behind. */
+  function geoTexMatSet(g, texName){
+    const key = (texName || "").toLowerCase();
+    const set = new Set();
+    g.materials.forEach((m, mi) => { if ((m.textureName || "").toLowerCase() === key) set.add(mi); });
+    return set;
+  }
+  function triUvContains(UV, t, pu, pv){
+    const ax = UV[t[0]*2], ay = UV[t[0]*2+1], bx = UV[t[1]*2], by = UV[t[1]*2+1], cx = UV[t[2]*2], cy = UV[t[2]*2+1];
+    const d = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy);
+    if (Math.abs(d) < 1e-12) return false;
+    const l1 = ((by - cy) * (pu - cx) + (cx - bx) * (pv - cy)) / d;
+    if (l1 < -0.001) return false;
+    const l2 = ((cy - ay) * (pu - cx) + (ax - cx) * (pv - cy)) / d;
+    if (l2 < -0.001) return false;
+    return 1 - l1 - l2 >= -0.001;
+  }
+  /* For each geometry, the triangles that sample texture `texName`,
+     split into up to two clusters:
+     - MIRRORED pair (a ped face whose two cheeks sample the same UV
+       spot): sample points inside the used UV region and check which
+       are covered by triangles from two far-apart places on the model.
+       The axis those covering groups separate along is the mirror axis;
+       a median split along it puts the two cheeks in different
+       clusters. (UV *bbox* overlap cannot detect this — a car hood's
+       left and right halves have overlapping bboxes too, but no sample
+       point is covered by both, so continuous bodywork stays whole.)
+     - DISJOINT shells (left/right shoes, paired parts): split at the
+       largest centroid gap along the widest axis.
+     Otherwise a single cluster = the whole part. */
+  function texGeoParts(model, texName){
+    const parts = [];
+    if (!model) return parts;
+    model.geometries.forEach((g, gi) => {
+      if (!g || g.native || !g.positions || !g.uvs || !g.rawTris) return;
+      const matSet = geoTexMatSet(g, texName);
+      if (!matSet.size) return;
+      const tris = [];
+      g.rawTris.forEach((t, ti) => { if (matSet.has(t[3])) tris.push(ti); });
+      if (!tris.length) return;
+      const P = g.positions, UV = g.uvs;
+      const cents = tris.map(ti => {
+        const t = g.rawTris[ti], c = [0, 0, 0];
+        for (let k = 0; k < 3; k++){ const v = t[k]; c[0] += P[v*3]/3; c[1] += P[v*3+1]/3; c[2] += P[v*3+2]/3; }
+        return c;
+      });
+      const ext = [0, 0, 0];
+      for (let a = 0; a < 3; a++){
+        let mn = Infinity, mx = -Infinity;
+        for (const c of cents){ if (c[a] < mn) mn = c[a]; if (c[a] > mx) mx = c[a]; }
+        ext[a] = mx - mn;
+      }
+      let clusters = [tris], axis = 0;
+      if (tris.length > 8){
+        // Per-triangle UV bboxes prefilter the coverage sampling below.
+        const bb = new Float32Array(tris.length * 4);
+        tris.forEach((ti, i) => {
+          const b = triUvBBox(g, g.rawTris[ti]);
+          bb[i*4] = b[0]; bb[i*4+1] = b[1]; bb[i*4+2] = b[2]; bb[i*4+3] = b[3];
+        });
+        const S = Math.min(128, tris.length);
+        const step = tris.length / S;
+        let dual = 0, sampled = 0;
+        const sepSum = [0, 0, 0];
+        for (let s = 0; s < S; s++){
+          const ti = tris[Math.floor(s * step)], t = g.rawTris[ti];
+          const pu = (UV[t[0]*2] + UV[t[1]*2] + UV[t[2]*2]) / 3;
+          const pv = (UV[t[0]*2+1] + UV[t[1]*2+1] + UV[t[2]*2+1]) / 3;
+          const cov = [];
+          for (let j = 0; j < tris.length; j++){
+            if (pu < bb[j*4] - 0.001 || pu > bb[j*4+2] + 0.001 || pv < bb[j*4+1] - 0.001 || pv > bb[j*4+3] + 0.001) continue;
+            let inside = false;
+            for (let ku = -1; ku <= 1 && !inside; ku++) for (let kv = -1; kv <= 1 && !inside; kv++)
+              if (triUvContains(UV, g.rawTris[tris[j]], pu - ku, pv - kv)) inside = true;
+            if (inside) cov.push(cents[j]);
+          }
+          sampled++;
+          if (cov.length >= 2){
+            dual++;
+            for (let a = 0; a < 3; a++){
+              let mn = Infinity, mx = -Infinity;
+              for (const c of cov){ if (c[a] < mn) mn = c[a]; if (c[a] > mx) mx = c[a]; }
+              if (ext[a] > 1e-9) sepSum[a] += (mx - mn) / ext[a];
+            }
+          }
+        }
+        const dualFrac = sampled ? dual / sampled : 0;
+        if (dualFrac >= 0.5){
+          axis = 0;
+          for (let a = 1; a < 3; a++) if (sepSum[a] > sepSum[axis]) axis = a;
+          const sorted = cents.map(c => c[axis]).sort((x, y) => x - y);
+          const med = sorted[Math.floor(sorted.length / 2)];
+          const A = [], B = [];
+          tris.forEach((ti, i) => (cents[i][axis] < med ? A : B).push(ti));
+          if (A.length >= tris.length * 0.03 && B.length >= tris.length * 0.03) clusters = [A, B];
+        }
+        if (clusters.length === 1){
+          // Disjoint shells: largest relative centroid gap wins.
+          let bestGap = 0.15, bestSplit = null;
+          for (let a = 0; a < 3; a++){
+            if (ext[a] < 1e-9) continue;
+            const order = cents.map((c, i) => [c[a], i]).sort((x, y) => x[0] - y[0]);
+            for (let i = 1; i < order.length; i++){
+              const rel = (order[i][0] - order[i-1][0]) / ext[a];
+              if (rel > bestGap){
+                const inA = new Set(order.slice(0, i).map(e => e[1]));
+                const A = tris.filter((_, j) => inA.has(j)), B = tris.filter((_, j) => !inA.has(j));
+                if (A.length >= tris.length * 0.03 && B.length >= tris.length * 0.03){
+                  bestGap = rel; bestSplit = [A, B]; axis = a;
+                }
+              }
+            }
+          }
+          if (bestSplit) clusters = bestSplit;
+        }
+      }
+      parts.push({ gi, tris, clusters, axis });
+    });
+    return parts;
+  }
+  /* Vertex set for a list of raw triangles, expanded with every vertex
+     that shares an identical position among the same materials' triangles
+     — the baked duplicate layer uses different vertex indices at the same
+     positions, and it must move too or the old UV stays as a ghost. */
+  function uvSelectionVerts(g, triIdxArr){
+    const matSet = new Set(), vset = new Set();
+    for (const ti of triIdxArr){
+      const t = g.rawTris[ti]; if (!t) continue;
+      matSet.add(t[3]); vset.add(t[0]); vset.add(t[1]); vset.add(t[2]);
+    }
+    if (!vset.size) return vset;
+    const P = g.positions;
+    const keyOf = v => Math.round(P[v*3]*1e4) + "," + Math.round(P[v*3+1]*1e4) + "," + Math.round(P[v*3+2]*1e4);
+    const cand = new Set();
+    for (const t of g.rawTris) if (matSet.has(t[3])){ cand.add(t[0]); cand.add(t[1]); cand.add(t[2]); }
+    const byPos = new Map();
+    for (const v of cand){
+      const k = keyOf(v);
+      if (!byPos.has(k)) byPos.set(k, []);
+      byPos.get(k).push(v);
+    }
+    const out = new Set(vset);
+    for (const v of vset){
+      const twins = byPos.get(keyOf(v));
+      if (twins) for (const tv of twins) out.add(tv);
+    }
+    return out;
+  }
+  function triUvBBox(g, t){
+    const UV = g.uvs;
+    let u0 = Infinity, v0 = Infinity, u1 = -Infinity, v1 = -Infinity;
+    for (let k = 0; k < 3; k++){
+      const u = UV[t[k]*2], v = UV[t[k]*2+1];
+      if (u < u0) u0 = u; if (u > u1) u1 = u; if (v < v0) v0 = v; if (v > v1) v1 = v;
+    }
+    return [u0, v0, u1, v1];
+  }
+  /* Plan an "un-mirror": find a half of the texture (right / left / top /
+     bottom) that the OTHER triangles of this texture (almost) never
+     sample, and map the selected side's UV bbox onto it, flipped along
+     the move axis so art placed there reads the right way round.
+     Freeness is tested by coverage sampling, not bounding boxes — stray
+     triangles (an ear, a neck strip) have bboxes crossing every half of
+     a real-world texture while covering almost none of it. Returns null
+     when no half is free enough. selTris: Map gi -> rawTri index array. */
+  function uvUnmirrorPlan(model, texName, selTris){
+    const parts = texGeoParts(model, texName);
+    let su0 = Infinity, sv0 = Infinity, su1 = -Infinity, sv1 = -Infinity, any = false;
+    const others = []; // { g, t, bb } for every non-selected tri of this texture
+    for (const part of parts){
+      const g = model.geometries[part.gi];
+      const sel = new Set(selTris.get(part.gi) || []);
+      for (const ti of part.tris){
+        const t = g.rawTris[ti], bb = triUvBBox(g, t);
+        if (sel.has(ti)){
+          any = true;
+          if (bb[0] < su0) su0 = bb[0]; if (bb[1] < sv0) sv0 = bb[1];
+          if (bb[2] > su1) su1 = bb[2]; if (bb[3] > sv1) sv1 = bb[3];
+        } else others.push({ g, t, bb });
+      }
+    }
+    if (!any) return null;
+    const cx = (su0 + su1) / 2, cy = (sv0 + sv1) / 2;
+    const regions = [
+      { u0: 0.5, v0: 0, u1: 1, v1: 1, flip: "u" },
+      { u0: 0, v0: 0, u1: 0.5, v1: 1, flip: "u" },
+      { u0: 0, v0: 0.5, u1: 1, v1: 1, flip: "v" },
+      { u0: 0, v0: 0, u1: 1, v1: 0.5, flip: "v" },
+    ];
+    for (const r of regions){
+      if (cx > r.u0 && cx < r.u1 && cy > r.v0 && cy < r.v1) continue; // already there
+      const G = 10;
+      let covered = 0, total = 0;
+      for (let i = 0; i < G; i++) for (let j = 0; j < G; j++){
+        const pu = r.u0 + (r.u1 - r.u0) * (i + 0.5) / G;
+        const pv = r.v0 + (r.v1 - r.v0) * (j + 0.5) / G;
+        total++;
+        for (const o of others){
+          if (pu < o.bb[0] - 0.001 || pu > o.bb[2] + 0.001 || pv < o.bb[1] - 0.001 || pv > o.bb[3] + 0.001) continue;
+          let inside = false;
+          for (let ku = -1; ku <= 1 && !inside; ku++) for (let kv = -1; kv <= 1 && !inside; kv++)
+            if (triUvContains(o.g.uvs, o.t, pu - ku, pv - kv)) inside = true;
+          if (inside){ covered++; break; }
+        }
+      }
+      if (total && covered / total <= 0.03) return { region: r, sel: [su0, sv0, su1, sv1] };
+    }
+    return null;
+  }
+  /* Download DFF with UV edits: clone the original bytes and rewrite
+     only the edited UV set-0 floats at the offsets recorded at parse
+     time. Every other byte stays identical to the uploaded file. */
+  function buildPatchedDFF(buf, model, edits){
+    const out = new Uint8Array(buf.slice(0));
+    const dv = new DataView(out.buffer);
+    for (const [gi, verts] of edits){
+      const g = model.geometries[gi];
+      if (!g || !(g.uvOff >= 0)) continue;
+      for (const [vi, uv] of verts){
+        dv.setFloat32(g.uvOff + vi*8, uv[0], true);
+        dv.setFloat32(g.uvOff + vi*8 + 4, uv[1], true);
+      }
+    }
+    return out.buffer;
+  }
+
+  return { parseTXD, buildTXD, parseDFF, formatName, CH, texGeoParts, uvSelectionVerts, uvUnmirrorPlan, buildPatchedDFF };
+})();
+/*__RW_CORE_END__*/
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   XSS TXD app
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const FONTS = ["Russo One","Anton","Bebas Neue","Montserrat","Poppins","Oswald","Permanent Marker","Bangers"];
+
+const state = {
+  txd: null,            // {version, deviceId, textures:[...]}
+  txdName: "",
+  txdRawBuf: null,      // original TXD bytes (session snapshot / full restore)
+  txIncomplete: false,  // true pag ang TXD ay galing sa partial (composite-only) restore
+  dffBuffer: null, dffName: "",
+  demo: true,
+  cur: -1,              // current texture index
+  tool: "move",
+  sel: null,            // selected object
+  view: { s: 1, tx: 0, ty: 0 },
+  brush: { color: "#ffb02e", size: 18 },
+  eraserSize: 36,
+  text: { value: "SIOBE", font: "Russo One", size: 48, color: "#ffffff", outlineColor: "#111111", outlineWidth: 6 },
+  showAllParts: false,
+  activePart: null,     // frame name isolated in the 3D preview, null = lahat
+  paintColor: "#ffffff",
+  model: null,
+  uvShare: null,        // per-texture UV-sharing tables from the loaded DFF
+  uvMode: false,        // UV editor active (inside the Edit Texture pane)
+  uvParts: null,        // RW.texGeoParts() result for the current texture
+  uvSide: "A",          // selected UV part: "A" | "B" | "all"
+  uvUndoStack: [],      // before-state maps for UV ops
+  uvEdits: new Map(),   // gi -> Map(vertIdx -> [u, v]) — patched into Download DFF
+  uvPristine: new Map(),// gi -> Float32Array copy of the original UVs
+  uvVersion: 0,         // bumps on every UV change (wireframe cache key)
+  viewLock: true,       // texture lock: one-finger empty drag never pans
+};
+
+function toast(msg, ms){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), ms || 2400);
+}
+
+/* ---------------- demo content ---------------- */
+function makeDemoTextures(){
+  function canvasTex(w, h, draw){
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    draw(c.getContext("2d"), w, h);
+    const rgba = c.getContext("2d").getImageData(0, 0, w, h).data;
+    return { name:"", platform:9, filterMode:6, uAddr:1, vAddr:1, maskName:"",
+      rasterFormat:0x0500, d3dFormat:21, width:w, height:h, depth:32, numLevels:1,
+      rasterType:4, flagsByte:0, raw:null, edited:false, formatLabel:"A8R8G8B8", hasAlpha:false, rgba };
+  }
+  const body = canvasTex(512, 256, (g,w,h) => {
+    const grad = g.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0,"#d21f2e"); grad.addColorStop(.55,"#a8121f"); grad.addColorStop(1,"#7d0d17");
+    g.fillStyle = grad; g.fillRect(0,0,w,h);
+    g.fillStyle = "rgba(255,255,255,.9)"; g.fillRect(0,108,w,16);
+    g.fillStyle = "rgba(0,0,0,.35)"; g.fillRect(0,196,w,60);
+    g.fillStyle = "#ffd34d"; g.font = "44px 'Russo One', sans-serif"; g.textAlign = "center";
+    g.fillText("SAMPLE CAR", w/2, 84);
+    g.fillStyle = "rgba(255,255,255,.75)"; g.font = "20px 'Montserrat', sans-serif";
+    g.fillText("edit mo ako sa Edit Texture tab", w/2, 168);
+    g.strokeStyle = "rgba(0,0,0,.4)"; g.lineWidth = 6; g.strokeRect(3,3,w-6,h-6);
+  });
+  body.name = "demo_body";
+  const wheel = canvasTex(128, 128, (g,w,h) => {
+    g.fillStyle = "#151515"; g.beginPath(); g.arc(64,64,62,0,7); g.fill();
+    g.fillStyle = "#2c2c2c"; g.beginPath(); g.arc(64,64,46,0,7); g.fill();
+    g.fillStyle = "#c9ccd4"; g.beginPath(); g.arc(64,64,30,0,7); g.fill();
+    g.fillStyle = "#7d828e";
+    for (let i = 0; i < 5; i++){ const a = i/5*Math.PI*2;
+      g.beginPath(); g.arc(64+Math.cos(a)*17, 64+Math.sin(a)*17, 6, 0, 7); g.fill(); }
+    g.fillStyle = "#3a3d45"; g.beginPath(); g.arc(64,64,8,0,7); g.fill();
+  });
+  wheel.name = "demo_wheel";
+  return { version: 0x36003, deviceId: 1, textures: [body, wheel] };
+}
+
+/* ---------------- three.js preview ---------------- */
+const GL_OK = typeof THREE !== "undefined";
+let renderer, scene, camera, modelGroup, demoGroup, gridHelper;
+const orbit = { theta: 0.7, phi: 1.05, radius: 10, target: null };
+function initGL(){
+  const wrap = $("#glwrap");
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  wrap.insertBefore(renderer.domElement, wrap.firstChild);
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x070708);
+  scene.fog = new THREE.Fog(0x070708, 30, 90);
+  camera = new THREE.PerspectiveCamera(50, 1, 0.05, 500);
+  scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x1a1a20, 0.95));
+  const key = new THREE.DirectionalLight(0xffffff, 0.9); key.position.set(6, 10, 4); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xffb02e, 0.35); rim.position.set(-8, 4, -6); scene.add(rim);
+  modelGroup = new THREE.Group(); modelGroup.rotation.x = -Math.PI/2; scene.add(modelGroup);
+  gridHelper = new THREE.GridHelper(80, 80, 0x2c2c33, 0x191920);
+  gridHelper.material.transparent = true; gridHelper.material.opacity = .6; scene.add(gridHelper);
+  resizeGL();
+  (function loop(){ requestAnimationFrame(loop); updateCamera(); renderer.render(scene, camera); })();
+  // orbit input
+  const el = renderer.domElement; el.style.touchAction = "none";
+  const pts = new Map(); let pinchD = 0;
+  el.addEventListener("pointerdown", e => { el.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); pinchD = 0; });
+  el.addEventListener("pointermove", e => {
+    if (!pts.has(e.pointerId)) return;
+    const prev = pts.get(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]);
+    if (pts.size === 1){
+      orbit.theta -= (e.clientX - prev[0]) * 0.008;
+      orbit.phi = Math.min(1.5, Math.max(0.12, orbit.phi - (e.clientY - prev[1]) * 0.008));
+    } else if (pts.size === 2){
+      const [a, b] = [...pts.values()];
+      const d = Math.hypot(a[0]-b[0], a[1]-b[1]);
+      if (pinchD) orbit.radius = Math.min(120, Math.max(1.2, orbit.radius * pinchD / d));
+      pinchD = d;
+    }
+  });
+  const up = e => pts.delete(e.pointerId);
+  el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+  el.addEventListener("wheel", e => { e.preventDefault(); orbit.radius = Math.min(120, Math.max(1.2, orbit.radius * (e.deltaY > 0 ? 1.12 : 0.9))); }, { passive: false });
+}
+function updateCamera(){
+  if (!orbit.target) return;
+  const t = orbit.target;
+  camera.position.set(
+    t.x + orbit.radius * Math.sin(orbit.phi) * Math.sin(orbit.theta),
+    t.y + orbit.radius * Math.cos(orbit.phi),
+    t.z + orbit.radius * Math.sin(orbit.phi) * Math.cos(orbit.theta));
+  camera.lookAt(t);
+}
+function frameObject(obj){
+  const box = new THREE.Box3().setFromObject(obj);
+  if (box.isEmpty()) return;
+  const c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
+  orbit.target = c;
+  orbit.radius = Math.max(sz.x, sz.y, sz.z) * 1.65 + 1.5;
+  gridHelper.position.y = box.min.y - 0.01;
+}
+function baseCanvasOf(tex){
+  if (!tex._baseCv){
+    const c = document.createElement("canvas"); c.width = tex.width; c.height = tex.height;
+    c.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(tex.rgba), tex.width, tex.height), 0, 0);
+    tex._baseCv = c;
+  }
+  return tex._baseCv;
+}
+function paintCanvasOf(tex){
+  if (!tex._paintCv){
+    const c = document.createElement("canvas"); c.width = tex.width; c.height = tex.height;
+    tex._paintCv = c;
+  }
+  return tex._paintCv;
+}
+/* The composite is ALWAYS pristine base + paint layer + objects.
+   Edits are never baked into tex.rgba while editing (that left ghost
+   copies behind after switching textures); baking happens once, at export. */
+function texCanvasOf(tex){
+  if (!tex._cv){
+    tex._cv = document.createElement("canvas"); tex._cv.width = tex.width; tex._cv.height = tex.height;
+  }
+  const g = tex._cv.getContext("2d");
+  g.clearRect(0, 0, tex.width, tex.height);
+  g.drawImage(baseCanvasOf(tex), 0, 0);
+  if (tex === curTex()) g.drawImage(cvPaint, 0, 0);
+  else if (tex._paintCv) g.drawImage(tex._paintCv, 0, 0);
+  drawObjectsTo(g, tex, false);
+  return tex._cv;
+}
+function threeTextureOf(tex){
+  if (!tex._three){
+    const t = new THREE.CanvasTexture(texCanvasOf(tex));
+    t.flipY = false; t.encoding = THREE.sRGBEncoding;
+    // Non-power-of-two textures (e.g. 256x200) cannot use mipmaps in
+    // WebGL1 — with the default mipmap filter they render solid black.
+    const pot = (tex.width & (tex.width-1)) === 0 && (tex.height & (tex.height-1)) === 0;
+    if (!pot){ t.generateMipmaps = false; t.minFilter = THREE.LinearFilter; }
+    tex._three = t;
+  }
+  return tex._three;
+}
+let paintMats = []; // materials whose diffuse follows the paint picker
+function buildDemoModel(){
+  paintMats = [];
+  demoGroup = new THREE.Group();
+  const bodyTex = state.txd.textures.find(t => t.name === "demo_body");
+  const wheelTex = state.txd.textures.find(t => t.name === "demo_wheel");
+  const bodyMat = new THREE.MeshStandardMaterial({ map: threeTextureOf(bodyTex), color: new THREE.Color(state.paintColor), roughness: .35, metalness: .25 });
+  paintMats.push(bodyMat);
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x14151a, roughness: .4, metalness: .3 });
+  const wheelMat = new THREE.MeshStandardMaterial({ map: threeTextureOf(wheelTex), roughness: .8, metalness: .1 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.8, 4.3, 0.62), bodyMat); body.position.set(0, 0, 0.05); body.userData.frameName = "body"; demoGroup.add(body);
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.55, 2.0, 0.52), darkMat); cabin.position.set(0, -0.25, 0.58); cabin.userData.frameName = "cabin"; demoGroup.add(cabin);
+  const wg = new THREE.CylinderGeometry(0.42, 0.42, 0.3, 20); wg.rotateZ(Math.PI/2);
+  [[-0.92, 1.42], [0.92, 1.42], [-0.92, -1.42], [0.92, -1.42]].forEach(([x, y]) => {
+    const w = new THREE.Mesh(wg, wheelMat); w.position.set(x, y, -0.28); w.userData.frameName = "wheel"; demoGroup.add(w);
+  });
+  modelGroup.add(demoGroup);
+  state.activePart = null;
+  renderParts();
+  frameObject(demoGroup);
+}
+function clearModel(){
+  if (!modelGroup) return;
+  while (modelGroup.children.length){
+    const ch = modelGroup.children.pop();
+    ch.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+  }
+  demoGroup = null;
+  paintMats = [];
+  state.activePart = null;
+  renderParts();
+}
+/* GTA paint slots are stored as marker colors in the DFF — primary
+   (60,255,0), secondary (255,0,175) — or use a "remap" texture. The game
+   replaces the marker with the car's paint color at runtime; multiplying
+   the texture by the raw marker is what turned colored cars green in the
+   preview. Paint materials therefore render with the paint picker color
+   (default white, so the texture's own colors show true). */
+function isPaintMaterial(mt){
+  const tn = (mt.textureName || "").toLowerCase();
+  if (tn.includes("remap")) return true;
+  const [r, g, b] = mt.color;
+  return (r === 60 && g === 255 && b === 0) || (r === 255 && g === 0 && b === 175) || (r === 0 && g === 255 && b === 0);
+}
+function buildModelFromDFF(model){
+  if (!GL_OK || !modelGroup) return false;
+  clearModel();
+  paintMats = [];
+  state.model = model;
+  state.activePart = null;
+  const byName = {};
+  if (state.txd) for (const t of state.txd.textures) byName[t.name.toLowerCase()] = t;
+  // frame world matrices
+  const worlds = model.frames.map(() => null);
+  function worldOf(i, depth){
+    if (worlds[i] || depth > 64) return worlds[i] || new THREE.Matrix4();
+    const f = model.frames[i];
+    // Skinned character DFFs commonly store an all-zero rotation on the
+    // clump root frame (the game fills it in at runtime). A zero basis
+    // collapses every vertex to a single point — nothing renders — so
+    // fall back to identity rotation, keeping the frame's position.
+    const r = f.rot.every(v => v === 0) ? [1,0,0, 0,1,0, 0,0,1] : f.rot;
+    const m = new THREE.Matrix4().makeBasis(
+      new THREE.Vector3(r[0], r[1], r[2]),
+      new THREE.Vector3(r[3], r[4], r[5]),
+      new THREE.Vector3(r[6], r[7], r[8])).setPosition(f.pos[0], f.pos[1], f.pos[2]);
+    if (f.parent >= 0 && f.parent !== i) m.premultiply(worldOf(f.parent, depth+1));
+    worlds[i] = m; return m;
+  }
+  model.frames.forEach((_, i) => worldOf(i, 0));
+  const group = new THREE.Group();
+  for (const at of model.atomics){
+    const geo = model.geometries[at.geometryIndex];
+    if (!geo || geo.native || !geo.positions) continue;
+    const bg = new THREE.BufferGeometry();
+    bg.setAttribute("position", new THREE.BufferAttribute(geo.positions, 3));
+    if (geo.uvs) bg.setAttribute("uv", new THREE.BufferAttribute(geo.uvs, 2));
+    if (geo.normals) bg.setAttribute("normal", new THREE.BufferAttribute(geo.normals, 3));
+    bg.setIndex(geo.indices);
+    const mats = geo.materials.map(mt => {
+      const entry = mt.textureName ? byName[mt.textureName.toLowerCase()] : null;
+      const paint = isPaintMaterial(mt);
+      const col = paint ? new THREE.Color(state.paintColor)
+                        : new THREE.Color(mt.color[0]/255, mt.color[1]/255, mt.color[2]/255);
+      const mat = new THREE.MeshStandardMaterial({
+        map: entry ? threeTextureOf(entry) : null, color: col,
+        roughness: .55, metalness: .15, side: THREE.DoubleSide });
+      if (paint) paintMats.push(mat);
+      if (entry && entry.hasAlpha){ mat.alphaTest = 0.08; }
+      return mat;
+    });
+    if (!mats.length) mats.push(new THREE.MeshStandardMaterial({ color: 0x888888, side: THREE.DoubleSide }));
+    for (const g of geo.groups) bg.addGroup(g.start, g.count, Math.min(g.materialIndex, mats.length-1));
+    if (!geo.groups.length) bg.addGroup(0, geo.indices.length, 0);
+    if (!geo.normals) bg.computeVertexNormals();
+    const mesh = new THREE.Mesh(bg, mats.length > 1 ? mats : mats[0]);
+    mesh.matrixAutoUpdate = false;
+    if (worlds[at.frameIndex]) mesh.matrix.copy(worlds[at.frameIndex]);
+    if (geo.skinned && model.boneRoot >= 0 && worlds[model.boneRoot]){
+      // Character geometry is stored in skeleton space, lying along the
+      // spine axis instead of standing. Undoing the root bone's bind
+      // rotation stands the model upright in the preview.
+      const rotOnly = worlds[model.boneRoot].clone(); rotOnly.setPosition(0, 0, 0);
+      mesh.matrix.premultiply(rotOnly.transpose());
+    }
+    mesh.userData.frameName = (model.frames[at.frameIndex] || {}).name || "";
+    group.add(mesh);
+  }
+  modelGroup.add(group);
+  applyPartVisibility();
+  renderParts();
+  frameObject(group);
+  return group.children.length > 0;
+}
+function applyPartVisibility(){
+  if (!modelGroup) return;
+  modelGroup.traverse(o => {
+    if (o.isMesh && o.userData.frameName != null && o.userData.frameName !== ""){
+      if (state.activePart){
+        o.visible = o.userData.frameName === state.activePart;
+        return;
+      }
+      const n = o.userData.frameName.toLowerCase();
+      const hidden = /(_dam|_vlo|_shadow|shadow|collision|_col\b)/.test(n);
+      o.visible = state.showAllParts || !hidden;
+    }
+  });
+}
+/* ---------------- mirrored / shared UV detection ----------------
+   Some DFFs (many ripped ped/skin mods, maccer/clytwins included) unwrap
+   a part mirrored: ONE spot of a texture is sampled by triangles on BOTH
+   sides of the model. Verified on maccer's head (material "1"): every
+   sampled point of the face texture is covered by triangles from both
+   cheeks, and the texture's other half is never sampled at all. Anything
+   placed on such a spot — e.g. one text on a cheek — therefore appears
+   twice, mirrored on the far side, in this preview AND in GTA itself.
+   No texture edit can prevent that; it is how the model's UVs are made.
+   What the editor can do is detect it and warn at placement time, so the
+   user does not think their edit broke. The tables are built from the
+   same deduped triangle groups the preview renders, keyed by texture
+   name exactly like buildModelFromDFF's material lookup. */
+function buildUvShare(model){
+  const byTex = new Map();
+  if (!model) return byTex;
+  for (const geo of model.geometries){
+    if (!geo || geo.native || !geo.positions || !geo.uvs) continue;
+    const P = geo.positions, UV = geo.uvs, idx = geo.indices;
+    for (const gr of geo.groups){
+      const mt = geo.materials[gr.materialIndex];
+      if (!mt || !mt.textureName) continue;
+      const key = mt.textureName.toLowerCase();
+      let e = byTex.get(key);
+      if (!e){ e = { tris: [], mn: [1e9,1e9,1e9], mx: [-1e9,-1e9,-1e9] }; byTex.set(key, e); }
+      for (let k = gr.start; k < gr.start + gr.count; k += 3){
+        let u0 = 1e9, v0 = 1e9, u1 = -1e9, v1 = -1e9;
+        const us = [], vs = [], c = [0,0,0];
+        for (let i = 0; i < 3; i++){
+          const vtx = idx[k+i];
+          const u = UV[vtx*2], v = UV[vtx*2+1];
+          us.push(u); vs.push(v);
+          if (u < u0) u0 = u; if (u > u1) u1 = u; if (v < v0) v0 = v; if (v > v1) v1 = v;
+          c[0] += P[vtx*3]/3; c[1] += P[vtx*3+1]/3; c[2] += P[vtx*3+2]/3;
+        }
+        // flat record: uv bbox, the 3 uv corners, the 3D centroid
+        e.tris.push(u0, v0, u1, v1, us[0], vs[0], us[1], vs[1], us[2], vs[2], c[0], c[1], c[2]);
+        for (let a = 0; a < 3; a++){ if (c[a] < e.mn[a]) e.mn[a] = c[a]; if (c[a] > e.mx[a]) e.mx[a] = c[a]; }
+      }
+    }
+  }
+  for (const e of byTex.values()) e.ext = [e.mx[0]-e.mn[0], e.mx[1]-e.mn[1], e.mx[2]-e.mn[2]];
+  return byTex;
+}
+function objUvRect(tex, o){
+  objBox(o);
+  const rot = o.rot * Math.PI/180, cos = Math.cos(rot), sin = Math.sin(rot);
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (const [lx, ly] of [[-o.w/2,-o.h/2],[o.w/2,-o.h/2],[o.w/2,o.h/2],[-o.w/2,o.h/2]]){
+    const wx = o.x + lx*cos - ly*sin, wy = o.y + lx*sin + ly*cos;
+    if (wx < x0) x0 = wx; if (wx > x1) x1 = wx; if (wy < y0) y0 = wy; if (wy > y1) y1 = wy;
+  }
+  // Canvas space is top-down over the decoded RGBA; RW v runs bottom-up
+  // and the preview texture is flipY=false, so v = 1 - y/h.
+  return { u0: x0/tex.width, u1: x1/tex.width, v0: 1 - y1/tex.height, v1: 1 - y0/tex.height };
+}
+function uvOverlap(a0, a1, b0, b1){
+  // Interval overlap allowing integer wrap offsets (tiling UVs can sit
+  // outside [0,1] and still land on the same texture spot).
+  for (let k = -1; k <= 1; k++){
+    if (a0 <= b1 + k && b0 + k <= a1) return true;
+  }
+  return false;
+}
+function triContainsUv(T, i, pu, pv){
+  const ax = T[i+4], ay = T[i+5], bx = T[i+6], by = T[i+7], cx = T[i+8], cy = T[i+9];
+  const d = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy);
+  if (Math.abs(d) < 1e-12) return false;
+  const l1 = ((by - cy) * (pu - cx) + (cx - bx) * (pv - cy)) / d;
+  if (l1 < -0.001) return false;
+  const l2 = ((cy - ay) * (pu - cx) + (ax - cx) * (pv - cy)) / d;
+  if (l2 < -0.001) return false;
+  return 1 - l1 - l2 >= -0.001;
+}
+/* True when the object's footprint on this texture is sampled by two
+   surface patches that sit far apart on the model (the mirrored case).
+   Samples points inside the footprint; a point covered by triangles
+   whose centroids form two clusters — spread over 30% of the texture's
+   whole 3D extent with a real gap between them — means the spot is
+   shared. A single continuous surface (a car hood, a shirt front) and
+   coincident ok/dam part pairs stay below the thresholds. */
+function objOnSharedSpot(tex, o){
+  if (!state.uvShare || !tex || !o) return false;
+  const e = state.uvShare.get((tex.name || "").toLowerCase());
+  if (!e || !e.tris.length) return false;
+  const r = objUvRect(tex, o);
+  const T = e.tris, cands = [];
+  for (let i = 0; i < T.length; i += 13){
+    if (uvOverlap(r.u0, r.u1, T[i], T[i+2]) && uvOverlap(r.v0, r.v1, T[i+1], T[i+3])) cands.push(i);
+  }
+  if (!cands.length) return false;
+  const S = 5;
+  for (let si = 0; si < S; si++) for (let sj = 0; sj < S; sj++){
+    const pu = r.u0 + (r.u1 - r.u0) * (si + 0.5) / S;
+    const pv = r.v0 + (r.v1 - r.v0) * (sj + 0.5) / S;
+    const cents = [];
+    for (const i of cands){
+      let inside = false;
+      for (let ku = -1; ku <= 1 && !inside; ku++) for (let kv = -1; kv <= 1 && !inside; kv++)
+        if (triContainsUv(T, i, pu - ku, pv - kv)) inside = true;
+      if (inside) cents.push(T[i+10], T[i+11], T[i+12]);
+    }
+    if (cents.length < 2) continue;
+    for (let a = 0; a < 3; a++){
+      const ext = e.ext[a]; if (ext < 1e-6) continue;
+      const vals = [];
+      for (let k = a; k < cents.length; k += 3) vals.push(cents[k]);
+      vals.sort((x, y) => x - y);
+      if (vals[vals.length-1] - vals[0] < 0.30 * ext) continue;
+      let maxGap = 0;
+      for (let k = 1; k < vals.length; k++) maxGap = Math.max(maxGap, vals[k] - vals[k-1]);
+      if (maxGap > 0.15 * ext) return true;
+    }
+  }
+  return false;
+}
+function updateShareWarn(){
+  const bar = $("#shareWarn"); if (!bar) return;
+  const t = curTex();
+  let show = false;
+  if (t && state.uvShare && state.uvShare.size){
+    const objs = state.sel ? [state.sel] : (t.objects || []);
+    for (const o of objs){ if (objOnSharedSpot(t, o)){ show = true; break; } }
+  }
+  bar.classList.toggle("hidden", !show);
+}
+
+/* ---------------- parts list (isolate one part in the preview) ------- */
+function renderParts(){
+  const names = [];
+  if (modelGroup) modelGroup.traverse(o => {
+    if (o.isMesh){ const n = o.userData.frameName; if (n && !names.includes(n)) names.push(n); }
+  });
+  const eb = $("#btnEditPart"); if (eb) eb.disabled = !state.activePart;
+  // Ang parehong chips ay nasa 3D Preview at sa Edit mode — sa Edit mode,
+  // ang pag-tap ng part ay nagsasala rin ng texture list sa texture niya.
+  for (const list of [$("#partsList"), $("#editPartsList")]){
+    if (!list) continue;
+    list.innerHTML = "";
+    if (!names.length){
+      const s = document.createElement("span");
+      s.style.cssText = "font-size:12px;color:var(--dim)";
+      s.textContent = "Walang parts pa — mag-upload ng DFF.";
+      list.appendChild(s);
+      continue;
+    }
+    const mk = (label, part) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "partchip" + (state.activePart === part ? " on" : "");
+      b.textContent = label; // frame names come from the file: textContent only
+      b.addEventListener("click", () => selectPart(part));
+      list.appendChild(b);
+    };
+    mk("Lahat", null);
+    for (const n of names) mk(n, n);
+  }
+  updatePartFocus();
+}
+function selectPart(name){
+  state.activePart = (name && state.activePart !== name) ? name : null;
+  applyPartVisibility();
+  renderParts();
+  // Nasa Edit mode ang user: ang napiling part lang at ang texture niya
+  // ang ipakita sa editor.
+  if ($("#paneEdit").classList.contains("on")) focusPartInEditor();
+  if (!modelGroup) return;
+  if (state.activePart){
+    // Frame just the isolated part (e.g. only the wheel fills the view)
+    const box = new THREE.Box3(); let found = false;
+    modelGroup.traverse(o => {
+      if (o.isMesh && o.visible && o.userData.frameName === state.activePart){ box.expandByObject(o); found = true; }
+    });
+    if (found && !box.isEmpty()){
+      const c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
+      orbit.target = c;
+      orbit.radius = Math.max(sz.x, sz.y, sz.z) * 1.5 + 1.2;
+      gridHelper.position.y = box.min.y - 0.01;
+    }
+    toast("Part lang ang nakikita: " + state.activePart + " — sa Edit Texture, texture lang niya ang lalabas. I-tap ulit o Lahat para buo.");
+  } else {
+    frameObject(modelGroup);
+  }
+}
+
+/* ---------------- part-focused editing ----------------
+   Ang bawat part (frame ng DFF) ay may sariling mga texture: ang mga
+   material ng geometry na naka-attach sa frame na iyon. Pag may napiling
+   part, ang Edit mode ay iyon lang ang ipinapakita — sinasala ang
+   texture strip sa mga texture ng part at awtomatikong pinipili ang
+   una, para ang canvas ay naka-focus agad sa texture ng part (hal.
+   i-tap ang hood → ang texture lang ng hood ang mae-edit). "Lahat"
+   ang nagbabalik sa buong model at lahat ng textures. */
+function partTextureNames(part){
+  const out = new Set();
+  if (!part) return out;
+  if (state.model){
+    for (const at of state.model.atomics){
+      const f = state.model.frames[at.frameIndex];
+      if (!f || f.name !== part) continue;
+      const g = state.model.geometries[at.geometryIndex];
+      if (!g) continue;
+      for (const mt of g.materials || []) if (mt.textureName) out.add(mt.textureName.toLowerCase());
+    }
+  }
+  if (!out.size && modelGroup && state.txd){
+    // Fallback (demo model / walang parsed DFF): hanapin ang texture sa
+    // pamamagitan ng three.js material map ng mesh ng part.
+    modelGroup.traverse(o => {
+      if (!o.isMesh || o.userData.frameName !== part) return;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      for (const m of mats){
+        if (m && m.map){
+          const t = state.txd.textures.find(x => x._three === m.map);
+          if (t) out.add(t.name.toLowerCase());
+        }
+      }
+    });
+  }
+  return out;
+}
+function updatePartFocus(){
+  const bar = $("#partFocus"); if (!bar) return;
+  if (!state.activePart){ bar.classList.add("hidden"); return; }
+  bar.classList.remove("hidden");
+  const set = partTextureNames(state.activePart);
+  const names = state.txd
+    ? state.txd.textures.filter(t => set.has((t.name || "").toLowerCase())).map(t => t.name)
+    : [];
+  $("#partFocusTxt").textContent = names.length
+    ? "Part: " + state.activePart + " — texture: " + names.join(", ")
+    : "Part: " + state.activePart + " — walang sariling texture ang part na ito (kulay lang ng materyal).";
+}
+function focusPartInEditor(){
+  renderTexStrip();
+  updatePartFocus();
+  if (!state.activePart || !state.txd) return;
+  const set = partTextureNames(state.activePart);
+  if (!set.size) return;
+  const cur = curTex();
+  if (cur && set.has((cur.name || "").toLowerCase())) return; // texture na ng part ang bukas
+  const idx = state.txd.textures.findIndex(t => set.has((t.name || "").toLowerCase()));
+  if (idx >= 0) selectTexture(idx); // bubuksan + i-fit ang texture ng part sa canvas
+}
+
+/* ---------------- editor: layers & objects ---------------- */
+const cvBase = $("#cvBase"), cvPaint = $("#cvPaint"), cvObj = $("#cvObj"), overlay = $("#overlayCv");
+const stageWrap = $("#stageWrap"), stageVp = $("#stageViewport");
+const measureCtx = document.createElement("canvas").getContext("2d");
+function curTex(){ return state.cur >= 0 && state.txd ? state.txd.textures[state.cur] : null; }
+
+function objBox(o){
+  if (o.type === "text"){
+    // Measure the ACTUAL ink bounds of the glyphs (not the font's em box),
+    // so the yellow selection box hugs the visible text exactly. The ink
+    // spans [-left, +right] x [-asc, +desc] around the fillText origin;
+    // the stroke adds outlineWidth on every side.
+    measureCtx.font = `${o.size}px "${o.font}", sans-serif`;
+    const m = measureCtx.measureText(o.text || " ");
+    const ow = o.outlineWidth || 0;
+    const left = m.actualBoundingBoxLeft != null ? m.actualBoundingBoxLeft : m.width/2;
+    const right = m.actualBoundingBoxRight != null ? m.actualBoundingBoxRight : m.width/2;
+    const asc = m.actualBoundingBoxAscent != null ? m.actualBoundingBoxAscent : o.size * 0.75;
+    const desc = m.actualBoundingBoxDescent != null ? m.actualBoundingBoxDescent : o.size * 0.05;
+    o._tm = { left, right, asc, desc };
+    o.w = Math.max(10, left + right + ow * 2);
+    o.h = Math.max(10, asc + desc + ow * 2);
+  }
+  return { w: o.w, h: o.h };
+}
+/* Keep an object's box inside the texture: shrink text that is wider /
+   taller than the texture, then clamp the center so the whole box fits. */
+function clampObjToTex(o, tex){
+  if (!o || !tex) return;
+  if (o.type === "text"){
+    objBox(o);
+    const maxW = tex.width * 0.96, maxH = tex.height * 0.96;
+    let k = 1;
+    if (o.w > maxW) k = Math.min(k, maxW / o.w);
+    if (o.h > maxH) k = Math.min(k, maxH / o.h);
+    if (k < 1){ o.size = Math.max(8, Math.floor(o.size * k)); objBox(o); }
+  } else if (o.type === "image"){
+    // Larawan: paliitin nang proporsyonal (aspect ratio buo) kapag mas
+    // malaki sa texture, para ang resize ay hindi kailanman magtulak sa
+    // image palabas ng texture.
+    objBox(o);
+    const maxW = tex.width * 0.98, maxH = tex.height * 0.98;
+    let k = 1;
+    if (o.w > maxW) k = Math.min(k, maxW / o.w);
+    if (o.h > maxH) k = Math.min(k, maxH / o.h);
+    if (k < 1){ o.w = Math.max(12, o.w * k); o.h = Math.max(12, o.h * k); }
+  } else objBox(o);
+  o.x = o.w <= tex.width ? Math.min(Math.max(o.x, o.w/2), tex.width - o.w/2) : tex.width/2;
+  o.y = o.h <= tex.height ? Math.min(Math.max(o.y, o.h/2), tex.height - o.h/2) : tex.height/2;
+}
+function drawObjectsTo(ctx, tex, clear){
+  if (clear !== false) ctx.clearRect(0, 0, tex.width, tex.height);
+  for (const o of tex.objects || []){
+    objBox(o);
+    ctx.save();
+    ctx.translate(o.x, o.y); ctx.rotate(o.rot * Math.PI/180);
+    ctx.globalAlpha = o.opacity != null ? o.opacity : 1;
+    if (o.type === "text"){
+      ctx.font = `${o.size}px "${o.font}", sans-serif`;
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+      // Shift the origin so the ink bounding box is exactly centered on
+      // (o.x, o.y) — the same box objBox() reports and the overlay draws.
+      const tm = o._tm || { left: o.w/2, right: o.w/2, asc: o.h/2, desc: o.h/2 };
+      const dx = (tm.left - tm.right) / 2, dy = (tm.asc - tm.desc) / 2;
+      if (o.outlineWidth > 0){ ctx.lineWidth = o.outlineWidth * 2; ctx.lineJoin = "round"; ctx.strokeStyle = o.outlineColor; ctx.strokeText(o.text, dx, dy); }
+      ctx.fillStyle = o.color; ctx.fillText(o.text, dx, dy);
+    } else if (o.type === "image" && o.img){
+      ctx.drawImage(o.img, -o.w/2, -o.h/2, o.w, o.h);
+    }
+    ctx.restore();
+  }
+}
+function updateComposite(tex){
+  texCanvasOf(tex); // recomposes base + paint + objects in place
+  if (tex._three) tex._three.needsUpdate = true;
+  updateThumb(tex);
+}
+function updateThumb(tex){
+  if (!tex._thumbCv){
+    tex._thumbCv = document.createElement("canvas"); tex._thumbCv.width = 176; tex._thumbCv.height = 120;
+  }
+  const g = tex._thumbCv.getContext("2d");
+  g.clearRect(0, 0, 176, 120);
+  const src = texCanvasOf(tex);
+  const sc = Math.min(176/tex.width, 120/tex.height);
+  g.drawImage(src, (176 - tex.width*sc)/2, (120 - tex.height*sc)/2, tex.width*sc, tex.height*sc);
+  const el = document.querySelector(`.texthumb[data-i="${state.txd.textures.indexOf(tex)}"] canvas`);
+  if (el){ const eg = el.getContext("2d"); eg.clearRect(0,0,el.width,el.height); eg.drawImage(tex._thumbCv, 0, 0, el.width, el.height); }
+}
+
+/* ---------------- texture switching ---------------- */
+function renderTexStrip(){
+  const strip = $("#texstrip"); strip.innerHTML = "";
+  if (!state.txd) return;
+  // May napiling part? Ang mga texture lang niya ang ipakita.
+  const partSet = state.activePart ? partTextureNames(state.activePart) : null;
+  let shown = 0;
+  state.txd.textures.forEach((t, i) => {
+    if (partSet && !partSet.has((t.name || "").toLowerCase())) return;
+    shown++;
+    const d = document.createElement("div");
+    d.className = "texthumb" + (i === state.cur ? " on" : "") + (t.edited ? " edited" : "");
+    d.dataset.i = i;
+    const box = document.createElement("div"); box.className = "thumbbox";
+    const cv = document.createElement("canvas"); cv.width = 176; cv.height = 120;
+    const dot = document.createElement("span"); dot.className = "edot";
+    box.appendChild(cv); box.appendChild(dot);
+    const nm = document.createElement("div"); nm.className = "tname";
+    nm.textContent = t.name; // file-supplied string: textContent only, never innerHTML
+    const sz = document.createElement("div"); sz.className = "tsize";
+    sz.textContent = `${t.width}×${t.height} · ${t.formatLabel}`;
+    d.appendChild(box); d.appendChild(nm); d.appendChild(sz);
+    d.addEventListener("click", () => selectTexture(i));
+    strip.appendChild(d);
+    updateThumb(t);
+  });
+  if (partSet && !shown){
+    const s = document.createElement("div");
+    s.style.cssText = "color:var(--dim);font-size:13px;line-height:1.55;padding:8px 4px;max-width:300px";
+    s.textContent = partSet.size
+      ? "Ang texture ng part na “" + state.activePart + "” ay wala sa TXD na naka-load — kaya walang mae-edit para sa part na ito."
+      : "Walang sariling texture ang part na “" + state.activePart + "” — kulay lang ng materyal ang gamit niya, kaya walang mae-edit dito. I-tap ang Lahat para makita ang lahat ng textures.";
+    strip.appendChild(s);
+  }
+}
+function saveCurrentPaint(){
+  const t = curTex(); if (!t || !cvPaint.width) return;
+  // Persist the live paint layer into the texture's own canvas (a plain
+  // canvas copy — no PNG encode, so switching textures stays instant
+  // even on a 2048x2048 texture, and nothing is baked into the base).
+  const pc = paintCanvasOf(t), pg = pc.getContext("2d");
+  pg.clearRect(0, 0, t.width, t.height);
+  pg.drawImage(cvPaint, 0, 0);
+}
+function selectTexture(i){
+  const t = state.txd.textures[i]; if (!t) return;
+  saveCurrentPaint();
+  state.cur = i; state.sel = null;
+  for (const cv of [cvBase, cvPaint, cvObj]){ cv.width = t.width; cv.height = t.height; }
+  stageWrap.style.width = t.width + "px"; stageWrap.style.height = t.height + "px";
+  cvBase.getContext("2d").drawImage(baseCanvasOf(t), 0, 0);
+  const pg = cvPaint.getContext("2d");
+  pg.clearRect(0, 0, t.width, t.height);
+  if (t._paintCv) pg.drawImage(t._paintCv, 0, 0);
+  if (!t.objects) t.objects = [];
+  if (!t.undoStack) { t.undoStack = []; t.redoStack = []; }
+  drawObjectsTo(cvObj.getContext("2d"), t);
+  $("#stageMsg").style.display = "none";
+  fitView();
+  renderTexStrip(); if (state.uvMode) computeUvParts(); renderOptbar(); updateUndoBtns(); drawOverlay();
+}
+
+/* ---------------- view transform ---------------- */
+function applyView(){
+  stageWrap.style.transform = `translate(${state.view.tx}px, ${state.view.ty}px) scale(${state.view.s})`;
+  drawOverlay();
+}
+function fitView(){
+  const t = curTex(); if (!t) return;
+  const r = stageVp.getBoundingClientRect();
+  const s = Math.min((r.width - 24)/t.width, (r.height - 24)/t.height);
+  state.view.s = Math.min(Math.max(s, 0.02), 8);
+  state.view.tx = (r.width - t.width*state.view.s)/2;
+  state.view.ty = (r.height - t.height*state.view.s)/2;
+  applyView();
+}
+function zoomAt(cx, cy, factor){
+  const v = state.view;
+  const ns = Math.min(24, Math.max(0.02, v.s * factor));
+  const k = ns / v.s;
+  v.tx = cx - (cx - v.tx) * k; v.ty = cy - (cy - v.ty) * k; v.s = ns;
+  applyView();
+}
+function screenToTex(e){
+  const r = stageWrap.getBoundingClientRect();
+  const t = curTex();
+  return { x: (e.clientX - r.left) / r.width * t.width, y: (e.clientY - r.top) / r.height * t.height };
+}
+function texToScreen(x, y){
+  const r = stageVp.getBoundingClientRect();
+  return { x: state.view.tx + x*state.view.s, y: state.view.ty + y*state.view.s, vp: r };
+}
+
+/* ---------------- overlay (selection) ---------------- */
+function drawOverlay(){
+  const dpr = Math.min(devicePixelRatio, 2);
+  const r = stageVp.getBoundingClientRect();
+  // The overlay is the one layer NOT inside the transformed stageWrap, so
+  // its bitmap must match the viewport's CURRENT size in BOTH dimensions.
+  // Resizing only when the WIDTH changed left a stale bitmap height
+  // whenever the viewport changed height alone — collapsing the settings
+  // panel, phone browser chrome showing/hiding, the soft keyboard. CSS
+  // (inset:0) then stretched the short bitmap over the taller viewport,
+  // so the yellow box and its handles were DRAWN displaced from the
+  // object while hit-testing kept using the true coordinates: the box
+  // floated away from the text and the visible handles didn't respond
+  // where they appeared to be. Match both dimensions, every draw.
+  const bw = Math.max(1, Math.round(r.width * dpr)), bh = Math.max(1, Math.round(r.height * dpr));
+  if (overlay.width !== bw || overlay.height !== bh){ overlay.width = bw; overlay.height = bh; }
+  const g = overlay.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, r.width, r.height);
+  if (state.uvMode){ drawUVOverlay(g, r); return; }
+  updateShareWarn(); // mirrored-UV warning follows selection and drags
+  const o = state.sel, t = curTex();
+  if (!o || !t) return;
+  objBox(o);
+  const rot = o.rot * Math.PI/180, cos = Math.cos(rot), sin = Math.sin(rot);
+  const corners = [[-o.w/2,-o.h/2],[o.w/2,-o.h/2],[o.w/2,o.h/2],[-o.w/2,o.h/2]].map(([lx,ly]) => {
+    const wx = o.x + lx*cos - ly*sin, wy = o.y + lx*sin + ly*cos;
+    return texToScreen(wx, wy);
+  });
+  g.strokeStyle = "#ffb02e"; g.lineWidth = 1.6; g.beginPath();
+  corners.forEach((c, i) => i ? g.lineTo(c.x, c.y) : g.moveTo(c.x, c.y));
+  g.closePath(); g.stroke();
+  if (o.locked){
+    // Locked object: no handles, just a lock badge — drags can't move it.
+    o._handles = null;
+    const c0 = corners[0];
+    g.fillStyle = "#ffb02e";
+    g.beginPath(); g.arc(c0.x, c0.y, 10, 0, 7); g.fill();
+    g.fillStyle = "#161006"; g.font = "10px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillText("🔒", c0.x, c0.y + .5);
+    return;
+  }
+  // rotate handle
+  const topMid = { x: (corners[0].x + corners[1].x)/2, y: (corners[0].y + corners[1].y)/2 };
+  const rp = texToScreen(o.x - Math.sin(rot) * (o.h/2 + 30/state.view.s), o.y - Math.cos(rot) * (o.h/2 + 30/state.view.s));
+  g.beginPath(); g.moveTo(topMid.x, topMid.y); g.lineTo(rp.x, rp.y); g.stroke();
+  g.fillStyle = "#ffb02e";
+  g.beginPath(); g.arc(rp.x, rp.y, 9, 0, 7); g.fill();
+  g.fillStyle = "#161006"; g.font = "bold 11px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("⟳", rp.x, rp.y + .5);
+  // resize handle (bottom-right) — malaking parisukat na madaling tamaan
+  // ng daliri sa phone (ang hit test nito ay 28px radius, ~56px target)
+  const br = corners[2];
+  g.fillStyle = "#ffb02e"; g.fillRect(br.x - 13, br.y - 13, 26, 26);
+  g.strokeStyle = "#161006"; g.lineWidth = 1.6; g.strokeRect(br.x - 13, br.y - 13, 26, 26);
+  g.fillStyle = "#161006"; g.font = "bold 15px sans-serif"; g.fillText("⤡", br.x, br.y + .5);
+  o._handles = { rotate: rp, resize: br };
+}
+
+/* ---------------- undo / redo ---------------- */
+function snapshot(){
+  const t = curTex();
+  // Store the paint layer as a canvas copy, not a PNG data URL: encoding a
+  // 2048x2048 PNG on every snapshot froze the UI and could OOM the tab on
+  // iPhone. A canvas copy is a fast drawImage and applies synchronously.
+  const pc = document.createElement("canvas");
+  pc.width = t.width; pc.height = t.height;
+  pc.getContext("2d").drawImage(cvPaint, 0, 0);
+  return { paint: pc, objects: (t.objects || []).map(o => ({ ...o })) };
+}
+function pushUndo(){
+  const t = curTex(); if (!t) return;
+  t.undoStack.push(snapshot());
+  if (t.undoStack.length > 15) t.undoStack.shift();
+  t.redoStack = [];
+  markEdited();
+  updateUndoBtns();
+}
+function applySnapshot(snap){
+  const t = curTex(); if (!t) return;
+  t.objects = snap.objects.map(o => ({ ...o }));
+  state.sel = null;
+  const pg = cvPaint.getContext("2d");
+  pg.clearRect(0, 0, t.width, t.height);
+  if (snap.paint) pg.drawImage(snap.paint, 0, 0);
+  drawObjectsTo(cvObj.getContext("2d"), t);
+  updateComposite(t); renderOptbar(); drawOverlay();
+}
+function markEdited(){
+  const t = curTex(); if (!t) return;
+  t.edited = true;
+  scheduleWorkSave();
+  const el = document.querySelector(`.texthumb[data-i="${state.cur}"]`);
+  if (el) el.classList.add("edited");
+}
+function updateUndoBtns(){
+  const t = curTex();
+  $("#btnUndo").disabled = !(t && t.undoStack && t.undoStack.length);
+  $("#btnRedo").disabled = !(t && t.redoStack && t.redoStack.length);
+}
+$("#btnUndo").addEventListener("click", () => {
+  const t = curTex(); if (!t || !t.undoStack.length) return;
+  t.redoStack.push(snapshot());
+  applySnapshot(t.undoStack.pop());
+  updateUndoBtns();
+});
+$("#btnRedo").addEventListener("click", () => {
+  const t = curTex(); if (!t || !t.redoStack.length) return;
+  t.undoStack.push(snapshot());
+  applySnapshot(t.redoStack.pop());
+  updateUndoBtns();
+});
+</script>
+
+<script>
+"use strict";
+/* ---------------- pointer interaction on the stage ---------------- */
+let drag = null;
+const stagePtrs = new Map();
+let pinch = null;
+let lastEmptyTap = null;
+
+function hitObject(p){
+  const t = curTex(); if (!t) return null;
+  const objs = t.objects || [];
+  for (let i = objs.length - 1; i >= 0; i--){
+    const o = objs[i]; objBox(o);
+    const rot = -o.rot * Math.PI/180, cos = Math.cos(rot), sin = Math.sin(rot);
+    const dx = p.x - o.x, dy = p.y - o.y;
+    const lx = dx*cos - dy*sin, ly = dx*sin + dy*cos;
+    // Padding in SCREEN pixels (~14px) so tapping stays forgiving at any zoom
+    const pad = Math.max(4, 14 / state.view.s);
+    if (Math.abs(lx) <= o.w/2 + pad && Math.abs(ly) <= o.h/2 + pad) return o;
+  }
+  return null;
+}
+function paintStroke(from, to){
+  const g = cvPaint.getContext("2d");
+  g.lineCap = "round"; g.lineJoin = "round";
+  if (state.tool === "eraser"){
+    g.globalCompositeOperation = "destination-out";
+    g.strokeStyle = "rgba(0,0,0,1)"; g.lineWidth = state.eraserSize;
+  } else {
+    g.globalCompositeOperation = "source-over";
+    g.strokeStyle = state.brush.color; g.lineWidth = state.brush.size;
+  }
+  g.beginPath(); g.moveTo(from.x, from.y); g.lineTo(to.x, to.y); g.stroke();
+  g.globalCompositeOperation = "source-over";
+}
+stageVp.addEventListener("pointerdown", e => {
+  const t = curTex(); if (!t) return;
+  stageVp.setPointerCapture(e.pointerId);
+  stagePtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (stagePtrs.size === 2){
+    const [a, b] = [...stagePtrs.values()];
+    pinch = { d: Math.hypot(a.x-b.x, a.y-b.y), cx: (a.x+b.x)/2, cy: (a.y+b.y)/2 };
+    // A second finger cancels the drag; a half-finished UV drag rolls
+    // back instead of leaving un-undoable UV changes behind — and so
+    // does a half-finished object move/rotate/resize, so a pinch can
+    // never strand the object somewhere with no undo entry for it.
+    if (drag && drag.mode === "uvmove" && drag.moved) rollbackUvOp(drag.op);
+    if (drag && drag.orig && drag.moved){
+      Object.assign(drag.o, drag.orig);
+      const t2 = curTex();
+      if (t2){ drawObjectsTo(cvObj.getContext("2d"), t2); drawOverlay(); }
+    }
+    drag = null; return;
+  }
+  const p = screenToTex(e);
+  if (state.uvMode){
+    drag = { mode: "uvmove", last: p, op: uvBeginOp(), moved: false };
+    return;
+  }
+  if (state.tool === "brush" || state.tool === "eraser"){
+    drag = { mode: "paint", last: p, moved: true, snapPre: snapshot() };
+    paintStroke(p, p);
+    return;
+  }
+  if (state.tool === "text"){
+    addTextObject(p.x, p.y);
+    return;
+  }
+  // move tool
+  const o = state.sel;
+  if (o && !o.locked && o._handles){
+    const r = stageVp.getBoundingClientRect();
+    const sx = e.clientX - r.left, sy = e.clientY - r.top;
+    if (Math.hypot(sx - o._handles.rotate.x, sy - o._handles.rotate.y) < 28){
+      drag = { mode: "rotate", o, cx: o.x, cy: o.y,
+               startAng: Math.atan2(p.y - o.y, p.x - o.x) * 180/Math.PI, startRot: o.rot, snap: snapshot(),
+               orig: { x: o.x, y: o.y, rot: o.rot, size: o.size, w: o.w, h: o.h } };
+      return;
+    }
+    if (Math.hypot(sx - o._handles.resize.x, sy - o._handles.resize.y) < 28){
+      const box = objBox(o);
+      drag = { mode: "resize", o, startDist: Math.max(8, Math.hypot(p.x - o.x, p.y - o.y)),
+               startW: box.w, startH: box.h, startSize: o.size, snap: snapshot(),
+               orig: { x: o.x, y: o.y, rot: o.rot, size: o.size, w: o.w, h: o.h } };
+      return;
+    }
+  }
+  const hit = hitObject(p);
+  if (hit){
+    if (state.sel !== hit){ state.sel = hit; renderOptbar(); }
+    if (hit.locked){
+      drag = { mode: "none" };
+      toast("Naka-lock ang object — i-unlock muna (LOCK button) para magalaw.");
+    } else {
+      // Canva-style, one motion: the tap selects AND the same touch drags
+      // the object by its grab offset. A plain tap never shifts the
+      // object (finger down and up at the same point = zero movement),
+      // but a drag no longer lands on a dead first touch that only
+      // selects — the old two-step rule is what made moving text feel
+      // unresponsive. orig lets a pinch cancel roll the drag back.
+      drag = { mode: "move", o: hit, dx: p.x - hit.x, dy: p.y - hit.y, snap: snapshot(), moved: false, sx: e.clientX, sy: e.clientY,
+               orig: { x: hit.x, y: hit.y, rot: hit.rot, size: hit.size, w: hit.w, h: hit.h } };
+    }
+  } else {
+    if (state.sel){ state.sel = null; renderOptbar(); }
+    // Texture lock ON (default): a one-finger drag on empty space does
+    // nothing — the texture never slides around while editing. Panning
+    // is two-finger drag / pinch; double-tap fits. Lock OFF restores
+    // the classic one-finger pan.
+    drag = { mode: state.viewLock ? "tapwatch" : "pan", sx: e.clientX, sy: e.clientY,
+             tx: state.view.tx, ty: state.view.ty, empty: true, t0: performance.now() };
+  }
+  drawOverlay();
+});
+stageVp.addEventListener("pointermove", e => {
+  if (stagePtrs.has(e.pointerId)) stagePtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch && stagePtrs.size === 2){
+    const [a, b] = [...stagePtrs.values()];
+    const d = Math.hypot(a.x-b.x, a.y-b.y), cx = (a.x+b.x)/2, cy = (a.y+b.y)/2;
+    const r = stageVp.getBoundingClientRect();
+    state.view.tx += cx - pinch.cx; state.view.ty += cy - pinch.cy;
+    zoomAt(cx - r.left, cy - r.top, d / Math.max(1, pinch.d));
+    pinch = { d, cx, cy };
+    return;
+  }
+  if (!drag) return;
+  const t = curTex(); if (!t) return;
+  const p = screenToTex(e);
+  if (drag.mode === "paint"){
+    paintStroke(drag.last, p); drag.last = p;
+  } else if (drag.mode === "uvmove"){
+    const du = (p.x - drag.last.x) / t.width, dv = -(p.y - drag.last.y) / t.height;
+    if (du || dv){
+      for (const [gi, verts] of drag.op.sel){
+        const g = state.model.geometries[gi];
+        for (const vi of verts){ g.uvs[vi*2] += du; g.uvs[vi*2+1] += dv; }
+      }
+      drag.last = p; drag.moved = true;
+      state.uvVersion++;
+      refreshThreeUVs();
+      drawOverlay();
+    }
+  } else if (drag.mode === "pan"){
+    state.view.tx = drag.tx + (e.clientX - drag.sx);
+    state.view.ty = drag.ty + (e.clientY - drag.sy);
+    applyView();
+  } else if (drag.mode === "move"){
+    drag.o.x = p.x - drag.dx; drag.o.y = p.y - drag.dy;
+    if (Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 3) drag.moved = true;
+    clampObjToTex(drag.o, t); // puwedeng i-drag kahit hanggang pinakataas, pero hindi lalagpas sa texture
+    drawObjectsTo(cvObj.getContext("2d"), t); drawOverlay();
+  } else if (drag.mode === "rotate"){
+    const ang = Math.atan2(p.y - drag.cy, p.x - drag.cx) * 180/Math.PI;
+    drag.o.rot = Math.round(drag.startRot + (ang - drag.startAng));
+    drag.moved = true;
+    drawObjectsTo(cvObj.getContext("2d"), t); drawOverlay();
+  } else if (drag.mode === "resize"){
+    const d = Math.max(8, Math.hypot(p.x - drag.o.x, p.y - drag.o.y));
+    const k = d / drag.startDist;
+    if (drag.o.type === "text"){ drag.o.size = Math.max(8, Math.round(drag.startSize * k)); clampObjToTex(drag.o, t); }
+    else { drag.o.w = Math.max(12, drag.startW * k); drag.o.h = Math.max(12, drag.startH * k); clampObjToTex(drag.o, t); }
+    drag.moved = true;
+    drawObjectsTo(cvObj.getContext("2d"), t); drawOverlay();
+  }
+});
+function endStagePointer(e){
+  stagePtrs.delete(e.pointerId);
+  if (stagePtrs.size < 2) pinch = null;
+  if (!drag) return;
+  const t = curTex();
+  if (drag.mode === "uvmove"){
+    if (drag.moved){ uvCommitOp(drag.op); toast("Nailipat ang UV ng napiling parte."); }
+    drag = null; return;
+  }
+  if (drag.empty){
+    // Double-tap on empty space zooms back to fit (Canva-style).
+    const quick = performance.now() - drag.t0 < 300;
+    const still = Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 8;
+    if (quick && still){
+      const now = performance.now();
+      if (lastEmptyTap && now - lastEmptyTap.t < 350 && Math.hypot(e.clientX - lastEmptyTap.x, e.clientY - lastEmptyTap.y) < 48){
+        fitView(); lastEmptyTap = null;
+      } else lastEmptyTap = { t: now, x: e.clientX, y: e.clientY };
+    }
+  }
+  if (drag.mode === "paint"){
+    if (t && drag.snapPre){
+      t.undoStack.push(drag.snapPre);
+      if (t.undoStack.length > 15) t.undoStack.shift();
+      t.redoStack = []; markEdited(); updateUndoBtns();
+    }
+    if (t) updateComposite(t);
+  } else if ((drag.mode === "move" || drag.mode === "rotate" || drag.mode === "resize") && drag.moved){
+    const t2 = curTex();
+    t2.undoStack.push(drag.snap); t2.redoStack = []; markEdited(); updateUndoBtns();
+    if (t2) updateComposite(t2);
+    renderOptbar();
+  }
+  drag = null;
+}
+stageVp.addEventListener("pointerup", endStagePointer);
+stageVp.addEventListener("pointercancel", endStagePointer);
+stageVp.addEventListener("wheel", e => {
+  if (!curTex()) return;
+  e.preventDefault();
+  const r = stageVp.getBoundingClientRect();
+  zoomAt(e.clientX - r.left, e.clientY - r.top, e.deltaY < 0 ? 1.12 : 0.89);
+}, { passive: false });
+stageVp.addEventListener("dblclick", () => { if (curTex()) fitView(); });
+
+/* ---------------- adding objects ---------------- */
+function addTextObject(x, y){
+  const t = curTex(); if (!t) return;
+  pushUndo();
+  const s = state.text;
+  const o = { type: "text", text: s.value || "TEXT", font: s.font, size: s.size,
+    color: s.color, outlineColor: s.outlineColor, outlineWidth: s.outlineWidth,
+    x: x != null ? x : t.width/2, y: y != null ? y : t.height/2, rot: 0, opacity: 1 };
+  // Bagong text: paliitin muna para mga 1/3 lang ng lapad ng texture ang
+  // sakop (dati halos buong texture ang natatakpan), tapos i-clamp sa loob.
+  objBox(o);
+  const targetW = t.width / 3;
+  if (o.w > targetW) o.size = Math.max(8, Math.floor(o.size * targetW / o.w));
+  clampObjToTex(o, t);
+  (t.objects = t.objects || []).push(o);
+  state.sel = o;
+  drawObjectsTo(cvObj.getContext("2d"), t);
+  updateComposite(t);
+  setTool("move");
+  toast("Text nailagay — i-drag para igalaw, gamitin ang handles para ikot/resize.");
+}
+function addImageObject(img){
+  const t = curTex(); if (!t) return;
+  pushUndo();
+  const maxW = t.width * 0.6;
+  const sc = Math.min(1, maxW / img.naturalWidth);
+  const o = { type: "image", img, w: img.naturalWidth * sc, h: img.naturalHeight * sc,
+    x: t.width/2, y: t.height/2, rot: 0, opacity: 1 };
+  clampObjToTex(o, t); // matangkad na larawan: paliitin para pasok sa texture
+  (t.objects = t.objects || []).push(o);
+  state.sel = o;
+  drawObjectsTo(cvObj.getContext("2d"), t);
+  updateComposite(t);
+  setTool("move");
+  toast("Larawan nailagay — i-drag para igalaw, hilahin ang dilaw na sulok ⤡ o gamitin ang “Laki ng larawan” slider para palakihin o paliitin.");
+}
+
+/* ---------------- options bar ---------------- */
+function renderOptbar(){
+  const bar = $("#optbar");
+  const t = curTex();
+  if (!t){ bar.innerHTML = ""; return; }
+  const o = state.sel;
+  syncLockBtn();
+  if (state.uvMode){ bar.innerHTML = uvOptbarHtml(); wireUvOptbar(); return; }
+  let html = "";
+  if (state.tool === "text" || (o && o.type === "text")){
+    const s = o && o.type === "text" ? o : state.text;
+    html += `<div class="grp"><label class="lbl">Text</label>
+      <input type="text" id="optTextVal" value="${(s.text || state.text.value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")}" style="width:130px" /></div>
+      <div class="grp"><label class="lbl">Font</label>
+      <select id="optFont">${FONTS.map(f => `<option ${f === s.font ? "selected" : ""} style="font-family:'${f}'">${f}</option>`).join("")}</select></div>
+      <div class="grp"><label class="lbl">Laki: <span id="optSizeVal">${Math.round(s.size)}</span></label>
+      <input type="range" id="optSize" min="10" max="320" value="${s.size}" style="width:100px" /></div>
+      <div class="grp"><label class="lbl">Kulay</label><input type="color" id="optColor" value="${s.color}" /></div>
+      <div class="grp"><label class="lbl">Outline</label>
+      <div class="row"><input type="color" id="optOutColor" value="${s.outlineColor}" />
+      <input type="range" id="optOutW" min="0" max="24" value="${s.outlineWidth}" style="width:70px" /></div></div>`;
+    if (!o) html += `<div class="grp"><label class="lbl">&nbsp;</label><button id="optAddText" class="primary" type="button">Idagdag</button></div>
+      <div class="grp"><label class="lbl">&nbsp;</label><span style="font-size:12px;color:var(--dim)">o i-tap ang canvas para ilagay doon</span></div>`;
+  }
+  if (state.tool === "brush"){
+    html += `<div class="grp"><label class="lbl">Kulay ng brush</label><input type="color" id="optBrushColor" value="${state.brush.color}" /></div>
+      <div class="grp"><label class="lbl">Laki: <span id="optBrushSizeVal">${state.brush.size}</span></label>
+      <input type="range" id="optBrushSize" min="1" max="120" value="${state.brush.size}" style="width:130px" /></div>`;
+  }
+  if (state.tool === "eraser"){
+    html += `<div class="grp"><label class="lbl">Laki ng eraser: <span id="optEraSizeVal">${state.eraserSize}</span></label>
+      <input type="range" id="optEraSize" min="4" max="160" value="${state.eraserSize}" style="width:150px" /></div>
+      <span style="font-size:12px;color:var(--dim)">Binubura lang nito ang paint layer — hindi ang original texture.</span>`;
+  }
+  if (state.tool === "image" && !o){
+    html += `<div class="grp"><label class="lbl">Larawan / sticker</label>
+      <button id="optAddImg" class="primary" type="button">Pumili ng PNG / larawan</button></div>
+      <span style="font-size:12px;color:var(--dim);align-self:center">PNG na may transparent background ang pinaka-ok pang-sticker.</span>`;
+  }
+  if (o && o.type === "image"){
+    html += `<div class="grp"><label class="lbl">Laki ng larawan: <span id="optImgSizeVal">${Math.round(o.w)}</span>px</label>
+      <input type="range" id="optImgSize" min="12" max="${t.width}" value="${Math.round(o.w)}" style="width:130px" /></div>
+      <span style="font-size:12px;color:var(--dim);align-self:center">o hilahin ang dilaw na sulok ⤡ ng napiling larawan — proporsyonal ang paglaki/pagliit.</span>`;
+  }
+  if (o){
+    html += `<div class="grp"><label class="lbl">Ikot: <span id="optRotVal">${Math.round(o.rot)}°</span></label>
+      <input type="range" id="optRot" min="-180" max="180" value="${o.rot}" style="width:100px" /></div>
+      <div class="grp"><label class="lbl">Opacity: <span id="optOpVal">${Math.round((o.opacity != null ? o.opacity : 1)*100)}%</span></label>
+      <input type="range" id="optOp" min="10" max="100" value="${Math.round((o.opacity != null ? o.opacity : 1)*100)}" style="width:90px" /></div>
+      <div class="grp"><label class="lbl">&nbsp;</label><div class="row">
+      <button id="optDup" type="button">Kopya</button>
+      <button id="optLock" type="button">${o.locked ? "🔓 I-unlock" : "🔒 I-lock"}</button>
+      <button id="optDel" type="button">Burahin</button></div></div>`;
+  }
+  if (!o && state.tool === "move"){
+    html += `<span style="font-size:12.5px;color:var(--dim)">I-tap ang object para piliin, i-drag agad para igalaw ito lang · double-tap: fit sa screen · two-finger drag: pan · pinch: zoom.</span>
+      <div class="grp"><label class="lbl">&nbsp;</label><button id="optResetTex" type="button">I-reset ang texture</button></div>`;
+  }
+  bar.innerHTML = html;
+  wireOptbar();
+}
+function wireOptbar(){
+  const t = curTex(); const o = state.sel;
+  const target = () => (state.sel && state.sel.type === "text") ? state.sel : state.text;
+  const redrawText = () => { if (state.sel){ drawObjectsTo(cvObj.getContext("2d"), t); updateComposite(t); drawOverlay(); } };
+  const tv = $("#optTextVal");
+  if (tv) tv.addEventListener("change", () => { const tg = target(); pushUndo(); if (tg === state.text) state.text.value = tv.value; else { tg.text = tv.value; } if (state.sel){ state.sel.text = tv.value; clampObjToTex(state.sel, t); } redrawText(); });
+  const ft = $("#optFont");
+  if (ft) ft.addEventListener("change", () => { const tg = target(); pushUndo(); tg.font = ft.value; if (state.sel){ state.sel.font = ft.value; clampObjToTex(state.sel, t); }
+    document.fonts.load(`40px "${ft.value}"`).then(() => { if (state.sel) clampObjToTex(state.sel, t); redrawText(); }); redrawText(); });
+  const sz = $("#optSize");
+  armPropUndo(sz);
+  if (sz) sz.addEventListener("input", () => { $("#optSizeVal").textContent = sz.value; const tg = target(); tg.size = +sz.value; if (state.sel){ state.sel.size = +sz.value; clampObjToTex(state.sel, t); sz.value = state.sel.size; $("#optSizeVal").textContent = state.sel.size; } redrawText(); });
+  if (sz) sz.addEventListener("change", () => pushUndoSafe());
+  const col = $("#optColor");
+  if (col) col.addEventListener("input", () => { const tg = target(); tg.color = col.value; if (state.sel) state.sel.color = col.value; redrawText(); });
+  const oc = $("#optOutColor");
+  if (oc) oc.addEventListener("input", () => { const tg = target(); tg.outlineColor = oc.value; if (state.sel) state.sel.outlineColor = oc.value; redrawText(); });
+  const ow = $("#optOutW");
+  if (ow) ow.addEventListener("input", () => { const tg = target(); tg.outlineWidth = +ow.value; if (state.sel) state.sel.outlineWidth = +ow.value; redrawText(); });
+  const at = $("#optAddText");
+  if (at) at.addEventListener("click", () => addTextObject(null, null));
+  const bc = $("#optBrushColor");
+  if (bc) bc.addEventListener("input", () => state.brush.color = bc.value);
+  const bs = $("#optBrushSize");
+  if (bs) bs.addEventListener("input", () => { state.brush.size = +bs.value; $("#optBrushSizeVal").textContent = bs.value; });
+  const es = $("#optEraSize");
+  if (es) es.addEventListener("input", () => { state.eraserSize = +es.value; $("#optEraSizeVal").textContent = es.value; });
+  const ai = $("#optAddImg");
+  if (ai) ai.addEventListener("click", () => $("#fileImg").click());
+  const isz = $("#optImgSize");
+  armPropUndo(isz);
+  if (isz) isz.addEventListener("input", () => { if (!o || o.type !== "image") return; const nw = +isz.value; const k = nw / Math.max(1, o.w); o.w = nw; o.h = Math.max(12, Math.round(o.h * k)); clampObjToTex(o, t); isz.value = Math.round(o.w); const lv = $("#optImgSizeVal"); if (lv) lv.textContent = Math.round(o.w); drawObjectsTo(cvObj.getContext("2d"), t); updateComposite(t); drawOverlay(); });
+  if (isz) isz.addEventListener("change", () => pushUndoSafe());
+  const rot = $("#optRot");
+  armPropUndo(rot);
+  if (rot) rot.addEventListener("input", () => { if (!o) return; o.rot = +rot.value; $("#optRotVal").textContent = rot.value + "°"; drawObjectsTo(cvObj.getContext("2d"), t); updateComposite(t); drawOverlay(); });
+  if (rot) rot.addEventListener("change", () => pushUndoSafe());
+  const op = $("#optOp");
+  armPropUndo(op);
+  if (op) op.addEventListener("input", () => { if (!o) return; o.opacity = +op.value/100; $("#optOpVal").textContent = op.value + "%"; drawObjectsTo(cvObj.getContext("2d"), t); updateComposite(t); });
+  if (op) op.addEventListener("change", () => pushUndoSafe());
+  const del = $("#optDel");
+  if (del) del.addEventListener("click", () => {
+    if (!o) return; pushUndo();
+    t.objects = t.objects.filter(x => x !== o); state.sel = null;
+    drawObjectsTo(cvObj.getContext("2d"), t); updateComposite(t); renderOptbar(); drawOverlay();
+  });
+  const dup = $("#optDup");
+  if (dup) dup.addEventListener("click", () => {
+    if (!o) return; pushUndo();
+    const c = { ...o, x: o.x + 24, y: o.y + 24 }; t.objects.push(c); state.sel = c;
+    drawObjectsTo(cvObj.getContext("2d"), t); updateComposite(t); renderOptbar(); drawOverlay();
+  });
+  const lok = $("#optLock");
+  if (lok) lok.addEventListener("click", () => {
+    if (!o) return;
+    o.locked = !o.locked;
+    syncLockBtn(); renderOptbar(); drawOverlay();
+    toast(o.locked ? "Naka-lock na ang object — hindi siya magagalaw sa canvas." : "Na-unlock ang object — pwede na siyang igalaw.");
+  });
+  const rst = $("#optResetTex");
+  if (rst) rst.addEventListener("click", () => {
+    pushUndo();
+    t.objects = []; state.sel = null;
+    const pg = cvPaint.getContext("2d"); pg.clearRect(0, 0, t.width, t.height);
+    if (t._paintCv) t._paintCv.getContext("2d").clearRect(0, 0, t.width, t.height);
+    drawObjectsTo(cvObj.getContext("2d"), t); updateComposite(t); renderOptbar(); drawOverlay();
+    toast("Na-reset ang texture na ito.");
+  });
+}
+/* Sliders mutate live on 'input'; arm a pre-change snapshot on pointerdown/focus
+   and commit it to the undo stack when the change finishes ('change'). */
+function pushUndoSafe(){
+  const t = curTex(); if (!t || !window._propSnap) return;
+  t.undoStack.push(window._propSnap);
+  if (t.undoStack.length > 15) t.undoStack.shift();
+  t.redoStack = []; markEdited(); updateUndoBtns();
+  window._propSnap = null;
+}
+function armPropUndo(el){
+  if (!el) return;
+  const arm = () => { if (!window._propSnap) window._propSnap = snapshot(); };
+  el.addEventListener("pointerdown", arm);
+  el.addEventListener("focus", arm);
+}
+
+/* ---------------- tools ---------------- */
+function setTool(name){
+  state.tool = name;
+  $$("#rail [data-tool]").forEach(b => b.classList.toggle("on", b.dataset.tool === name));
+  if (name !== "move" && name !== "text" && name !== "image") { /* keep selection for text/image editing */ }
+  renderOptbar(); drawOverlay();
+}
+$$("#rail [data-tool]").forEach(b => b.addEventListener("click", () => {
+  setTool(b.dataset.tool);
+  if (b.dataset.tool === "image") $("#fileImg").click();
+}));
+$("#btnZoomIn").addEventListener("click", () => { const r = stageVp.getBoundingClientRect(); zoomAt(r.width/2, r.height/2, 1.3); });
+$("#btnZoomOut").addEventListener("click", () => { const r = stageVp.getBoundingClientRect(); zoomAt(r.width/2, r.height/2, 0.77); });
+$("#btnFit").addEventListener("click", fitView);
+$("#fileImg").addEventListener("change", e => {
+  const f = e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  const img = new Image();
+  img.onload = () => { addImageObject(img); URL.revokeObjectURL(img.src); };
+  img.src = URL.createObjectURL(f);
+});
+
+/* ---------------- tabs ---------------- */
+function setTab(which){
+  $("#tab3d").classList.toggle("on", which === "3d");
+  $("#tabEdit").classList.toggle("on", which === "edit");
+  $("#pane3d").classList.toggle("on", which === "3d");
+  $("#paneEdit").classList.toggle("on", which === "edit");
+  if (which === "3d") resizeGL();
+  else { focusPartInEditor(); requestAnimationFrame(() => { if (!state._fitted){ fitView(); state._fitted = true; } drawOverlay(); }); }
+}
+$("#tab3d").addEventListener("click", () => setTab("3d"));
+$("#tabEdit").addEventListener("click", () => setTab("edit"));
+
+/* ---------------- file loading ---------------- */
+function updateFileInfo(){
+  const parts = [];
+  if (state.dffName) parts.push("DFF: " + state.dffName);
+  if (state.txdName) parts.push("TXD: " + state.txdName + ` (${state.txd.textures.length} textures)`);
+  $("#fileinfo").textContent = parts.length ? parts.join("  ·  ") :
+    "Sample model ang naka-load — mag-upload ng DFF + TXD mo para mag-edit ng totoong file.";
+  $("#btnDlDff").disabled = !state.dffBuffer;
+  $("#btnDlAll").disabled = !(state.txd || state.dffBuffer);
+}
+async function loadDFF(file){
+  try {
+    const buf = await file.arrayBuffer();
+    const model = RW.parseDFF(buf);
+    state.uvShare = buildUvShare(model);
+    state.dffBuffer = buf; state.dffName = file.name; state.demo = false;
+    if (GL_OK && modelGroup){
+      if (!buildModelFromDFF(model)) throw new Error("Walang na-render na geometry.");
+      $("#glempty").style.display = "none";
+    }
+    reapplyUvEdits();
+    if (state.uvMode) computeUvParts();
+    toast("DFF na-load: " + file.name);
+  } catch(err){ toast("DFF error: " + err.message, 3400); }
+  updateFileInfo();
+  scheduleWorkSave();
+}
+async function loadTXD(file){
+  try {
+    const buf = await file.arrayBuffer();
+    const txd = RW.parseTXD(buf);
+    // dispose old three textures
+    if (state.txd) for (const t of state.txd.textures){ if (t._three) t._three.dispose(); t._three = null; t._cv = null; }
+    state.txd = txd; state.txdName = file.name; state.demo = false; state.txdRawBuf = buf; state.txIncomplete = false;
+    for (const t of txd.textures){ t.objects = []; t.undoStack = []; t.redoStack = []; }
+    state.cur = -1;
+    if (state.dffBuffer){
+      const model = RW.parseDFF(state.dffBuffer);
+      state.uvShare = buildUvShare(model);
+      if (GL_OK && modelGroup) buildModelFromDFF(model);
+      reapplyUvEdits();
+    } else {
+      state.uvShare = null;
+      clearModel();
+      $("#glempty").style.display = "flex";
+      $("#glempty").innerHTML = "<span>TXD lang ang na-upload.<br/>Mag-upload ng <b>.dff</b> para makita ang 3D model — pwede ka nang mag-edit ng textures sa Edit Texture tab.</span>";
+    }
+    selectTexture(0);
+    toast(`TXD na-load: ${txd.textures.length} textures`);
+    await applyPendingWorkForTxd(file.name); // kung may partial session snapshot para sa file na ito, ilapat ang edits
+  } catch(err){ toast("TXD error: " + err.message, 3400); }
+  updateFileInfo();
+  scheduleWorkSave();
+}
+$("#btnDff").addEventListener("click", () => $("#fileDff").click());
+$("#btnTxd").addEventListener("click", () => $("#fileTxd").click());
+$("#fileDff").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) loadDFF(f); });
+$("#fileTxd").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) loadTXD(f); });
+$("#chkAllParts").addEventListener("change", e => { state.showAllParts = e.target.checked; applyPartVisibility(); });
+/* Mula sa 3D Parts bar: diretso sa Edit mode na naka-focus sa part. */
+$("#btnEditPart").addEventListener("click", () => { if (state.activePart) setTab("edit"); });
+/* Sa part-focus banner: bumalik sa buong model at lahat ng textures. */
+$("#btnPartAll").addEventListener("click", () => selectPart(null));
+$("#paintColor").addEventListener("input", e => {
+  state.paintColor = e.target.value;
+  for (const m of paintMats) m.color.set(state.paintColor);
+});
+/* Collapse / expand the tool settings panel so it stops blocking the canvas */
+$("#btnOptToggle").addEventListener("click", () => {
+  const bar = $("#optbar");
+  const collapsed = bar.classList.toggle("collapsed");
+  $("#btnOptToggle").textContent = collapsed ? "▼ Ipakita" : "▲ Itago";
+  requestAnimationFrame(drawOverlay); // overlay canvas resizes to the freed space
+});
+
+/* ---------------- UV editor + locks ----------------
+   UV mode lives inside the Edit Texture pane: the model's UV triangles
+   for the current texture are drawn over it (faint blue = lahat, amber =
+   napiling parte). The user picks Parte A / Parte B — the two halves of
+   a mirrored unwrap, split by RW.texGeoParts — then drags their UVs,
+   flips/scales them, or one-taps Un-mirror to move them onto the half
+   of the texture nothing else samples. Every op runs through
+   uvBeginOp/uvCommitOp: the before-state is snapshotted for undo, the
+   pristine UVs are remembered, and state.uvEdits is rebuilt as the diff
+   against pristine — that diff is what Download DFF patches in place. */
+function escHtml(s){
+  return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function computeUvParts(){
+  const t = curTex();
+  state.uvParts = (t && state.model) ? RW.texGeoParts(state.model, t.name) : null;
+  state.uvVersion++; // wireframe caches key on version — force a rebuild
+}
+function setUvMode(on){
+  if (on){
+    if (!state.dffBuffer){ toast("Mag-upload muna ng DFF — kailangan ang model para sa UV editor.", 3200); return; }
+    if (!curTex()){ toast("Mag-upload muna ng TXD.", 3000); return; }
+    if (!state.model){
+      try {
+        state.model = RW.parseDFF(state.dffBuffer);
+        state.uvShare = buildUvShare(state.model);
+        reapplyUvEdits();
+      } catch(err){ toast("DFF error: " + err.message, 3200); return; }
+    }
+    computeUvParts();
+    if (!state.uvParts || !state.uvParts.length){
+      toast("Walang parte ng model na gumagamit ng texture na ito (" + (curTex().name || "") + ").", 3400);
+      return;
+    }
+    state.uvMode = true;
+    toast("UV mode: pumili ng Parte A o B, i-drag sa canvas para ilipat ang UV nila, o i-Un-mirror para isang side lang ang gumamit ng spot.");
+  } else {
+    state.uvMode = false;
+  }
+  $("#btnUVMode").classList.toggle("on", state.uvMode);
+  renderOptbar(); drawOverlay();
+}
+function uvSelTris(){
+  const m = new Map();
+  if (!state.uvParts) return m;
+  for (const part of state.uvParts){
+    let tris;
+    if (state.uvSide === "all") tris = part.tris;
+    else if (state.uvSide === "B") tris = part.clusters[1] || part.tris;
+    else tris = part.clusters[0];
+    m.set(part.gi, tris);
+  }
+  return m;
+}
+function uvSelVerts(){
+  const res = new Map();
+  if (!state.model || !state.uvParts) return res;
+  for (const [gi, tris] of uvSelTris())
+    res.set(gi, RW.uvSelectionVerts(state.model.geometries[gi], tris));
+  return res;
+}
+function uvCounts(){
+  let all = 0, a = 0, b = 0, hasB = false;
+  for (const p of state.uvParts || []){
+    all += p.tris.length;
+    a += (p.clusters[0] || []).length;
+    if (p.clusters.length > 1){ hasB = true; b += p.clusters[1].length; }
+  }
+  return { all, a, b, hasB };
+}
+function uvBeginOp(){
+  const sel = uvSelVerts();
+  const before = new Map();
+  for (const [gi, verts] of sel){
+    const g = state.model.geometries[gi];
+    if (!state.uvPristine.has(gi)) state.uvPristine.set(gi, g.uvs.slice());
+    const m = new Map();
+    for (const vi of verts) m.set(vi, [g.uvs[vi*2], g.uvs[vi*2+1]]);
+    before.set(gi, m);
+  }
+  return { sel, before };
+}
+function rollbackUvOp(op){
+  if (!op || !state.model) return;
+  for (const [gi, m] of op.before){
+    const g = state.model.geometries[gi]; if (!g) continue;
+    for (const [vi, uv] of m){ g.uvs[vi*2] = uv[0]; g.uvs[vi*2+1] = uv[1]; }
+  }
+  state.uvVersion++;
+  refreshThreeUVs();
+}
+function rebuildUvEdits(){
+  state.uvEdits.clear();
+  if (!state.model) return;
+  for (const [gi, pr] of state.uvPristine){
+    const g = state.model.geometries[gi]; if (!g || !g.uvs) continue;
+    const em = new Map();
+    for (let vi = 0; vi < g.numVerts; vi++){
+      const u = g.uvs[vi*2], v = g.uvs[vi*2+1];
+      if (u !== pr[vi*2] || v !== pr[vi*2+1]) em.set(vi, [u, v]);
+    }
+    if (em.size) state.uvEdits.set(gi, em);
+  }
+}
+function refreshThreeUVs(){
+  if (!modelGroup) return;
+  modelGroup.traverse(o => {
+    if (o.isMesh && o.geometry && o.geometry.attributes && o.geometry.attributes.uv)
+      o.geometry.attributes.uv.needsUpdate = true;
+  });
+}
+function afterUvChange(){
+  state.uvVersion++;
+  refreshThreeUVs();
+  if (state.model) state.uvShare = buildUvShare(state.model);
+  drawOverlay();
+}
+function uvCommitOp(op){
+  if (op && op.before && [...op.before.values()].some(m => m.size)){
+    state.uvUndoStack.push(op.before);
+    if (state.uvUndoStack.length > 20) state.uvUndoStack.shift();
+  }
+  rebuildUvEdits();
+  afterUvChange();
+  renderOptbar();
+  scheduleWorkSave();
+}
+function uvSelCenter(sel){
+  let u0 = Infinity, v0 = Infinity, u1 = -Infinity, v1 = -Infinity, n = 0;
+  for (const [gi, verts] of sel){
+    const g = state.model.geometries[gi];
+    for (const vi of verts){
+      const u = g.uvs[vi*2], v = g.uvs[vi*2+1];
+      if (u < u0) u0 = u; if (u > u1) u1 = u; if (v < v0) v0 = v; if (v > v1) v1 = v; n++;
+    }
+  }
+  if (!n) return null;
+  return { cu: (u0 + u1) / 2, cv: (v0 + v1) / 2, u0, v0, u1, v1 };
+}
+function uvTransformOp(fn, label){
+  if (!state.model) return;
+  const op = uvBeginOp();
+  const box = uvSelCenter(op.sel);
+  if (!box){ toast("Walang napiling parte."); return; }
+  for (const [gi, verts] of op.sel){
+    const g = state.model.geometries[gi];
+    for (const vi of verts){
+      const r = fn(g.uvs[vi*2], g.uvs[vi*2+1], box);
+      g.uvs[vi*2] = r[0]; g.uvs[vi*2+1] = r[1];
+    }
+  }
+  uvCommitOp(op);
+  if (label) toast(label);
+}
+function applyUnmirror(){
+  const t = curTex(); if (!t || !state.model) return;
+  if (state.uvSide === "all"){ toast("Pumili muna ng Parte A o Parte B — yun ang ililipat sa bakanteng kalahati."); return; }
+  const plan = RW.uvUnmirrorPlan(state.model, t.name, uvSelTris());
+  if (!plan){
+    toast("Walang bakanteng kalahati sa texture na ito — ginagamit ng ibang parte ang buong texture. I-drag na lang mano-mano ang UV, o mag-Flip.", 3800);
+    return;
+  }
+  const op = uvBeginOp();
+  const [su0, sv0, su1, sv1] = plan.sel, r = plan.region;
+  const sw = Math.max(1e-6, su1 - su0), sh = Math.max(1e-6, sv1 - sv0);
+  for (const [gi, verts] of op.sel){
+    const g = state.model.geometries[gi];
+    for (const vi of verts){
+      const u = g.uvs[vi*2], v = g.uvs[vi*2+1];
+      let nu, nv;
+      if (r.flip === "u"){
+        nu = r.u0 + (su1 - u) / sw * (r.u1 - r.u0);
+        nv = r.v0 + (v - sv0) / sh * (r.v1 - r.v0);
+      } else {
+        nu = r.u0 + (u - su0) / sw * (r.u1 - r.u0);
+        nv = r.v0 + (sv1 - v) / sh * (r.v1 - r.v0);
+      }
+      g.uvs[vi*2] = nu; g.uvs[vi*2+1] = nv;
+    }
+  }
+  uvCommitOp(op);
+  toast("Na-un-mirror na! Ang napiling parte, sarili na niyang kalahati ng texture ang gamit — ang ilalagay mo doon, sa isang side lang lalabas. I-download ang DFF para ma-save ang UV.");
+}
+function uvUndo(){
+  const before = state.uvUndoStack.pop();
+  if (!before || !state.model) return;
+  rollbackUvOp({ before });
+  rebuildUvEdits();
+  if (state.model) state.uvShare = buildUvShare(state.model);
+  drawOverlay(); renderOptbar();
+  toast("Na-undo ang huling UV edit.");
+}
+function uvReset(){
+  if (!state.model || !state.uvParts) return;
+  const before = new Map(); let changed = false;
+  for (const part of state.uvParts){
+    const gi = part.gi, g = state.model.geometries[gi], pr = state.uvPristine.get(gi);
+    if (!g || !pr) continue;
+    const m = new Map();
+    for (let vi = 0; vi < g.numVerts; vi++){
+      if (g.uvs[vi*2] !== pr[vi*2] || g.uvs[vi*2+1] !== pr[vi*2+1]){
+        m.set(vi, [g.uvs[vi*2], g.uvs[vi*2+1]]);
+        g.uvs[vi*2] = pr[vi*2]; g.uvs[vi*2+1] = pr[vi*2+1];
+        changed = true;
+      }
+    }
+    if (m.size) before.set(gi, m);
+  }
+  if (!changed){ toast("Original pa ang UV ng texture na ito — walang ni-reset."); return; }
+  state.uvUndoStack.push(before);
+  rebuildUvEdits(); afterUvChange(); renderOptbar();
+  toast("Na-reset ang UV ng texture na ito sa original.");
+}
+/* Re-apply saved UV edits after a (re)parse of the same DFF — loading a
+   TXD rebuilds the model from scratch and must not lose UV work. */
+function reapplyUvEdits(){
+  const m = state.model;
+  if (!m || !state.uvEdits || !state.uvEdits.size) return;
+  for (const [gi, em] of state.uvEdits){
+    const g = m.geometries[gi]; if (!g || !g.uvs) continue;
+    if (!state.uvPristine.has(gi)) state.uvPristine.set(gi, g.uvs.slice());
+    for (const [vi, uv] of em){ g.uvs[vi*2] = uv[0]; g.uvs[vi*2+1] = uv[1]; }
+  }
+  state.uvShare = buildUvShare(m);
+}
+/* ---- UV wireframe overlay (drawn over the texture in UV mode) ---- */
+function uvWireFor(tex, selected){
+  const key = selected ? "_uvWireSel" : "_uvWireAll";
+  const cached = tex[key];
+  if (cached && cached.ver === state.uvVersion && cached.side === state.uvSide) return cached.cv;
+  const cv = document.createElement("canvas");
+  cv.width = tex.width; cv.height = tex.height;
+  const g = cv.getContext("2d");
+  const trisMap = selected ? uvSelTris() : (() => { const m = new Map(); for (const p of state.uvParts || []) m.set(p.gi, p.tris); return m; })();
+  for (const [gi, tris] of trisMap){
+    const geo = state.model && state.model.geometries[gi];
+    if (!geo || !geo.uvs || !geo.rawTris) continue;
+    const UV = geo.uvs, W = tex.width, H = tex.height;
+    g.beginPath();
+    for (const ti of tris){
+      const t3 = geo.rawTris[ti]; if (!t3) continue;
+      for (let k = 0; k < 3; k++){
+        const vtx = t3[k], nx = t3[(k + 1) % 3];
+        g.moveTo(UV[vtx*2] * W, (1 - UV[vtx*2+1]) * H);
+        g.lineTo(UV[nx*2] * W, (1 - UV[nx*2+1]) * H);
+      }
+    }
+    if (selected){
+      g.strokeStyle = "#ffb02e"; g.lineWidth = Math.max(1.2, tex.width / 420); g.stroke();
+    } else {
+      g.strokeStyle = "rgba(130,190,255,.30)"; g.lineWidth = 1; g.stroke();
+    }
+  }
+  tex[key] = { cv, ver: state.uvVersion, side: state.uvSide };
+  return cv;
+}
+function drawUVOverlay(g, r){
+  const tex = curTex(); if (!tex || !state.model) return;
+  const x = state.view.tx, y = state.view.ty, w = tex.width * state.view.s, h = tex.height * state.view.s;
+  const all = uvWireFor(tex, false), sel = uvWireFor(tex, true);
+  if (all) g.drawImage(all, x, y, w, h);
+  if (sel) g.drawImage(sel, x, y, w, h);
+  const label = "UV mode · Parte " + (state.uvSide === "all" ? "Lahat" : state.uvSide) + " ang napili (amber) — i-drag para ilipat ang UV";
+  g.font = "600 12px sans-serif";
+  const tw = g.measureText(label).width;
+  g.fillStyle = "rgba(10,10,12,.85)";
+  g.fillRect(8, 8, tw + 16, 24);
+  g.fillStyle = "#f2f2f4"; g.textAlign = "left"; g.textBaseline = "middle";
+  g.fillText(label, 16, 20.5);
+}
+/* ---- UV options bar ---- */
+function uvOptbarHtml(){
+  const t = curTex();
+  if (!state.uvParts || !state.uvParts.length){
+    return `<span style="font-size:12.5px;color:var(--dim)">Walang parte ng model na gumagamit ng texture na ito.</span>
+      <div class="grp"><label class="lbl">&nbsp;</label><button id="uvDone" type="button">Tapos na</button></div>`;
+  }
+  const c = uvCounts();
+  const sideBtn = (side, label, n, dis) =>
+    `<button type="button" data-uvside="${side}" class="${state.uvSide === side ? "on" : ""}" ${dis ? "disabled" : ""}>${label} (${n.toLocaleString()})</button>`;
+  return `
+  <div class="grp"><label class="lbl">UV editor — ${escHtml(t ? t.name : "")}</label>
+    <div class="row">${sideBtn("A", "Parte A", c.a, false)}${sideBtn("B", "Parte B", c.b, !c.hasB)}${sideBtn("all", "Lahat", c.all, false)}</div></div>
+  <div class="grp"><label class="lbl">Ayusin ang UV</label>
+    <div class="row">
+      <button id="uvUnmirror" class="primary" type="button" ${state.uvSide !== "all" && c.hasB ? "" : "disabled"}>Un-mirror → isang side lang</button>
+      <button id="uvFlipH" type="button">Flip ↔</button>
+      <button id="uvFlipV" type="button">Flip ↕</button>
+      <button id="uvScaleUp" type="button">Laki +</button>
+      <button id="uvScaleDn" type="button">Laki −</button>
+    </div></div>
+  <div class="grp"><label class="lbl">&nbsp;</label>
+    <div class="row">
+      <button id="uvUndo" type="button" ${state.uvUndoStack.length ? "" : "disabled"}>Undo UV</button>
+      <button id="uvReset" type="button">I-reset UV</button>
+      <button id="uvDone" type="button">Tapos na</button>
+    </div></div>
+  <span style="font-size:12px;color:var(--dim);align-self:center">I-drag sa canvas para ilipat ang UV ng napiling parte. Kasama ang UV edits sa Download DFF; ang TXD, hindi nagagalaw.</span>`;
+}
+function wireUvOptbar(){
+  $$("#optbar [data-uvside]").forEach(b => b.addEventListener("click", () => {
+    state.uvSide = b.dataset.uvside;
+    renderOptbar(); drawOverlay();
+  }));
+  const un = $("#uvUnmirror"); if (un) un.addEventListener("click", applyUnmirror);
+  const fh = $("#uvFlipH"); if (fh) fh.addEventListener("click", () => uvTransformOp((u, v, b) => [2 * b.cu - u, v], "Na-flip ang UV ng parte (↔)."));
+  const fv = $("#uvFlipV"); if (fv) fv.addEventListener("click", () => uvTransformOp((u, v, b) => [u, 2 * b.cv - v], "Na-flip ang UV ng parte (↕)."));
+  const su = $("#uvScaleUp"); if (su) su.addEventListener("click", () => uvTransformOp((u, v, b) => [b.cu + (u - b.cu) * 1.25, b.cv + (v - b.cv) * 1.25], "Pinalaki ang UV ng parte."));
+  const sd = $("#uvScaleDn"); if (sd) sd.addEventListener("click", () => uvTransformOp((u, v, b) => [b.cu + (u - b.cu) * 0.8, b.cv + (v - b.cv) * 0.8], "Pinaliit ang UV ng parte."));
+  const uu = $("#uvUndo"); if (uu) uu.addEventListener("click", uvUndo);
+  const ur = $("#uvReset"); if (ur) ur.addEventListener("click", uvReset);
+  const ud = $("#uvDone"); if (ud) ud.addEventListener("click", () => setUvMode(false));
+}
+/* ---- lock controls ---- */
+function syncLockBtn(){
+  const b = $("#btnLockObj"); if (!b) return;
+  const o = state.sel;
+  b.disabled = !o;
+  b.classList.toggle("on", !!(o && o.locked));
+}
+$("#btnLockObj").addEventListener("click", () => {
+  const o = state.sel; if (!o) return;
+  o.locked = !o.locked;
+  syncLockBtn(); renderOptbar(); drawOverlay();
+  toast(o.locked ? "Naka-lock na ang object — hindi siya magagalaw sa canvas." : "Na-unlock ang object — pwede na siyang igalaw.");
+});
+$("#btnTexLock").addEventListener("click", () => {
+  state.viewLock = !state.viewLock;
+  const b = $("#btnTexLock");
+  b.classList.toggle("on", state.viewLock);
+  b.textContent = state.viewLock ? "🔒 Texture lock" : "🔓 Texture lock";
+  toast(state.viewLock
+    ? "Texture lock ON: hindi gagalaw ang texture sa isang daliri. Pan = two-finger drag, zoom = pinch, fit = double-tap."
+    : "Texture lock OFF: pwede nang i-pan ang bakanteng lugar sa isang daliri.", 3200);
+});
+$("#btnUVMode").addEventListener("click", () => setUvMode(!state.uvMode));
+
+/* ---------------- session work snapshot ----------------
+   Ang mga edit ay nasa memory lang habang nag-e-edit. Para hindi sila
+   mawala pag ni-reload ng phone ang page — nangyayari iyon sa iOS
+   pagkatapos mag-download, pag binalikan ang app mula sa background,
+   o pag sinara ang download sheet — may snapshot ng trabaho sa
+   sessionStorage, nire-restore sa load.
+
+   Saklaw ng snapshot: bawat texture na may edit (objects niya, paint
+   layer niya, at — para sa uploaded na TXD na hindi na mare-regenerate
+   ang base — ang composite image niya), ang UV edits, ang pangalan ng
+   files, at ang raw TXD/DFF bytes KUNG maliit ang file (≤ ~900KB) para
+   buong-buo ang restore. Malalaking file (hal. 9MB na bullet.txd) ay
+   hindi kasya sa sessionStorage quota, kaya composite lang ng mga
+   EDITED na texture ang nare-restore sa kanila. Ang ganitong restore
+   ay laging naka-flag na partial: naka-pause ang TXD downloads (para
+   hindi maipadala ang kulang na TXD), at pag ni-upload ulit ang
+   original na TXD, kusang bumabalik ang mga edit sa buong file
+   (applyPendingWorkForTxd). Ang UV edits ay naka-save nang hiwalay at
+   mag-a-apply pag bumalik ang DFF, kasama man ang raw bytes o hindi.
+
+   Ang sessionStorage ay kusang nawawala pag sinara talaga ang
+   tab/webview o na-force close ang app — doon lang nawawala ang
+   trabaho, tulad ng gusto ng may-ari. Walang permanenteng kopya. */
+const WORK_KEY = "mavs_txd_work";
+let workSaveTimer = null;
+
+function bufToB64(buf){
+  const u8 = new Uint8Array(buf); let s = "";
+  for (let i = 0; i < u8.length; i += 32768) s += String.fromCharCode.apply(null, u8.subarray(i, i + 32768));
+  return btoa(s);
+}
+function b64ToBuf(s){
+  const bin = atob(s), u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return u8.buffer;
+}
+function loadDataImage(src){
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = () => res(null);
+    img.src = src;
+  });
+}
+/* Cheap non-empty test for a paint layer: downscale to 8x8, scan alpha. */
+function paintNonEmpty(t){
+  if (!t._paintCv) return false;
+  try {
+    const c = document.createElement("canvas"); c.width = 8; c.height = 8;
+    const g = c.getContext("2d");
+    g.drawImage(t._paintCv, 0, 0, 8, 8);
+    const d = g.getImageData(0, 0, 8, 8).data;
+    for (let i = 3; i < d.length; i += 4) if (d[i] > 0) return true;
+  } catch(e){}
+  return false;
+}
+function serObject(o){
+  const base = { type: o.type, x: o.x, y: o.y, rot: o.rot || 0,
+    opacity: o.opacity != null ? o.opacity : 1, locked: !!o.locked, w: o.w, h: o.h };
+  if (o.type === "text")
+    return Object.assign(base, { text: o.text, font: o.font, size: o.size, color: o.color,
+      outlineColor: o.outlineColor, outlineWidth: o.outlineWidth });
+  if (o.type === "image"){
+    // Blob URLs die with the page, so keep the pixels as a PNG data URL.
+    let src = null;
+    try {
+      if (o.img && o.img.naturalWidth){
+        const c = document.createElement("canvas");
+        c.width = o.img.naturalWidth; c.height = o.img.naturalHeight;
+        c.getContext("2d").drawImage(o.img, 0, 0);
+        src = c.toDataURL("image/png");
+      }
+    } catch(e){}
+    return Object.assign(base, { src });
+  }
+  return null;
+}
+function deserObject(s){
+  if (!s || (s.type !== "text" && s.type !== "image")) return null;
+  const o = Object.assign({}, s);
+  if (s.type === "image"){
+    delete o.src;
+    if (!s.src) return null; // image pixels did not fit the snapshot
+    o.img = new Image();
+    o.img.src = s.src;
+  }
+  return o;
+}
+function buildWorkSnapshot(){
+  if (!state.txd) return null;
+  saveCurrentPaint();
+  const snap = { v: 1, demo: state.demo, txdName: state.txdName || "", dffName: state.dffName || "",
+    cur: state.cur, paintColor: state.paintColor, tex: [], partial: false };
+  state.txd.textures.forEach((t, i) => {
+    const entry = { i, name: t.name, w: t.width, h: t.height, edited: !!t.edited };
+    const objs = (t.objects || []).map(serObject).filter(Boolean);
+    if (objs.length) entry.objects = objs;
+    if (t.edited){
+      if (paintNonEmpty(t)){ try { entry.paint = paintCanvasOf(t).toDataURL("image/png"); } catch(e){} }
+      if (!state.demo){ try { entry.img = texCanvasOf(t).toDataURL("image/png"); } catch(e){} }
+    }
+    if (entry.edited || entry.objects) snap.tex.push(entry);
+  });
+  if (state.uvEdits && state.uvEdits.size){
+    const uv = [];
+    for (const [gi, em] of state.uvEdits){
+      const arr = [];
+      for (const [vi, p] of em) arr.push([vi, p[0], p[1]]);
+      uv.push([gi, arr]);
+    }
+    if (uv.length) snap.uv = uv;
+  }
+  try { if (state.txdRawBuf && state.txdRawBuf.byteLength <= 900000) snap.txdRaw = bufToB64(state.txdRawBuf); } catch(e){}
+  try { if (state.dffBuffer && state.dffBuffer.byteLength <= 900000) snap.dffRaw = bufToB64(state.dffBuffer); } catch(e){}
+  /* Partial ang snapshot pag may hindi naisamang piraso ng totoong
+     file set — malaking TXD/DFF na hindi kasya ang raw bytes, UV edits
+     na walang kasamang DFF, o edited texture na walang composite.
+     Kailangang malaman ito ng restore para hindi ito magmukhang buo. */
+  if (!snap.demo && state.txdRawBuf && !snap.txdRaw) snap.partial = true;
+  if (state.dffBuffer && !snap.dffRaw) snap.partial = true;
+  if (snap.uv && !snap.dffRaw) snap.partial = true;
+  if (!snap.demo && !snap.txdRaw && snap.tex.some(e => e.edited && !e.img)) snap.partial = true;
+  return snap;
+}
+function saveWorkNow(){
+  try {
+    if (sessionStorage.getItem("mavs_txd_session") !== "1") return; // unlocked session lang
+    const snap = buildWorkSnapshot();
+    if (!snap) return;
+    let s = JSON.stringify(snap);
+    // Degrade gracefully against the ~5MB sessionStorage quota: raw
+    // files first, then composite images, then paint layers. Ang mga
+    // objects (text/sticker placements) ang huling bibitawan — sila ang
+    // pinaka-ginawa ng user.
+    if (s.length > 4000000){ delete snap.txdRaw; delete snap.dffRaw; snap.partial = true; s = JSON.stringify(snap); }
+    if (s.length > 4000000){ for (const e of snap.tex) delete e.img; snap.partial = true; s = JSON.stringify(snap); }
+    if (s.length > 4000000){ for (const e of snap.tex) delete e.paint; snap.partial = true; s = JSON.stringify(snap); }
+    if (s.length > 4500000) return;
+    sessionStorage.setItem(WORK_KEY, s);
+  } catch(e){ /* quota o blocked storage: tuloy ang in-memory session */ }
+}
+function scheduleWorkSave(){
+  clearTimeout(workSaveTimer);
+  workSaveTimer = setTimeout(saveWorkNow, 350);
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveWorkNow(); });
+window.addEventListener("pagehide", saveWorkNow);
+
+/* Ilapat ang per-texture edit entries ng isang snapshot sa kasalukuyang
+   state.txd: edited flags, objects, at paint layers. Sa composite
+   restore, flat na ang paint sa base kaya hindi na inuulit. */
+async function applyWorkEntries(snap, byNameOnly, composite){
+  const imgWaits = [];
+  for (const e of snap.tex){
+    const t = (composite || byNameOnly)
+      ? state.txd.textures.find(x => x.name === e.name)
+      : (state.txd.textures[e.i] || state.txd.textures.find(x => x.name === e.name));
+    if (!t) continue;
+    if (e.edited) t.edited = true;
+    if (e.objects){
+      t.objects = e.objects.map(deserObject).filter(Boolean);
+      for (const o of t.objects){
+        if (o.type === "image" && o.img && !o.img.complete)
+          imgWaits.push(new Promise(res => { o.img.onload = o.img.onerror = () => res(); }));
+      }
+    }
+    if (e.paint && !composite){
+      const img = await loadDataImage(e.paint);
+      if (img){
+        const pc = paintCanvasOf(t), pg = pc.getContext("2d");
+        pg.clearRect(0, 0, t.width, t.height);
+        pg.drawImage(img, 0, 0);
+        t._cv = null; if (t._three) t._three.needsUpdate = true;
+      }
+    }
+  }
+  return imgWaits;
+}
+/* Pag nag-upload ulit ang user ng TXD na may pending na partial
+   snapshot (parehong pangalan ng file), ilapat ang na-save na edits sa
+   buong file — doon nakukumpleto ang restore ng malalaking file. */
+async function applyPendingWorkForTxd(fileName){
+  let snap = null;
+  try {
+    if (sessionStorage.getItem("mavs_txd_session") !== "1") return;
+    const raw = sessionStorage.getItem(WORK_KEY);
+    if (!raw) return;
+    snap = JSON.parse(raw);
+  } catch(e){ return; }
+  if (!snap || snap.demo || snap.txdRaw) return; // demo/full snapshots: sa load na ina-apply
+  if (!snap.txdName || snap.txdName !== fileName) return;
+  if (!snap.tex || !snap.tex.length) return;
+  try {
+    if (snap.uv && snap.uv.length && !state.uvEdits.size){
+      state.uvEdits = new Map(snap.uv.map(([gi, arr]) => [gi, new Map(arr.map(([vi, u, v]) => [vi, [u, v]]))]));
+      if (state.model) reapplyUvEdits();
+    }
+    const waits = await applyWorkEntries(snap, true, false);
+    const curIdx = Math.min(Math.max(0, snap.cur || 0), state.txd.textures.length - 1);
+    selectTexture(curIdx);
+    if (waits.length){
+      await Promise.all(waits);
+      const ct = curTex();
+      if (ct){ drawObjectsTo(cvObj.getContext("2d"), ct); updateComposite(ct); }
+    }
+    toast("Naibalik ang mga edit mo sa buong TXD — kumpleto na ulit ang file.", 3600);
+  } catch(e){}
+}
+
+async function restoreWorkSession(){
+  let snap = null;
+  try {
+    if (sessionStorage.getItem("mavs_txd_session") !== "1") return;
+    const raw = sessionStorage.getItem(WORK_KEY);
+    if (!raw) return;
+    snap = JSON.parse(raw);
+  } catch(e){ return; }
+  if (!snap || !snap.tex) return;
+  if (!snap.tex.length && !snap.txdRaw && !snap.dffRaw) return;
+  try {
+    /* UV edits ay nire-restore nang Hiwalay sa raw DFF: kung masyadong
+       malaki ang DFF para sa snapshot, mananatili pa rin ang UV edits
+       sa state at kusang mag-a-apply pag ni-upload ulit ang DFF
+       (tinatawag ng loadDFF ang reapplyUvEdits). */
+    if (snap.uv && snap.uv.length){
+      state.uvEdits = new Map(snap.uv.map(([gi, arr]) => [gi, new Map(arr.map(([vi, u, v]) => [vi, [u, v]]))]));
+    }
+    /* DFF muna: nakadepende rito ang model. */
+    if (snap.dffRaw){
+      const buf = b64ToBuf(snap.dffRaw);
+      const model = RW.parseDFF(buf);
+      state.dffBuffer = buf; state.dffName = snap.dffName || state.dffName; state.demo = false;
+      state.uvShare = buildUvShare(model);
+      state.model = model;
+      if (GL_OK && modelGroup){
+        if (buildModelFromDFF(model)) $("#glempty").style.display = "none";
+      }
+      if (state.uvEdits.size){ reapplyUvEdits(); refreshThreeUVs(); }
+    }
+    if (snap.txdRaw){
+      const tbuf = b64ToBuf(snap.txdRaw);
+      if (state.txd) for (const t of state.txd.textures){ if (t._three) t._three.dispose(); t._three = null; t._cv = null; }
+      state.txd = RW.parseTXD(tbuf); state.txdRawBuf = tbuf;
+      state.txdName = snap.txdName || ""; state.demo = false;
+      for (const t of state.txd.textures){ t.objects = []; t.undoStack = []; t.redoStack = []; }
+      if (state.model){
+        state.uvShare = buildUvShare(state.model);
+        if (GL_OK && modelGroup) buildModelFromDFF(state.model);
+        if (state.uvEdits.size) reapplyUvEdits();
+      } else if (!snap.dffRaw){
+        state.uvShare = null; clearModel();
+        $("#glempty").style.display = "flex";
+        $("#glempty").innerHTML = "<span>TXD lang ang naibalik.<br/>Mag-upload ng <b>.dff</b> para makita ang 3D model — pwede ka nang mag-edit ng textures sa Edit Texture tab.</span>";
+      }
+    } else if (!snap.demo){
+      /* Malaking uploaded TXD: ang mga EDITED na texture lang ang may
+         composite na kasya sa snapshot — sila ang binubuo ulit dito. */
+      var usedComposite = false;
+      const textures = [];
+      for (const e of snap.tex){
+        if (!e.img) continue;
+        const img = await loadDataImage(e.img);
+        if (!img) continue;
+        const c = document.createElement("canvas"); c.width = e.w; c.height = e.h;
+        const g = c.getContext("2d"); g.drawImage(img, 0, 0, e.w, e.h);
+        textures.push({ name: e.name, platform: 9, filterMode: 6, uAddr: 1, vAddr: 1, maskName: "",
+          rasterFormat: 0x0500, d3dFormat: 21, width: e.w, height: e.h, depth: 32, numLevels: 1,
+          rasterType: 4, flagsByte: 0, raw: null, edited: true, formatLabel: "A8R8G8B8", hasAlpha: true,
+          rgba: g.getImageData(0, 0, e.w, e.h).data, objects: [], undoStack: [], redoStack: [] });
+      }
+      if (textures.length){
+        if (state.txd) for (const t of state.txd.textures){ if (t._three) t._three.dispose(); t._three = null; t._cv = null; }
+        state.txd = { version: 0x36003, deviceId: 1, textures };
+        state.txdName = snap.txdName || ""; state.demo = false;
+        usedComposite = true;
+        if (!state.model){ state.uvShare = null; clearModel(); }
+      }
+    }
+    /* Ibalik ang edit state sa bawat texture (demo man o uploaded). */
+    const composite = (typeof usedComposite !== "undefined" && usedComposite);
+    if (composite) state.txIncomplete = true; // kulang ang TXD (mga edited lang): naka-pause ang TXD downloads hanggang ma-upload ulit ang original
+    const imgWaits = await applyWorkEntries(snap, false, composite);
+    if (snap.paintColor){
+      state.paintColor = snap.paintColor;
+      const pc2 = $("#paintColor"); if (pc2) pc2.value = snap.paintColor;
+      for (const m of paintMats) m.color.set(state.paintColor);
+    }
+    const curIdx = Math.min(Math.max(0, snap.cur || 0), state.txd.textures.length - 1);
+    selectTexture(curIdx);
+    if (imgWaits.length){
+      await Promise.all(imgWaits);
+      const ct = curTex();
+      if (ct){ drawObjectsTo(cvObj.getContext("2d"), ct); updateComposite(ct); }
+    }
+    updateFileInfo();
+    toast(state.txIncomplete
+      ? "Naibalik ang mga edited na texture mo — pero malaki ang original na TXD, kaya naka-pause ang Download TXD. I-upload ulit ang original na TXD: babalik ang edits mo sa buong file at maa-unlock ang download."
+      : snap.partial
+      ? "Naibalik ang session mo — pero may hindi naisama (malaking file). I-upload ulit ang TXD/DFF para makumpleto."
+      : "Naibalik ang session mo — nandito pa ang mga edit mo, tuloy ka lang.", 4600);
+  } catch(e){ /* sirang snapshot: magpatuloy sa sariwang editor */ }
+}
+
+/* ---------------- downloads ---------------- */
+function download(blob, name){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+/* Build the downloadable TXD (edited textures baked in) without
+   downloading it yet — shared by Download TXD and Download All. */
+function buildTxdItem(){
+  if (!state.txd) return null;
+  saveCurrentPaint(); // make sure the live paint layer is the stored one
+  // Bake each edited texture's composite (base + paint + objects) into its
+  // rgba just for the build, then restore the pristine base so editing can
+  // continue without the edits getting double-baked.
+  const baked = [];
+  try {
+    for (const t of state.txd.textures){
+      if (!t.edited) continue;
+      const comp = texCanvasOf(t);
+      baked.push([t, t.rgba]);
+      t.rgba = comp.getContext("2d").getImageData(0, 0, t.width, t.height).data;
+    }
+    const buf = RW.buildTXD(state.txd);
+    return { blob: new Blob([buf], { type: "application/octet-stream" }),
+             name: state.txdName || "edited.txd",
+             edited: state.txd.textures.filter(x => x.edited).length };
+  } finally { for (const [t, rgba] of baked) t.rgba = rgba; }
+}
+/* Build the downloadable DFF — UV-patched when there are UV edits,
+   otherwise the original uploaded bytes. Shared by both buttons. */
+function buildDffItem(){
+  if (!state.dffBuffer) return null;
+  if (state.model && state.uvEdits && state.uvEdits.size){
+    let n = 0; for (const m of state.uvEdits.values()) n += m.size;
+    const buf = RW.buildPatchedDFF(state.dffBuffer, state.model, state.uvEdits);
+    return { blob: new Blob([buf], { type: "application/octet-stream" }),
+             name: state.dffName || "model.dff", uvVerts: n };
+  }
+  return { blob: new Blob([state.dffBuffer], { type: "application/octet-stream" }),
+           name: state.dffName || "model.dff", uvVerts: 0 };
+}
+function txIncompleteMsg(){
+  return uiLang() === "en"
+    ? "Download paused: the TXD restored from your session is incomplete because the original file was large. Re-upload the original TXD — your edits will be re-applied to the complete file and downloads unlock."
+    : "Naka-pause ang download: hindi kumpleto ang TXD na naibalik mula sa session dahil malaki ang original na file. I-upload ulit ang original na TXD — babalik ang mga edit mo sa buong file at maa-unlock ang download.";
+}
+$("#btnDlTxd").addEventListener("click", () => {
+  if (!state.txd) return;
+  if (state.txIncomplete){ toast(txIncompleteMsg(), 4600); return; }
+  saveWorkNow(); // i-snapshot muna ang trabaho bago ang download flow ng phone
+  try {
+    const item = buildTxdItem();
+    if (!item) return;
+    download(item.blob, item.name);
+    toast(item.edited ? `Na-download ang TXD — ${item.edited} texture ang na-edit (uncompressed), ang iba original pa rin.` :
+                   "Na-download ang TXD (walang binago).", 3400);
+  } catch(err){ toast("Export error: " + err.message, 3400); }
+});
+$("#btnDlDff").addEventListener("click", () => {
+  if (!state.dffBuffer) return;
+  saveWorkNow();
+  try {
+    const item = buildDffItem();
+    if (!item) return;
+    download(item.blob, item.name);
+    if (item.uvVerts) toast(`Na-download ang DFF na may UV edits (${item.uvVerts} vertices ang nabago) — lahat ng ibang bytes, original pa rin.`, 3600);
+  } catch(err){ toast("DFF export error: " + err.message, 3400); }
+});
+
+/* ---------------- download all (isang pindot: TXD + DFF) ---------------- */
+function uiLang(){
+  try { return localStorage.getItem("mavs_txd_lang") === "en" ? "en" : "tl"; }
+  catch(e){ return "tl"; }
+}
+const DLALL_STR = {
+  tl: {
+    both: "Dalawang file ang pinapadala — TXD at DFF. Kung isa lang ang dumating (minsan bina-block ng phone browser ang pangalawang download), pindutin dito ang kulang:",
+    txdOnly: "TXD lang ang pinadala — walang DFF na naka-load pa. Mag-upload ng DFF para maisama siya sa susunod na I-download Lahat. Kung hindi dumating ang TXD, pindutin siya dito:",
+    dffOnly: "DFF lang ang pinadala — walang TXD na naka-load. Kung hindi siya dumating, pindutin siya dito:",
+    dlTxd: "I-download ang TXD", dlDff: "I-download ang DFF", close: "Isara",
+    sentBoth: "I-download Lahat: pinapadala na ang TXD at DFF.",
+    sentOne: "I-download Lahat: pinapadala na ang file.",
+    stillHere: "Nasa editor ka pa rin — hindi nawala ang mga edit mo. Magpatuloy ka lang mag-edit."
+  },
+  en: {
+    both: "Two files are being sent — the TXD and the DFF. If only one arrived (phone browsers sometimes block the second download), tap the missing one here:",
+    txdOnly: "Only the TXD was sent — no DFF is loaded yet. Upload a DFF so the next Download All includes it. If the TXD did not arrive, tap it here:",
+    dffOnly: "Only the DFF was sent — no TXD is loaded. If it did not arrive, tap it here:",
+    dlTxd: "Download the TXD", dlDff: "Download the DFF", close: "Close",
+    sentBoth: "Download All: sending the TXD and DFF.",
+    sentOne: "Download All: sending the file.",
+    stillHere: "You're still in the editor — your edits are untouched. Keep editing."
+  }
+};
+/* The files built by the last Download All tap, kept so the notice's
+   buttons can re-send exactly the same bytes on a fresh tap (a fresh
+   user gesture is never blocked the way a second automatic one can be). */
+let dlAllPending = { txd: null, dff: null };
+function showDlAllNotice(mode){
+  const s = DLALL_STR[uiLang()];
+  const box = $("#dlAllNotice");
+  $("#dlAllMsg").textContent = s[mode] || s.both;
+  const bT = $("#btnDlPendTxd"), bD = $("#btnDlPendDff");
+  bT.classList.toggle("hidden", !dlAllPending.txd);
+  bD.classList.toggle("hidden", !dlAllPending.dff);
+  if (dlAllPending.txd) bT.textContent = "⬇ " + s.dlTxd + " (" + dlAllPending.txd.name + ")";
+  if (dlAllPending.dff) bD.textContent = "⬇ " + s.dlDff + " (" + dlAllPending.dff.name + ")";
+  $("#btnDlNoticeClose").textContent = s.close;
+  box.classList.remove("hidden");
+}
+$("#btnDlPendTxd").addEventListener("click", () => {
+  if (dlAllPending.txd) download(dlAllPending.txd.blob, dlAllPending.txd.name);
+});
+$("#btnDlPendDff").addEventListener("click", () => {
+  if (dlAllPending.dff) download(dlAllPending.dff.blob, dlAllPending.dff.name);
+});
+/* Ang Isara ng notice ay notice lang ang tinatago — hindi nito ginalaw
+   ang gate, ang session, o kahit anong edit state. Mananatili ang user
+   sa editor na buo ang ginawa niya. */
+$("#btnDlNoticeClose").addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  const box = $("#dlAllNotice");
+  if (box.classList.contains("hidden")) return;
+  box.classList.add("hidden");
+  toast(DLALL_STR[uiLang()].stillHere, 3000);
+});
+$("#btnDlAll").addEventListener("click", () => {
+  if (state.txIncomplete){ toast(txIncompleteMsg(), 4600); return; }
+  saveWorkNow(); // i-snapshot muna ang trabaho bago ang download flow ng phone
+  let txdItem = null, dffItem = null;
+  try { txdItem = buildTxdItem(); }
+  catch(err){ toast("TXD export error: " + err.message, 3400); }
+  try { dffItem = buildDffItem(); }
+  catch(err){ toast("DFF export error: " + err.message, 3400); }
+  dlAllPending = { txd: txdItem, dff: dffItem };
+  const items = [txdItem, dffItem].filter(Boolean);
+  if (!items.length) return;
+  // Both downloads fire from this one tap: the first right away, the
+  // second a beat later. If the browser blocks the second one, the
+  // notice below offers it as a fresh tap — a file is never just dropped.
+  download(items[0].blob, items[0].name);
+  if (items[1]) setTimeout(() => download(items[1].blob, items[1].name), 450);
+  showDlAllNotice(txdItem && dffItem ? "both" : txdItem ? "txdOnly" : "dffOnly");
+  const s = DLALL_STR[uiLang()];
+  toast(items.length === 2 ? s.sentBoth : s.sentOne, 3000);
+});
+
+/* ---------------- resize ---------------- */
+function resizeGL(){
+  if (!renderer) return;
+  const w = $("#glwrap"); const r = w.getBoundingClientRect();
+  if (r.width < 2 || r.height < 2) return;
+  renderer.setSize(r.width, r.height);
+  camera.aspect = r.width / r.height; camera.updateProjectionMatrix();
+}
+window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
+
+/* ---------------- init ---------------- */
+(function init(){
+  state.txd = makeDemoTextures();
+  for (const t of state.txd.textures){ t.objects = []; t.undoStack = []; t.redoStack = []; }
+  if (GL_OK){
+    try { initGL(); buildDemoModel(); }
+    catch(e){
+      // WebGL unavailable / context creation failed on this device:
+      // show the notice but keep the texture editor fully working.
+      const ge = $("#glempty");
+      ge.style.display = "flex";
+      ge.innerHTML = "<span>Hindi gumana ang 3D preview sa device na ito.<br/>Pwede ka pa ring mag-edit ng textures sa <b>Edit Texture</b> tab.</span>";
+    }
+  } else {
+    const ge = $("#glempty");
+    ge.style.display = "flex";
+    ge.innerHTML = "<span>Hindi na-load ang 3D preview library (kailangan ng internet sandali).<br/>Pwede ka pa ring mag-edit ng textures sa <b>Edit Texture</b> tab.</span>";
+  }
+  selectTexture(0);
+  renderOptbar();
+  renderParts();
+  updateFileInfo();
+  // Kung reload/pagbalik lang ito sa loob ng parehong session (hal.
+  // pagkatapos mag-download), ibalik ang trabaho mula sa snapshot.
+  restoreWorkSession();
+  // Keep the selection overlay aligned whenever the stage changes size
+  // (panel collapse, rotation, tab switch) — not just on window resize.
+  if (window.ResizeObserver) new ResizeObserver(() => drawOverlay()).observe(stageVp);
+  FONTS.forEach(f => { try { document.fonts.load(`40px "${f}"`, "Ag"); } catch(e){} });
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   XSS TXD gate — loading screen + password entry.
+
+   Password ang hinihingi sa PANIBAGONG session. Pag naipasok na ang
+   tamang password, may session flag sa sessionStorage: hangga't buhay
+   ang session na iyon, ang kahit anong reload o pagbalik — mula sa
+   pag-download ng TXD/DFF, pag-close ng download notice, o pagbalik
+   mula sa background — ay diretso pabalik sa editor, walang password
+   ulit. Ang trabaho mismo ay may sariling session snapshot
+   (mavs_txd_work, tingnan ang "session work snapshot" sa editor
+   script) na nire-restore sa load, kaya buo pa rin ang mga edit kahit
+   ni-reload ng phone ang page.
+
+   Ang sessionStorage ay kusang nawawala pag sinara talaga ang tab /
+   webview o na-force close ang app — doon lang hihingin ulit ang
+   password, at doon lang din nawawala ang hindi pa nada-download na
+   trabaho, tulad ng gusto ng may-ari. Walang permanenteng "unlocked"
+   flag sa localStorage: ang lumang flag ng dating version ay
+   tinatanggal pa rin sa load.
+
+   Ang buong password check ay nasa validateCode() lang sa ibaba.
+   ===================================================================== */
+(function gate(){
+  /* Alisin ang lumang remember-on-device flag ng dating version. */
+  try { localStorage.removeItem("mavs_txd_unlocked"); } catch(e){}
+
+  /* Session flag: buhay lang habang buhay ang tab/webview session. */
+  var SESSION_KEY = "mavs_txd_session";
+  function sessionIsOpen(){
+    try { return sessionStorage.getItem(SESSION_KEY) === "1"; } catch(e){ return false; }
+  }
+  function markSessionOpen(){
+    try { sessionStorage.setItem(SESSION_KEY, "1"); } catch(e){}
+  }
+
+  /* --- THE password check --- */
+  function validateCode(code){
+    return String(code == null ? "" : code).trim() === "2607";
+  }
+
+  var gateEl = document.getElementById("gate");
+  var cardEl = document.getElementById("gateCard");
+  var loadingEl = document.getElementById("gateLoading");
+  var formEl = document.getElementById("gateForm");
+  var codeEl = document.getElementById("gateCode");
+  var errorEl = document.getElementById("gateError");
+  if (!gateEl) return;
+
+  /* ---------- Language picker: 🇺🇸 English / 🇵🇭 Tagalog ----------
+     Default ay Tagalog. Ang huling pinili ay naka-save sa localStorage
+     (language preference lang ito — hindi ito ang password/session, na
+     hiwalay na nasa sessionStorage). */
+  var LANG_KEY = "mavs_txd_lang";
+  var STRINGS = {
+    tl: {
+      tag: "TXD editor para sa GTA SA-MP — mag-edit ng textures, i-preview sa 3D, i-download ang TXD at DFF.",
+      status: "Naglo-load ang XSS TXD\u2026",
+      langLabel: "Pumili ng wika",
+      label: "Ilagay ang password",
+      placeholder: "Password mo",
+      placeholderAria: "Ilagay ang password",
+      submit: "Buksan ang XSS TXD",
+      dlAll: "I-download Lahat",
+      error: "Mali ang password \u2014 pakisuri at subukan ulit.",
+      hint: "Makukuha mo ang password kay mavs pag bumili ka ng XSS TXD. Pag naipasok mo na, mananatili kang nasa editor \u2014 mag-download ka man at isara ang notice, hindi ka babalik dito. Hihingin lang ulit ang password sa panibagong bukas ng app."
+    },
+    en: {
+      tag: "TXD editor for GTA SA-MP \u2014 edit textures, preview in 3D, and download your TXD and DFF.",
+      status: "Loading XSS TXD\u2026",
+      langLabel: "Choose language",
+      label: "Enter your password",
+      placeholder: "Your password",
+      placeholderAria: "Enter your password",
+      submit: "Open XSS TXD",
+      dlAll: "Download All",
+      error: "Wrong password \u2014 please check and try again.",
+      hint: "Get the password from mavs when you buy XSS TXD. Once entered, you stay in the editor \u2014 downloading a file and closing the notice won't bring you back here. The password is only asked again on a fresh open of the app."
+    }
+  };
+  var tagEl = document.getElementById("gateTag");
+  var statusEl = document.getElementById("gateStatus");
+  var langLabelEl = document.getElementById("gateLangLabel");
+  var labelEl = document.getElementById("gateLabel");
+  var submitEl = document.getElementById("gateSubmit");
+  var hintEl = document.getElementById("gateHint");
+  var langEnBtn = document.getElementById("langEn");
+  var langTlBtn = document.getElementById("langTl");
+  var currentLang = "tl";
+  try {
+    var savedLang = localStorage.getItem(LANG_KEY);
+    if (savedLang === "en" || savedLang === "tl") currentLang = savedLang;
+  } catch(e){}
+  function applyLang(lang){
+    currentLang = (lang === "en") ? "en" : "tl";
+    var s = STRINGS[currentLang];
+    if (tagEl) tagEl.textContent = s.tag;
+    if (statusEl) statusEl.textContent = s.status;
+    if (langLabelEl) langLabelEl.textContent = s.langLabel;
+    if (labelEl) labelEl.textContent = s.label;
+    if (codeEl) { codeEl.placeholder = s.placeholder; codeEl.setAttribute("aria-label", s.placeholderAria); }
+    if (submitEl) submitEl.textContent = s.submit;
+    var dlAllLbl = document.getElementById("btnDlAllLabel");
+    if (dlAllLbl && s.dlAll) dlAllLbl.textContent = s.dlAll;
+    if (errorEl) errorEl.textContent = s.error;
+    if (hintEl) hintEl.textContent = s.hint;
+    if (langEnBtn) { var onEn = currentLang === "en"; langEnBtn.classList.toggle("on", onEn); langEnBtn.setAttribute("aria-pressed", onEn ? "true" : "false"); }
+    if (langTlBtn) { var onTl = currentLang === "tl"; langTlBtn.classList.toggle("on", onTl); langTlBtn.setAttribute("aria-pressed", onTl ? "true" : "false"); }
+    try { document.documentElement.lang = currentLang === "en" ? "en" : "tl"; } catch(e){}
+    try { localStorage.setItem(LANG_KEY, currentLang); } catch(e){}
+  }
+  if (langEnBtn) langEnBtn.addEventListener("click", function(){ applyLang("en"); });
+  if (langTlBtn) langTlBtn.addEventListener("click", function(){ applyLang("tl"); });
+  applyLang(currentLang);
+
+  var opened = false;
+  function openEditor(){
+    if (opened) return;
+    opened = true;
+    document.body.classList.remove("gate-locked");
+    gateEl.classList.add("done");
+    setTimeout(function(){ gateEl.style.display = "none"; }, 420);
+  }
+
+  /* Ang gate ay hindi pwedeng i-dismiss ng tap sa labas o ng Esc —
+     tamang password lang ang makakapagbukas ng editor. */
+  gateEl.addEventListener("click", function(e){ e.stopPropagation(); });
+  document.addEventListener("keydown", function(e){
+    if (!opened && e.key === "Escape"){ e.preventDefault(); e.stopPropagation(); }
+  }, true);
+
+  formEl.addEventListener("submit", function(e){
+    e.preventDefault();
+    if (validateCode(codeEl.value)){
+      markSessionOpen();
+      errorEl.classList.add("hidden");
+      formEl.classList.add("hidden");
+      loadingEl.style.display = "flex";
+      setTimeout(openEditor, 450);
+    } else {
+      errorEl.classList.remove("hidden");
+      codeEl.select();
+      cardEl.classList.remove("gate-shake");
+      void cardEl.offsetWidth; // restart the shake animation
+      cardEl.classList.add("gate-shake");
+    }
+  });
+  codeEl.addEventListener("input", function(){ errorEl.classList.add("hidden"); });
+
+  /* Loading screen muna (~1.2s). Pag buhay pa ang session — naipasok
+     na ang password at reload/pagbalik lang ito, tulad ng pagkatapos
+     mag-download — diretso sa editor, walang password ulit. Pag
+     panibagong session, password entry ang lalabas. */
+  setTimeout(function(){
+    if (sessionIsOpen()){
+      openEditor();
+      return;
+    }
+    loadingEl.style.display = "none";
+    formEl.classList.remove("hidden");
+    try { codeEl.focus({ preventScroll: true }); } catch(e){ codeEl.focus(); }
+  }, 1200);
+})();
+</script>
+  </body>
+</html>
