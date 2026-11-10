@@ -213,6 +213,26 @@
       .gate-lang-label{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.05em; text-transform:uppercase; text-align:center; margin:0;}
       .gate-shake{animation:gateShake .35s ease;}
       @keyframes gateShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-7px);}75%{transform:translateX(7px);}}
+      /* ---------- Legal / Privacy popup (unang lumalabas, bago ang loading at password) ---------- */
+      #legalPopup{position:fixed; inset:0; z-index:2000; background:#000; color:var(--txt);
+        display:flex; align-items:center; justify-content:center; padding:18px 14px calc(18px + env(safe-area-inset-bottom));
+        opacity:1; transition:opacity .3s ease; overflow-y:auto;}
+      #legalPopup.done{opacity:0; pointer-events:none;}
+      .legal-card{width:100%; max-width:520px; background:var(--panel); border:1px solid var(--line); border-radius:16px;
+        padding:22px 20px 20px; display:flex; flex-direction:column; gap:14px; max-height:94dvh; margin:auto;}
+      .legal-logo{font-family:"Russo One",sans-serif; font-size:28px; line-height:1.05; letter-spacing:.02em; text-align:center;}
+      .legal-logo span{color:var(--accent);}
+      .legal-title{margin:0; font-size:19px; line-height:1.3; text-align:center; font-weight:800;}
+      .legal-body{overflow-y:auto; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; gap:14px; padding-right:2px; min-height:0;}
+      .legal-body h3{margin:0 0 6px; font-size:13px; letter-spacing:.04em; text-transform:uppercase; color:var(--accent); font-weight:800;}
+      .legal-body p, .legal-body li{font-size:13.5px; line-height:1.6; color:#d8d8de;}
+      .legal-body p{margin:0;}
+      .legal-body ul{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:5px;}
+      .legal-credits{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:12px 14px; text-align:center;}
+      .legal-credits p{margin:0; font-size:14px; line-height:1.6; color:var(--txt);}
+      .legal-credits b{color:var(--accent);}
+      #legalContinue{width:100%; min-height:54px; font-size:15.5px; border-radius:12px; flex:none;}
+      .legal-note{margin:0; font-size:12px; color:var(--dim); text-align:center; line-height:1.5;}
       @media (prefers-reduced-motion: reduce){
         .gate-spinner{animation-duration:2.4s;}
         .gate-bar-fill{animation:none; width:100%;}
@@ -241,6 +261,44 @@
     </style>
   </head>
   <body class="gate-locked">
+    <!-- Legal / Privacy popup: ITO ang unang lumalabas sa bawat bukas ng
+         app — bago ang loading screen at bago ang password. Walang
+         naka-save na dismissal: bawat fresh open, lalabas ulit ito.
+         Pag pinindot ang continue button, saka lang magsisimula ang
+         loading ng gate, tapos ang password form. -->
+    <div id="legalPopup" role="dialog" aria-modal="true" aria-labelledby="legalTitle">
+      <div class="legal-card">
+        <div class="legal-logo">XSS <span>TXD</span></div>
+        <h2 class="legal-title" id="legalTitle">Privacy, Legal at Credits</h2>
+        <div class="legal-body" id="legalBody">
+          <section>
+            <h3>🔒 Privacy</h3>
+            <ul>
+              <li>Gumagana ang XSS TXD nang buo sa browser ng device mo — walang server na pinapadalhan ng files mo.</li>
+              <li>Ang mga DFF at TXD file na ina-upload mo ay <b>hindi umaalis sa device mo</b>. Dito lang sila binubuksan, ine-edit, at dina-download.</li>
+              <li>Walang personal na data na kinokolekta, walang tracking o analytics, at walang account na kailangan.</li>
+              <li>Ang mga edit mo ay nasa session lang ng browser mo habang bukas ang app — nawawala sila pag sinara mo talaga ang app/tab.</li>
+            </ul>
+          </section>
+          <section>
+            <h3>⚖️ Legal</h3>
+            <ul>
+              <li>Tool lang ito para mag-edit ng <b>sarili mong files</b>. Mag-edit lang ng files na pag-aari mo o may karapatan kang baguhin.</li>
+              <li>Ikaw ang responsable sa mga mod na ginagawa at ginagamit mo, at sa pagsunod sa rules ng game at ng server na pinaglalaruan mo.</li>
+              <li>Ang XSS TXD ay <b>hindi affiliated o endorsed</b> ng Rockstar Games, Take-Two Interactive, Grand Theft Auto: San Andreas, SA-MP, o open.mp.</li>
+              <li>Lahat ng pangalan ng game, logos, at trademarks ay pag-aari ng kani-kanilang may-ari.</li>
+              <li>Walang warranty ang app na ito — <b>use at your own risk</b>. Hindi mananagot ang developer sa anumang sira ng file, problema sa game, o ban na maaaring idulot ng paggamit ng mga na-edit na file.</li>
+              <li>Pag pinindot mo ang button sa ibaba, ibig sabihin nabasa mo at sinasang-ayunan mo ang lahat ng nakasulat dito.</li>
+            </ul>
+          </section>
+          <section class="legal-credits" aria-label="Credits">
+            <p>Developer: <b>mavs</b><br/>Owner: <b>mavs</b></p>
+          </section>
+        </div>
+        <button type="button" class="primary" id="legalContinue">Naiintindihan ko — Magpatuloy</button>
+        <p class="legal-note" id="legalNote">Pag nagpatuloy ka, lalabas ang loading screen at hihingin ang password mo.</p>
+      </div>
+    </div>
     <!-- XSS TXD gate: loading screen muna, tapos password entry sa
          panibagong session. Pag naipasok na ang password, ang session ay
          naka-save sa sessionStorage — ang reload, pagbalik mula sa
@@ -2151,7 +2209,9 @@ function drawOverlay(){
   g.beginPath(); g.arc(rp.x, rp.y, 9, 0, 7); g.fill();
   g.fillStyle = "#161006"; g.font = "bold 11px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("⟳", rp.x, rp.y + .5);
   // resize handle (bottom-right) — malaking parisukat na madaling tamaan
-  // ng daliri sa phone (ang hit test nito ay 28px radius, ~56px target)
+  // ng daliri sa phone (ang hit test nito ay 20px radius — sapat para
+  // tamaan ang handle, pero hindi nito sakop ang katawan ng maliit na
+  // object, kaya ang paghawak sa object mismo ay MOVE, hindi resize)
   const br = corners[2];
   g.fillStyle = "#ffb02e"; g.fillRect(br.x - 13, br.y - 13, 26, 26);
   g.strokeStyle = "#161006"; g.lineWidth = 1.6; g.strokeRect(br.x - 13, br.y - 13, 26, 26);
@@ -2217,8 +2277,18 @@ $("#btnRedo").addEventListener("click", () => {
 <script>
 "use strict";
 /* ---------------- pointer interaction on the stage ---------------- */
+/* Ang drag state ay nakakabit LANG sa aktibong drag (drag.pid = ang
+   daliring may-ari nito). Walang persistent na listahan ng pointers:
+   ang dating stagePtrs Map ay puwedeng mag-leak ng entry kapag may
+   pointerup/cancel na hindi dumating (o kapag nag-throw ang
+   setPointerCapture sa ilang phone browser) — at kapag nangyari iyon,
+   LAHAT ng sumunod na touch ay tinuturing na "pangalawang daliri" at
+   kinakansela: hindi na magagalaw ang text/image AT hindi na rin
+   mai-pan ang texture kahit i-off ang lock. Dito, ang bawat bagong
+   gesture ay nagsisimula sa malinis na state: kung may naiwang lumang
+   drag, kinakansela lang ito ng bagong touch at tuloy ang bagong
+   drag — walang naiipong sira sa pagitan ng mga gesture. */
 let drag = null;
-const stagePtrs = new Map();
 
 /* Hit test ng objects. Ang naka-LOCK na object ay hindi nasasali by
    default: hindi siya mapipili o magagalaw sa canvas (ang tap ay
@@ -2263,35 +2333,45 @@ function paintStroke(from, to){
 }
 stageVp.addEventListener("pointerdown", e => {
   const t = curTex(); if (!t) return;
-  stageVp.setPointerCapture(e.pointerId);
-  stagePtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  // Ang capture ay pang-ginhawa lang (para tuloy ang drag kahit lumabas
+  // ang daliri sa stage) — HINDI ito dapat makapatay ng buong touch
+  // kapag nag-throw ang browser, kaya naka-try/catch ito. Kung walang
+  // capture, bubbling pa rin ang events papunta sa stageVp.
+  try { stageVp.setPointerCapture(e.pointerId); } catch(err){ /* tuloy lang */ }
   { const r = stageVp.getBoundingClientRect(); stagePtrPos = { x: e.clientX - r.left, y: e.clientY - r.top }; }
-  if (stagePtrs.size > 1){
+  if (drag && drag.mode === "ignore"){
+    // May kinanselang gesture na hindi pa tapos: huwag pansinin ang
+    // bagong daliri hanggang maiangat ang isa sa mga nauna (ang
+    // pointerup/cancel ng alinman ay naglilinis ng ignore state).
+    return;
+  }
+  if (drag && drag.pid != null && e.pointerId !== drag.pid){
     // WALANG pinch sa Edit mode — ang zoom ay sa panel slider lang.
     // Ang pangalawang daliri ay CANCEL: ibalik ang anumang in-progress
     // na drag/paint/UV sa simula nito (para walang maiwang half-finished
     // na edit na walang undo), tapos huwag pansinin ang lahat ng galaw
-    // hanggang maiangat ang lahat ng daliri.
-    if (drag && drag.mode === "uvmove" && drag.moved) rollbackUvOp(drag.op);
-    if (drag && drag.mode === "paint" && drag.snapPre && drag.snapPre.paint){
+    // hanggang maiangat ang alinmang daliri.
+    if (drag.mode === "uvmove" && drag.moved) rollbackUvOp(drag.op);
+    if (drag.mode === "paint" && drag.snapPre && drag.snapPre.paint){
       const pg = cvPaint.getContext("2d");
       pg.clearRect(0, 0, t.width, t.height);
       pg.drawImage(drag.snapPre.paint, 0, 0);
     }
-    if (drag && drag.orig && drag.moved){
+    if (drag.orig && drag.moved){
       Object.assign(drag.o, drag.orig);
       drawObjectsTo(cvObj.getContext("2d"), t); drawOverlay();
     }
     drag = { mode: "ignore" }; return;
   }
+  if (drag && drag.pid === e.pointerId) drag = null; // duplicate down ng parehong daliri: simula ulit, huwag ma-stuck
   const p = screenToTex(e);
   if (state.uvMode){
-    drag = { mode: "uvmove", last: p, op: uvBeginOp(), moved: false };
+    drag = { mode: "uvmove", pid: e.pointerId, last: p, op: uvBeginOp(), moved: false };
     return;
   }
   if (state.tool === "brush" || state.tool === "eraser"){
     e.preventDefault();
-    drag = { mode: "paint", last: p, moved: true, snapPre: snapshot() };
+    drag = { mode: "paint", pid: e.pointerId, last: p, moved: true, snapPre: snapshot() };
     paintStroke(p, p);
     drawOverlay();
     return;
@@ -2305,15 +2385,15 @@ stageVp.addEventListener("pointerdown", e => {
   if (o && !o.locked && o._handles){
     const r = stageVp.getBoundingClientRect();
     const sx = e.clientX - r.left, sy = e.clientY - r.top;
-    if (Math.hypot(sx - o._handles.rotate.x, sy - o._handles.rotate.y) < 28){
-      drag = { mode: "rotate", o, cx: o.x, cy: o.y,
+    if (Math.hypot(sx - o._handles.rotate.x, sy - o._handles.rotate.y) < 20){
+      drag = { mode: "rotate", pid: e.pointerId, o, cx: o.x, cy: o.y,
                startAng: Math.atan2(p.y - o.y, p.x - o.x) * 180/Math.PI, startRot: o.rot, snap: snapshot(),
                orig: { x: o.x, y: o.y, rot: o.rot, size: o.size, w: o.w, h: o.h } };
       return;
     }
-    if (Math.hypot(sx - o._handles.resize.x, sy - o._handles.resize.y) < 28){
+    if (Math.hypot(sx - o._handles.resize.x, sy - o._handles.resize.y) < 20){
       const box = objBox(o);
-      drag = { mode: "resize", o, startDist: Math.max(8, Math.hypot(p.x - o.x, p.y - o.y)),
+      drag = { mode: "resize", pid: e.pointerId, o, startDist: Math.max(8, Math.hypot(p.x - o.x, p.y - o.y)),
                startW: box.w, startH: box.h, startSize: o.size, snap: snapshot(),
                orig: { x: o.x, y: o.y, rot: o.rot, size: o.size, w: o.w, h: o.h } };
       return;
@@ -2328,14 +2408,14 @@ stageVp.addEventListener("pointerdown", e => {
     // but a drag no longer lands on a dead first touch that only
     // selects — the old two-step rule is what made moving text feel
     // unresponsive. orig lets a cancel (second finger) roll the drag back.
-    drag = { mode: "move", o: hit, dx: p.x - hit.x, dy: p.y - hit.y, snap: snapshot(), moved: false, sx: e.clientX, sy: e.clientY,
+    drag = { mode: "move", pid: e.pointerId, o: hit, dx: p.x - hit.x, dy: p.y - hit.y, snap: snapshot(), moved: false, sx: e.clientX, sy: e.clientY,
              orig: { x: hit.x, y: hit.y, rot: hit.rot, size: hit.size, w: hit.w, h: hit.h } };
   } else if (hitObject(p, true)){
     // Locked object ang tinamaan at walang unlocked na object sa
     // ibabaw niya: hindi siya mapipili o magagalaw dito — paliwanag
     // lang. Para i-unlock: piliin siya sa Layers panel, tapos LOCK.
     if (state.sel){ state.sel = null; renderOptbar(); }
-    drag = { mode: "none" };
+    drag = { mode: "none", pid: e.pointerId };
     toast("Naka-lock ang object — hindi siya magagalaw. Para i-unlock: piliin sa Layers panel, tapos pindutin ang LOCK.", 3200);
   } else {
     if (state.sel){ state.sel = null; renderOptbar(); }
@@ -2343,13 +2423,15 @@ stageVp.addEventListener("pointerdown", e => {
     // nothing — the texture NEVER moves while editing. Walang pinch,
     // two-finger pan, o double-tap dito: ang zoom at fit ay nasa panel
     // lang (slider, +/−, Fit button). Lock OFF restores one-finger pan.
-    drag = { mode: state.viewLock ? "tapwatch" : "pan", sx: e.clientX, sy: e.clientY,
+    // TANDAAN: ang Texture lock ay para sa EMPTY space lang — ang mga
+    // text/image object ay hindi nito sakop at lagi silang mai-drag
+    // (ang humaharang lang sa kanila ay ang sarili nilang LOCK).
+    drag = { mode: state.viewLock ? "tapwatch" : "pan", pid: e.pointerId, sx: e.clientX, sy: e.clientY,
              tx: state.view.tx, ty: state.view.ty, empty: true, t0: performance.now() };
   }
   drawOverlay();
 });
 stageVp.addEventListener("pointermove", e => {
-  if (stagePtrs.has(e.pointerId)) stagePtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
   const r = stageVp.getBoundingClientRect();
   stagePtrPos = { x: e.clientX - r.left, y: e.clientY - r.top };
   if (!drag){
@@ -2358,6 +2440,10 @@ stageVp.addEventListener("pointermove", e => {
     return;
   }
   if (drag.mode === "ignore") return;
+  // Ang may-ari lang ng drag ang makakagalaw nito — ang galaw ng ibang
+  // daliri (o ng mouse habang may touch) ay hindi ito gagalawin o
+  // puputulin.
+  if (drag.pid != null && e.pointerId !== drag.pid) return;
   const t = curTex(); if (!t) return;
   const p = screenToTex(e);
   if (drag.mode === "paint"){
@@ -2399,8 +2485,13 @@ stageVp.addEventListener("pointermove", e => {
   }
 });
 function endStagePointer(e){
-  stagePtrs.delete(e.pointerId);
   if (!drag) return;
+  // Kinanselang gesture: alinmang daliri ang maiangat, tapos na ang
+  // ignore — malinis na ulit ang state para sa susunod na touch.
+  if (drag.mode === "ignore"){ drag = null; return; }
+  // Ang pointerup/cancel ng IBANG daliri ay hindi nagtatapos ng drag
+  // ng may-ari nito.
+  if (drag.pid != null && e.pointerId !== drag.pid) return;
   const t = curTex();
   if (drag.mode === "uvmove"){
     if (drag.moved){ uvCommitOp(drag.op); toast("Nailipat ang UV ng napiling parte."); }
@@ -2423,6 +2514,10 @@ function endStagePointer(e){
 }
 stageVp.addEventListener("pointerup", endStagePointer);
 stageVp.addEventListener("pointercancel", endStagePointer);
+/* Kapag nawala ang capture (hal. na-interrupt ang touch ng system),
+   ituring na ring katapusan ng pointer — para walang drag state na
+   maiwang nakabitin at makaharang sa mga susunod na touch. */
+stageVp.addEventListener("lostpointercapture", endStagePointer);
 stageVp.addEventListener("pointerleave", () => { stagePtrPos = null; drawOverlay(); });
 /* Walang scroll-wheel zoom at walang double-tap/dblclick fit sa Edit
    mode — slider / + / − / Fit BUTTON lang sa panel ang gagalaw sa zoom
@@ -2436,7 +2531,8 @@ function addTextObject(x, y){
   const s = state.text;
   const o = { type: "text", text: s.value || "TEXT", font: s.font, size: s.size,
     color: s.color, outlineColor: s.outlineColor, outlineWidth: s.outlineWidth,
-    x: x != null ? x : t.width/2, y: y != null ? y : t.height/2, rot: 0, opacity: 1, flipH: false, flipV: false, hidden: false };
+    x: x != null ? x : t.width/2, y: y != null ? y : t.height/2, rot: 0, opacity: 1, flipH: false, flipV: false, hidden: false,
+    locked: false }; // bagong object: LAGING magagalaw — ang Texture lock ay hindi kailanman nagla-lock ng object
   // Bagong text: paliitin muna para mga 1/3 lang ng lapad ng texture ang
   // sakop (dati halos buong texture ang natatakpan), tapos i-clamp sa loob.
   objBox(o);
@@ -2456,7 +2552,8 @@ function addImageObject(img){
   const maxW = t.width * 0.6;
   const sc = Math.min(1, maxW / img.naturalWidth);
   const o = { type: "image", img, w: img.naturalWidth * sc, h: img.naturalHeight * sc,
-    x: t.width/2, y: t.height/2, rot: 0, opacity: 1, flipH: false, flipV: false, hidden: false };
+    x: t.width/2, y: t.height/2, rot: 0, opacity: 1, flipH: false, flipV: false, hidden: false,
+    locked: false }; // bagong object: LAGING magagalaw — ang Texture lock ay hindi kailanman nagla-lock ng object
   clampObjToTex(o, t); // matangkad na larawan: paliitin para pasok sa texture
   (t.objects = t.objects || []).push(o);
   state.sel = o;
@@ -2525,7 +2622,7 @@ function renderOptbar(){
       <button id="optDel" type="button">Burahin</button></div></div>`;
   }
   if (!o && state.tool === "move"){
-    html += `<span style="font-size:12.5px;color:var(--dim)">I-tap ang object para piliin, i-drag agad para igalaw ito lang · Zoom: slider o +/− sa panel · Fit button: balik sa fit · Texture lock ON: hindi gagalaw ang texture sa drag.</span>
+    html += `<span style="font-size:12.5px;color:var(--dim)">I-tap ang object para piliin, i-drag agad para igalaw ito lang · Zoom: slider o +/− sa panel · Fit button: balik sa fit · Texture lock ON: ang bakanteng lugar lang ang hindi gagalaw — ang text/image na nilagay mo, lagi mong mai-drag kahit naka-ON ito. Ang LOCK button lang ang nagla-lock ng isang object.</span>
       <div class="grp"><label class="lbl">&nbsp;</label><button id="optResetTex" type="button">I-reset ang texture</button></div>`;
   }
   bar.innerHTML = html;
@@ -3186,7 +3283,7 @@ $("#btnTexLock").addEventListener("click", () => {
   state.viewLock = !state.viewLock;
   syncTexLockBtn();
   toast(state.viewLock
-    ? "Texture lock ON: hindi gagalaw ang texture habang nag-e-edit — kahit i-drag mo ang bakanteng lugar. Zoom = slider o +/− sa panel."
+    ? "Texture lock ON: hindi gagalaw ang texture habang nag-e-edit — kahit i-drag mo ang bakanteng lugar. Zoom = slider o +/− sa panel. Ang text/image na nilagay mo ay HINDI kasama dito — lagi mong mai-drag ang mga iyon."
     : "Texture lock OFF: pwede nang i-drag ang bakanteng lugar para i-pan ang texture.", 3400);
 });
 $("#btnUVMode").addEventListener("click", () => setUvMode(!state.uvMode));
@@ -3801,7 +3898,11 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       submit: "Buksan ang XSS TXD",
       dlAll: "I-download Lahat",
       error: "Mali ang password \u2014 pakisuri at subukan ulit.",
-      hint: "Makukuha mo ang password kay mavs pag bumili ka ng XSS TXD. Pag naipasok mo na, mananatili kang nasa editor \u2014 mag-download ka man at isara ang notice, hindi ka babalik dito. Hihingin lang ulit ang password sa panibagong bukas ng app."
+      hint: "Makukuha mo ang password kay mavs pag bumili ka ng XSS TXD. Pag naipasok mo na, mananatili kang nasa editor \u2014 mag-download ka man at isara ang notice, hindi ka babalik dito. Hihingin lang ulit ang password sa panibagong bukas ng app.",
+      legalTitle: "Privacy, Legal at Credits",
+      legalBtn: "Naiintindihan ko \u2014 Magpatuloy",
+      legalNote: "Pag nagpatuloy ka, lalabas ang loading screen at hihingin ang password mo.",
+      legalBody: "<section><h3>\uD83D\uDD12 Privacy</h3><ul><li>Gumagana ang XSS TXD nang buo sa browser ng device mo \u2014 walang server na pinapadalhan ng files mo.</li><li>Ang mga DFF at TXD file na ina-upload mo ay <b>hindi umaalis sa device mo</b>. Dito lang sila binubuksan, ine-edit, at dina-download.</li><li>Walang personal na data na kinokolekta, walang tracking o analytics, at walang account na kailangan.</li><li>Ang mga edit mo ay nasa session lang ng browser mo habang bukas ang app \u2014 nawawala sila pag sinara mo talaga ang app/tab.</li></ul></section><section><h3>\u2696\uFE0F Legal</h3><ul><li>Tool lang ito para mag-edit ng <b>sarili mong files</b>. Mag-edit lang ng files na pag-aari mo o may karapatan kang baguhin.</li><li>Ikaw ang responsable sa mga mod na ginagawa at ginagamit mo, at sa pagsunod sa rules ng game at ng server na pinaglalaruan mo.</li><li>Ang XSS TXD ay <b>hindi affiliated o endorsed</b> ng Rockstar Games, Take-Two Interactive, Grand Theft Auto: San Andreas, SA-MP, o open.mp.</li><li>Lahat ng pangalan ng game, logos, at trademarks ay pag-aari ng kani-kanilang may-ari.</li><li>Walang warranty ang app na ito \u2014 <b>use at your own risk</b>. Hindi mananagot ang developer sa anumang sira ng file, problema sa game, o ban na maaaring idulot ng paggamit ng mga na-edit na file.</li><li>Pag pinindot mo ang button sa ibaba, ibig sabihin nabasa mo at sinasang-ayunan mo ang lahat ng nakasulat dito.</li></ul></section><section class=\"legal-credits\" aria-label=\"Credits\"><p>Developer: <b>mavs</b><br/>Owner: <b>mavs</b></p></section>"
     },
     en: {
       tag: "TXD editor for GTA SA-MP \u2014 edit textures, preview in 3D, and download your TXD and DFF.",
@@ -3813,7 +3914,11 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       submit: "Open XSS TXD",
       dlAll: "Download All",
       error: "Wrong password \u2014 please check and try again.",
-      hint: "Get the password from mavs when you buy XSS TXD. Once entered, you stay in the editor \u2014 downloading a file and closing the notice won't bring you back here. The password is only asked again on a fresh open of the app."
+      hint: "Get the password from mavs when you buy XSS TXD. Once entered, you stay in the editor \u2014 downloading a file and closing the notice won't bring you back here. The password is only asked again on a fresh open of the app.",
+      legalTitle: "Privacy, Legal & Credits",
+      legalBtn: "I Understand \u2014 Continue",
+      legalNote: "When you continue, the loading screen will appear and your password will be asked.",
+      legalBody: "<section><h3>\uD83D\uDD12 Privacy</h3><ul><li>XSS TXD runs fully in your device's browser \u2014 your files are never sent to any server.</li><li>The DFF and TXD files you upload <b>never leave your device</b>. They are only opened, edited, and downloaded here.</li><li>No personal data is collected, there is no tracking or analytics, and no account is needed.</li><li>Your edits live only in your browser session while the app is open \u2014 they are gone when you truly close the app/tab.</li></ul></section><section><h3>\u2696\uFE0F Legal</h3><ul><li>This is a tool for editing <b>your own files</b>. Only edit files you own or have the right to modify.</li><li>You are responsible for the mods you make and use, and for following the rules of the game and of the server you play on.</li><li>XSS TXD is <b>not affiliated with or endorsed by</b> Rockstar Games, Take-Two Interactive, Grand Theft Auto: San Andreas, SA-MP, or open.mp.</li><li>All game names, logos, and trademarks belong to their respective owners.</li><li>This app comes with no warranty \u2014 <b>use at your own risk</b>. The developer is not liable for any file damage, game problem, or ban that using edited files may cause.</li><li>By pressing the button below, you confirm that you have read and agree to everything written here.</li></ul></section><section class=\"legal-credits\" aria-label=\"Credits\"><p>Developer: <b>mavs</b><br/>Owner: <b>mavs</b></p></section>"
     }
   };
   var tagEl = document.getElementById("gateTag");
@@ -3824,6 +3929,10 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   var hintEl = document.getElementById("gateHint");
   var langEnBtn = document.getElementById("langEn");
   var langTlBtn = document.getElementById("langTl");
+  var legalTitleEl = document.getElementById("legalTitle");
+  var legalBodyEl = document.getElementById("legalBody");
+  var legalBtnEl = document.getElementById("legalContinue");
+  var legalNoteEl = document.getElementById("legalNote");
   var currentLang = "tl";
   try {
     var savedLang = localStorage.getItem(LANG_KEY);
@@ -3842,6 +3951,10 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     if (dlAllLbl && s.dlAll) dlAllLbl.textContent = s.dlAll;
     if (errorEl) errorEl.textContent = s.error;
     if (hintEl) hintEl.textContent = s.hint;
+    if (legalTitleEl && s.legalTitle) legalTitleEl.textContent = s.legalTitle;
+    if (legalBodyEl && s.legalBody) legalBodyEl.innerHTML = s.legalBody;
+    if (legalBtnEl && s.legalBtn) legalBtnEl.textContent = s.legalBtn;
+    if (legalNoteEl && s.legalNote) legalNoteEl.textContent = s.legalNote;
     if (langEnBtn) { var onEn = currentLang === "en"; langEnBtn.classList.toggle("on", onEn); langEnBtn.setAttribute("aria-pressed", onEn ? "true" : "false"); }
     if (langTlBtn) { var onTl = currentLang === "tl"; langTlBtn.classList.toggle("on", onTl); langTlBtn.setAttribute("aria-pressed", onTl ? "true" : "false"); }
     try { document.documentElement.lang = currentLang === "en" ? "en" : "tl"; } catch(e){}
@@ -3885,19 +3998,54 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   });
   codeEl.addEventListener("input", function(){ errorEl.classList.add("hidden"); });
 
-  /* Loading screen muna (~1.2s). Pag buhay pa ang session — naipasok
-     na ang password at reload/pagbalik lang ito, tulad ng pagkatapos
-     mag-download — diretso sa editor, walang password ulit. Pag
-     panibagong session, password entry ang lalabas. */
-  setTimeout(function(){
-    if (sessionIsOpen()){
-      openEditor();
-      return;
+  /* Legal / Privacy popup muna — bago ang loading at bago ang password.
+     Walang naka-save na dismissal (walang localStorage/sessionStorage
+     flag para dito): bawat bukas ng page, lalabas ulit ang popup.
+     Ang loading block ng gate ay nakatago habang nakabukas ang popup
+     (ang popup mismo ay opaque at nasa ibabaw ng lahat), at saka lang
+     magsisimula ang loading timer pag pinindot ang continue. */
+  var legalEl = document.getElementById("legalPopup");
+  var legalDone = false;
+  function startGateFlow(){
+    /* Loading screen muna (~1.2s). Pag buhay pa ang session — naipasok
+       na ang password at reload/pagbalik lang ito, tulad ng pagkatapos
+       mag-download — diretso sa editor, walang password ulit. Pag
+       panibagong session, password entry ang lalabas. */
+    setTimeout(function(){
+      if (sessionIsOpen()){
+        openEditor();
+        return;
+      }
+      loadingEl.style.display = "none";
+      formEl.classList.remove("hidden");
+      try { codeEl.focus({ preventScroll: true }); } catch(e){ codeEl.focus(); }
+    }, 1200);
+  }
+  function dismissLegal(){
+    if (legalDone) return;
+    legalDone = true;
+    if (legalEl){
+      legalEl.classList.add("done");
+      setTimeout(function(){ legalEl.style.display = "none"; }, 320);
     }
+    loadingEl.style.display = "flex";
+    /* I-restart ang loading bar animation para buo siyang makita
+       pagkatapos ng popup, gaano man katagal binasa ng user ito. */
+    var fillEl = gateEl.querySelector(".gate-bar-fill");
+    if (fillEl){ fillEl.style.animation = "none"; void fillEl.offsetWidth; fillEl.style.animation = ""; }
+    startGateFlow();
+  }
+  if (legalEl && legalBtnEl){
+    /* Ang loading block lang ang nakatago habang bukas ang popup —
+       ang gate mismo ay nananatili sa layout (natatakpan nang buo ng
+       opaque na popup), para pag-dismiss, loading ang unang makikita. */
     loadingEl.style.display = "none";
-    formEl.classList.remove("hidden");
-    try { codeEl.focus({ preventScroll: true }); } catch(e){ codeEl.focus(); }
-  }, 1200);
+    legalEl.addEventListener("click", function(e){ e.stopPropagation(); });
+    legalBtnEl.addEventListener("click", dismissLegal);
+    try { legalBtnEl.focus({ preventScroll: true }); } catch(e){}
+  } else {
+    startGateFlow();
+  }
 })();
 </script>
   </body>
