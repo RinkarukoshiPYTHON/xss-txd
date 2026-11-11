@@ -43,29 +43,64 @@
       input[type=range]{accent-color:var(--accent); height:44px;}
       label.lbl{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.04em; text-transform:uppercase;}
 
-      /* ---------- top bar ---------- */
-      header#topbar{display:flex; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid var(--line); background:var(--panel); flex-wrap:wrap;}
-      #brand{font-family:"Russo One",sans-serif; font-size:17px; letter-spacing:.02em; margin-right:2px; white-space:nowrap;}
+      /* ---------- top bar / toolbar ---------- */
+      header#topbar{display:flex; align-items:center; gap:6px; padding:8px; border-bottom:1px solid var(--line); background:var(--panel); flex-wrap:wrap; position:relative;}
+      #brand{font-family:"Russo One",sans-serif; font-size:16px; letter-spacing:.02em; white-space:nowrap; order:1; flex:1;}
       #brand b{color:var(--accent);}
-      #fileinfo{font-size:11px; color:var(--dim); width:100%; order:5; line-height:1.4; overflow-wrap:anywhere;}
-      .topbtns{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+      .topbtns{display:flex; gap:6px; flex-wrap:wrap; align-items:center; order:2; width:100%;}
       .topbtns .spacer{flex:1;}
+      header#topbar .topbtns button{min-height:40px; padding:0 10px; font-size:13px; border-radius:10px; gap:6px;}
+      header#topbar .topbtns button svg{width:17px; height:17px;}
+      #topbar .topbtns button.dots-btn{font-size:18px;}
+      /* ---------- ⓘ info buttons + guide bubbles ----------
+         Lahat ng guide/helper text ay nakatago by default; lilitaw lang
+         bilang maliit na bubble sa ilalim ng kinauukulang control pag
+         pinindot ang katabing ⓘ. Ang .infopop ang bubble; ang button na
+         may data-pop ang toggle nito. */
+      button.infobtn{width:26px; height:26px; min-height:26px; padding:0; border-radius:50%; background:transparent; color:var(--accent); flex:none;}
+      button.infobtn svg{width:15px; height:15px;}
+      button.infobtn.on{background:#2b2008; border-color:var(--accent);}
+      #topbar .topbtns button.infobtn{width:26px; height:26px; min-height:26px; padding:0; border-radius:50%;}
+      #topbar .topbtns button.infobtn svg{width:15px; height:15px;}
+      .infopop{display:none;}
+      .infopop.open{display:block;}
+      #fileinfo{font-size:12.5px; color:var(--dim); width:100%; order:6; line-height:1.5; overflow-wrap:anywhere;
+        background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px 10px;}
+      #popZip{font-size:12.5px; color:var(--dim); width:100%; order:7; line-height:1.5; overflow-wrap:anywhere;
+        background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px 10px;}
+      #glhint button.chip{color:var(--accent); padding:0 13px;}
+      #glhint button.chip svg{width:17px; height:17px;}
+      #glhint button.chip.on{border-color:var(--accent); background:#2b2008;}
+      #glhint .glpop{flex:1 1 100%; order:5; background:var(--panel2); border:1px solid var(--line); border-radius:12px;
+        padding:8px 12px; font-size:12.5px; color:var(--dim); line-height:1.5;}
+      .obj3d-head button.infobtn{width:26px; height:26px; min-height:26px; padding:0; border-radius:50%;}
+      /* Edit Texture: ang mga guide text ng optbar ay nasa ⓘ bubbles na
+         rin (tulad ng v23 sa 3D Preview) — sariling row sa ilalim ng mga
+         control pag binuksan, para lumaki ang stage. */
+      #optbar .infopop{flex:1 1 100%; font-size:12.5px; color:var(--dim); line-height:1.5; overflow-wrap:anywhere;
+        background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px 10px;}
+      #optbar button.infobtn.on{background:#2b2008; border-color:var(--accent); color:var(--accent);}
 
       /* ---------- tabs ---------- */
       #tabs{display:flex; gap:6px; padding:8px 10px 0;}
-      #tabs button{flex:1; border-radius:12px 12px 0 0; border-bottom:none; background:var(--panel); color:var(--dim); min-height:52px; font-size:16px;}
+      #tabs button{flex:1; border-radius:12px 12px 0 0; border-bottom:none; background:var(--panel); color:var(--dim); min-height:46px; font-size:15px;}
       #tabs button.on{background:var(--panel2); color:var(--txt); box-shadow:inset 0 -3px 0 var(--accent);}
 
       main{flex:1; position:relative; min-height:0; background:var(--panel2); border-top:1px solid var(--line);}
       .pane{position:absolute; inset:0; display:none;}
       .pane.on{display:flex;}
 
-      /* ---------- 3D preview ---------- */
-      #pane3d{flex-direction:column;}
-      #glwrap{flex:1; position:relative; min-height:0;}
+      /* ---------- 3D preview ----------
+         Mahigpit na vertical flow — walang element na lumulutang sa
+         ibabaw ng canvas: canvas (fixed ang taas, stable kahit bukas
+         o sarado ang objects panel) → controls row (#glhint) → PARTS
+         bar → 3D Objects panel. Ang buong column ang nag-i-scroll
+         (overflow-y ng pane) pag hindi kasya sa screen. */
+      #pane3d{flex-direction:column; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+      #glwrap{flex:none; height:clamp(230px, 42vh, 400px); position:relative; overflow:hidden; background:#070708;}
       #glwrap canvas{display:block;}
-      #glhint{position:absolute; left:10px; bottom:10px; right:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; pointer-events:none;}
-      #glhint .chip{pointer-events:auto; background:rgba(10,10,12,.82); border:1px solid var(--line); border-radius:999px; padding:8px 12px; font-size:12.5px; color:var(--dim); display:inline-flex; gap:7px; align-items:center; min-height:44px;}
+      #glhint{display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:8px 10px; background:var(--panel); border-top:1px solid var(--line); flex:none;}
+      #glhint .chip{background:var(--panel2); border:1px solid var(--line); border-radius:999px; padding:8px 12px; font-size:12.5px; color:var(--dim); display:inline-flex; gap:7px; align-items:center; min-height:44px;}
       #glhint .chip input{width:20px; height:20px; accent-color:var(--accent);}
       #glempty{position:absolute; inset:0; display:none; align-items:center; justify-content:center; text-align:center; padding:24px; color:var(--dim); font-size:14.5px; line-height:1.55;}
 
@@ -112,12 +147,47 @@
       #stageLockBadge.show{display:inline-flex;}
       #stageLockBadge.off{border-color:var(--line); color:var(--dim);}
       /* parts bars (3D preview + edit mode) */
-      #partsBar{display:flex; align-items:center; gap:8px; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); background:var(--panel); border-top:1px solid var(--line);}
-      #partsList, #editPartsList{display:flex; gap:8px; overflow-x:auto; flex:1; padding:4px 2px; -webkit-overflow-scrolling:touch; scrollbar-width:none; align-items:center;}
+      #partsBar{display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--panel); border-top:1px solid var(--line); flex:none;}
+      #partsBar .lbl, #editPartsBar .lbl{flex:none;}
+      #partsList, #editPartsList{display:flex; gap:8px; overflow-x:auto; flex:1; min-width:0; padding:4px 18px 4px 2px; scroll-padding-right:18px; -webkit-overflow-scrolling:touch; scrollbar-width:none; align-items:center;}
       #partsList::-webkit-scrollbar, #editPartsList::-webkit-scrollbar{display:none;}
       .partchip{flex:none; min-height:44px; font-size:13.5px; padding:0 16px; border-radius:999px;}
       .partchip.on{background:var(--accent); border-color:var(--accent); color:#161006;}
       #btnEditPart{flex:none; min-height:44px;}
+      /* ---------- 3D objects (BETA) ---------- */
+      #obj3dPanel{background:var(--panel); border-top:1px solid var(--line); padding:8px 10px calc(8px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:8px; flex:none;}
+      /* Ang body ng panel ang nag-i-scroll sa sarili niyang area pag
+         mahaba ang controls — hindi nito itinutulak o tinatakpan ang
+         canvas, tabs, o pills sa itaas. */
+      #obj3dBody{display:flex; flex-direction:column; gap:8px; max-height:56vh; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:2px;}
+      .obj3d-head{display:flex; align-items:center; gap:8px; cursor:pointer; -webkit-user-select:none; user-select:none; min-height:40px;}
+      .obj3d-title{font-size:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--txt); flex:1; display:flex; align-items:center; gap:8px; min-width:0;}
+      .beta-badge{background:var(--accent2); color:#161006; font-size:10px; font-weight:800; border-radius:6px; padding:2px 6px; letter-spacing:.05em; flex:none;}
+      .obj3d-head button{min-height:36px; font-size:12.5px; padding:0 10px; flex:none;}
+      .obj3d-note{margin:0; font-size:12px; color:var(--dim); line-height:1.5;}
+      .obj3d-addrow{display:flex; gap:8px;}
+      .obj3d-addrow select{flex:1; min-width:0;}
+      .obj3d-addrow button{flex:none;}
+      #obj3dList{display:flex; flex-direction:column; gap:6px;}
+      #obj3dList:empty{display:none;}
+      .o3-item{display:flex; align-items:center; gap:8px; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:5px 8px; min-height:48px; cursor:pointer;}
+      .o3-item.on{border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent);}
+      .o3-swatch{width:22px; height:22px; border-radius:7px; border:1px solid var(--line); flex:none;}
+      .o3-name{flex:1; font-size:13.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;}
+      .o3-item button{min-height:40px; min-width:40px; width:40px; padding:0; flex:none; border-radius:10px; font-size:15px;}
+      .o3-empty{font-size:12.5px; color:var(--dim); line-height:1.5; padding:2px 2px 0;}
+      #obj3dEditor{display:flex; flex-direction:column; gap:1px; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:6px 10px 10px;}
+      .o3-row{display:flex; align-items:center; gap:8px; min-height:40px;}
+      .o3-row .o3-lbl{width:58px; flex:none; font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.03em; text-transform:uppercase;}
+      .o3-row input[type=range]{flex:1; min-width:0; height:40px;}
+      .o3-row .o3-val{width:46px; flex:none; text-align:right; font-size:12.5px; font-weight:700;}
+      .o3-row input[type=color]{flex:none;}
+      .o3-btnrow{display:flex; gap:8px; margin-top:7px;}
+      .o3-btnrow button{flex:1;}
+      .o3-btnrow .o3-del{border-color:#6e2222; color:#ff9a9a;}
+      .obj3d-dl{display:flex; gap:9px; align-items:center; font-size:12.5px; color:var(--dim); line-height:1.45; cursor:pointer; padding:2px 0;}
+      .obj3d-dl input{width:20px; height:20px; accent-color:var(--accent); flex:none;}
+      .obj3d-dl.off{opacity:.45;}
       /* parts bar inside Edit mode + the part-focus banner */
       #editPartsBar{display:flex; align-items:center; gap:8px; padding:6px 10px; background:var(--panel); border-bottom:1px solid var(--line);}
       #partFocus{display:flex; align-items:center; gap:10px; padding:8px 12px; background:#2b2008; border-bottom:1px solid #7a5a14; color:#ffd98c; font-size:13px; line-height:1.45;}
@@ -158,7 +228,8 @@
       #exportOpts{display:flex; align-items:center; gap:8px; padding:7px 10px; background:var(--panel); border-bottom:1px solid var(--line); flex-wrap:wrap;}
       #exportOpts .lbl{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.04em; text-transform:uppercase;}
       #exportOpts select{flex:1; min-width:180px; max-width:420px;}
-      #exportOpts .ehint{font-size:11.5px; color:var(--dim); line-height:1.4;}
+      #exportOpts .ehint{font-size:12.5px; color:var(--dim); line-height:1.5; width:100%;
+        background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px 10px;}
       .texthumb.edited .edot{display:block;}
 
       #toast{position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(20px);
@@ -233,6 +304,102 @@
       .legal-credits b{color:var(--accent);}
       #legalContinue{width:100%; min-height:54px; font-size:15.5px; border-radius:12px; flex:none;}
       .legal-note{margin:0; font-size:12px; color:var(--dim); text-align:center; line-height:1.5;}
+      /* ---------- Admin (•••) ---------- */
+      .dots-btn{font-size:19px; line-height:1; letter-spacing:.14em; padding:0 10px;}
+      .gate-dots{align-self:center; margin-top:2px; min-height:40px; padding:0 16px; font-size:17px; letter-spacing:.18em;
+        color:var(--dim); background:transparent; border-color:transparent;}
+      .gate-dots:active{color:var(--txt);}
+      .admin-overlay{position:fixed; inset:0; z-index:3000; background:rgba(0,0,0,.78); color:var(--txt);
+        display:none; align-items:center; justify-content:center; padding:18px 14px calc(18px + env(safe-area-inset-bottom)); overflow-y:auto;}
+      .admin-overlay.open{display:flex;}
+      .admin-card{width:100%; max-width:400px; background:var(--panel); border:1px solid var(--line); border-radius:16px;
+        padding:20px 18px 18px; display:flex; flex-direction:column; gap:12px; max-height:94dvh; overflow-y:auto; margin:auto;}
+      .admin-title{margin:0; font-size:18px; line-height:1.3; text-align:center; font-weight:800;}
+      .admin-card form{display:flex; flex-direction:column; gap:10px;}
+      .admin-card label{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.04em; text-transform:uppercase;}
+      .admin-card input[type=password], .admin-card input[type=text]{background:var(--panel2); border:1px solid var(--line); color:var(--txt);
+        border-radius:10px; min-height:48px; padding:0 12px; font-size:16px; width:100%;}
+      .admin-card input:focus{outline:2px solid var(--accent); outline-offset:1px;}
+      .admin-sec{border-top:1px solid var(--line); padding-top:12px; display:flex; flex-direction:column; gap:10px;}
+      .admin-sec h3{margin:0; font-size:12.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--accent); font-weight:800;}
+      .admin-cur{margin:0; font-size:14px; line-height:1.5;}
+      .admin-cur b{color:var(--accent); letter-spacing:.06em;}
+      .admin-note{margin:0; font-size:12px; color:var(--dim); line-height:1.55;}
+      .admin-msg{margin:0; font-size:13px; line-height:1.5; border-radius:10px; padding:9px 11px; display:none;}
+      .admin-msg.ok{display:block; color:#b9f2c0; background:#10260f; border:1px solid #2c5a2e;}
+      .admin-msg.err{display:block; color:#ff8a8a; background:#2b1010; border:1px solid #6e2222;}
+      .admin-btnrow{display:flex; gap:10px;}
+      .admin-btnrow button{flex:1;}
+      .admin-danger{border-color:#6e2222; color:#ff9a9a;}
+      .admin-danger.armed{background:#6e2222; color:#fff;}
+      .admin-info{margin:0; font-size:13px; line-height:1.7; color:#d8d8de;}
+      .admin-info b{color:var(--txt);}
+      /* ---------- ••• dropdown menu (header ng editor) ---------- */
+      #dotsMenu{position:absolute; top:calc(100% + 6px); right:8px; z-index:950; min-width:216px;
+        background:var(--panel2); border:1px solid var(--line); border-radius:14px; padding:6px;
+        display:flex; flex-direction:column; gap:4px; box-shadow:0 16px 44px rgba(0,0,0,.65);}
+      #dotsMenu.hidden{display:none;}
+      #dotsMenu button{justify-content:flex-start; min-height:48px; padding:0 14px; font-size:14.5px;
+        background:transparent; border-color:transparent; border-radius:10px;}
+      #dotsMenu button:active{background:var(--panel); transform:none;}
+      /* ---------- Timecyc Editor panel ---------- */
+      .tc-card{max-width:520px;}
+      /* Ang .admin-card ay column flex na may max-height: pag sumobra
+         ang laman, ini-shrink ng flex ang mga anak imbes na mag-scroll
+         ang card — dito gumuho ang preview (zero height) sa totoong
+         phone. flex:none sa lahat ng anak = walang squish, scroll na
+         lang ang card. */
+      .tc-card>*{flex:none;}
+      .tc-toprow{display:flex; gap:8px; flex-wrap:wrap;}
+      .tc-toprow button{flex:1; min-width:140px;}
+      /* Malaking upload area sa pinaka-taas ng panel: buong lapad,
+         dashed accent border, malaking tap target — hindi maliit na
+         button lang. Ang file na in-upload dito ang siyang naka-load
+         sa preview at sa lahat ng editors sa ilalim. */
+      .tc-upload-big{width:100%; min-height:78px; font-size:17.5px; font-weight:800; line-height:1.3;
+        border:2px dashed var(--accent); background:#2b2008; color:var(--txt); border-radius:14px; padding:16px 14px;}
+      .tc-upload-big:active{transform:scale(.98);}
+      .tc-upload-sub{margin:0; font-size:12.5px; color:var(--dim); line-height:1.5; text-align:center;}
+      /* Status ng naka-load na file: pangalan + bilang ng weathers/rows */
+      .tc-loaded{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:10px 12px;
+        display:flex; flex-direction:column; gap:3px;}
+      .tc-loaded-name{margin:0; font-size:14px; font-weight:700; line-height:1.45; overflow-wrap:anywhere;}
+      .tc-loaded-name b{color:var(--accent);}
+      .tc-loaded-meta{margin:0; font-size:12.5px; color:var(--dim); line-height:1.5;}
+      /* Malaking save/download button — isa sa itaas (ilalim ng upload
+         area) at isa sa baba ng panel; parehong function. */
+      .tc-save-big{width:100%; min-height:56px; font-size:16px; font-weight:800; border-radius:12px;}
+      .tc-sec{display:flex; flex-direction:column; gap:6px;}
+      .tc-sec select{width:100%;}
+      .tc-chips{display:flex; flex-wrap:wrap; gap:6px;}
+      .tc-chips button{min-height:40px; padding:0 13px; border-radius:999px; font-size:13px;}
+      .tc-chips button.on{background:var(--accent); border-color:var(--accent); color:#161006;}
+      #tcCanvas{width:100%; height:212px; flex:none; display:block; border-radius:12px; border:1px solid var(--line); background:#000;}
+      .tc-colors{display:flex; flex-direction:column; gap:4px;}
+      .tc-crow{display:flex; align-items:center; gap:10px; min-height:48px;}
+      .tc-crow .tc-clbl{flex:1; font-size:13.5px; font-weight:600; min-width:0;}
+      .tc-crow .tc-hex{font-size:12px; color:var(--dim); width:62px; text-align:right; flex:none; font-variant-numeric:tabular-nums;}
+      .tc-crow input[type=color]{flex:none;}
+      .tc-sliders{display:flex; flex-direction:column; gap:1px; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:6px 10px 10px;}
+      .tc-sliders .o3-lbl{width:108px; font-size:11.5px;}
+      /* 3D scene preview ng Timecyc (Three.js): parehong ideya sa DFF
+         3D Preview — totoong scene (sky dome, araw, ulap, tubig, kotse)
+         na naiilawan ng values ng napiling row. Pag hindi available
+         ang WebGL/Three.js, ang #tcCanvas (2D) ang mananatiling kita. */
+      #tcGlWrap{width:100%; height:212px; flex:none; border-radius:12px; border:1px solid var(--line); background:#000; overflow:hidden;}
+      #tcGlWrap canvas{display:block; width:100%; height:100%;}
+      #tcGlWrap.hidden{display:none;}
+      /* ---------- Colorcycle Editor panel ---------- */
+      #ccCanvas{width:100%; height:auto; flex:none; display:block; border-radius:12px; border:1px solid var(--line); background:#000; image-rendering:auto;}
+      .cc-groups{display:flex; flex-direction:column; gap:10px;}
+      .cc-group{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:8px 10px 10px;}
+      .cc-group h4{margin:0 0 4px; font-size:12.5px; font-weight:800; letter-spacing:.03em; display:flex; align-items:center; gap:7px;}
+      .cc-group h4 .cc-dot{width:11px; height:11px; border-radius:50%; flex:none;}
+      .cc-vrow{display:flex; align-items:center; gap:8px; min-height:44px;}
+      .cc-vrow .cc-vlbl{width:58px; flex:none; font-size:12px; font-weight:700; color:var(--dim);}
+      .cc-vrow input[type=range]{flex:1; min-width:0;}
+      .cc-vrow input[type=number]{width:74px; flex:none; min-height:40px; text-align:right; font-variant-numeric:tabular-nums;}
+      .cc-title-badge{display:inline-flex; align-items:center; gap:8px;}
       @media (prefers-reduced-motion: reduce){
         .gate-spinner{animation-duration:2.4s;}
         .gate-bar-fill{animation:none; width:100%;}
@@ -257,6 +424,7 @@
         .texthumb .thumbbox{width:72px; height:44px;}
         #partsBar{padding-top:5px; padding-bottom:calc(5px + env(safe-area-inset-bottom));}
         #glhint .chip{min-height:44px; padding:6px 10px;}
+        #glwrap{height:190px;}
       }
     </style>
   </head>
@@ -321,11 +489,161 @@
         </div>
         <form id="gateForm" class="hidden" novalidate>
           <label for="gateCode" id="gateLabel">Ilagay ang password</label>
-          <input id="gateCode" type="password" inputmode="numeric" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="12" placeholder="Password mo" aria-describedby="gateError gateHint" />
+          <input id="gateCode" type="password" inputmode="numeric" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" placeholder="Password mo" aria-describedby="gateError gateHint" />
           <p id="gateError" class="gate-error hidden" role="alert">Mali ang password — pakisuri at subukan ulit.</p>
           <button type="submit" class="primary gate-btn" id="gateSubmit">Buksan ang XSS TXD</button>
           <p class="gate-hint" id="gateHint">Makukuha mo ang password kay mavs pag bumili ka ng XSS TXD. Pag naipasok mo na, mananatili kang nasa editor — mag-download ka man at isara ang notice, hindi ka babalik dito. Hihingin lang ulit ang password sa panibagong bukas ng app.</p>
         </form>
+        <button type="button" id="gateDots" class="gate-dots" aria-label="Admin">•••</button>
+      </div>
+    </div>
+    <!-- Admin: pag pinindot ang ••• (sa gate o sa header ng editor),
+         hihingin muna ang admin password. Pag tama, saka lang bubukas
+         ang Admin Panel. -->
+    <div id="adminAuth" class="admin-overlay" role="dialog" aria-modal="true" aria-labelledby="adminAuthTitle">
+      <div class="admin-card" id="adminAuthCard">
+        <h2 class="admin-title" id="adminAuthTitle">Enter admin password</h2>
+        <form id="adminAuthForm" novalidate>
+          <label for="adminAuthInput" id="adminAuthLabel">Admin password</label>
+          <input id="adminAuthInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="64" />
+          <p id="adminAuthError" class="admin-msg err" role="alert">Mali ang admin password — hindi nagbukas ang panel.</p>
+          <div class="admin-btnrow">
+            <button type="button" class="ghost" id="adminAuthCancel">Cancel</button>
+            <button type="submit" class="primary" id="adminAuthConfirm">Confirm</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div id="adminPanel" class="admin-overlay" role="dialog" aria-modal="true" aria-labelledby="adminPanelTitle">
+      <div class="admin-card">
+        <h2 class="admin-title" id="adminPanelTitle">Admin Panel</h2>
+        <p id="adminMsg" class="admin-msg" role="status"></p>
+        <div class="admin-sec" style="border-top:none;padding-top:0;">
+          <h3 id="admSecPasscode">Passcode ng buyer</h3>
+          <p class="admin-cur"><span id="admCurLabel">Kasalukuyang passcode:</span> <b id="admCurPasscode">2607</b></p>
+          <form id="admPasscodeForm" novalidate>
+            <label for="admNewPasscode" id="admNewPasscodeLabel">Bagong passcode</label>
+            <input id="admNewPasscode" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" />
+            <label for="admNewPasscode2" id="admNewPasscode2Label">Ulitin ang bagong passcode</label>
+            <input id="admNewPasscode2" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" />
+            <button type="submit" class="primary" id="admSavePasscode">I-save ang passcode</button>
+          </form>
+          <p class="admin-note" id="admPasscodeNote">Paalala: ang pagpapalit dito ay sa device / browser lang na ito gumagana. Para mapalitan ang passcode para sa lahat ng buyer, kailangang i-update ang naka-publish na file — sabihin kay Kit.</p>
+          <button type="button" id="admResetPasscode">I-reset ang passcode sa 2607</button>
+        </div>
+        <div class="admin-sec">
+          <h3 id="admSecAdmin">Admin password</h3>
+          <form id="admAdminForm" novalidate>
+            <label for="admCurAdmin" id="admCurAdminLabel">Kasalukuyang admin password</label>
+            <input id="admCurAdmin" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="64" />
+            <label for="admNewAdmin" id="admNewAdminLabel">Bagong admin password</label>
+            <input id="admNewAdmin" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="64" />
+            <label for="admNewAdmin2" id="admNewAdmin2Label">Ulitin ang bagong admin password</label>
+            <input id="admNewAdmin2" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="64" />
+            <button type="submit" class="primary" id="admSaveAdmin">I-save ang admin password</button>
+          </form>
+        </div>
+        <div class="admin-sec">
+          <h3 id="admSecWork">Saved work</h3>
+          <button type="button" class="admin-danger" id="admClearWork">Burahin ang lahat ng saved work</button>
+          <p class="admin-note" id="admClearNote">Binubura lang nito ang work snapshot / edits na naka-save sa session. Hindi gagalawin ang passcode, admin password, at wika. Magre-reload ang app pagkatapos.</p>
+        </div>
+        <div class="admin-sec">
+          <h3 id="admSecInfo">Impormasyon ng app</h3>
+          <p class="admin-info" id="admInfo"></p>
+        </div>
+        <button type="button" class="primary" id="admClose">Isara</button>
+      </div>
+    </div>
+    <!-- Timecyc Editor: bubukas mula sa ••• menu ng editor (sa ilalim
+         ng Admin Panel). Tunay na GTA SA timecyc.dat ang ine-edit:
+         22 weather sections × 8 oras. Ang hindi in-edit na rows ay
+         mananatiling eksakto tulad ng in-upload na file. -->
+    <div id="tcPanel" class="admin-overlay" role="dialog" aria-modal="true" aria-labelledby="tcTitle">
+      <div class="admin-card tc-card">
+        <h2 class="admin-title" id="tcTitle"><span class="cc-title-badge">🌇 Timecyc Editor <span class="beta-badge">BETA</span></span></h2>
+        <button type="button" class="tc-upload-big" id="tcUploadBtn">📤 I-upload ang timecyc.dat</button>
+        <p class="tc-upload-sub" id="tcUploadSub">I-tap ito at piliin ang timecyc.dat mo — yun mismo ang lalabas sa preview sa ibaba at yun ang ie-edit mo.</p>
+        <!-- Walang accept filter dito nang sadya: pag may accept na
+             may MIME type (hal. text/plain), nagi-grey out ang iOS
+             Files picker sa .dat files at hindi sila mapipindot.
+             Walang filter = lahat mapipindot; ang .dat check ay nasa
+             JavaScript ng change handler (may Tagalog error kung
+             hindi .dat ang napili). -->
+        <input type="file" id="tcFile" class="hidden" />
+        <div class="tc-loaded" id="tcLoadedBox" role="status">
+          <p class="tc-loaded-name" id="tcLoadedName"></p>
+          <p class="tc-loaded-meta" id="tcFileInfo"></p>
+        </div>
+        <button type="button" class="primary tc-save-big" id="tcDownloadTopBtn">💾 I-save at I-download</button>
+        <div class="tc-toprow">
+          <button type="button" id="tcDefaultBtn">Gamitin ang default</button>
+        </div>
+        <div class="tc-sec">
+          <label class="lbl" for="tcWeatherSel" id="tcWeatherLbl">Weather</label>
+          <select id="tcWeatherSel"></select>
+        </div>
+        <div class="tc-sec">
+          <span class="lbl" id="tcTimeLbl">Oras</span>
+          <div id="tcTimeChips" class="tc-chips"></div>
+        </div>
+        <div id="tcGlWrap" class="hidden" aria-label="3D preview"></div>
+        <canvas id="tcCanvas" width="640" height="360"></canvas>
+        <div id="tcColors" class="tc-colors"></div>
+        <div id="tcSliders" class="tc-sliders"></div>
+        <div class="admin-btnrow">
+          <button type="button" id="tcResetBtn">Ibalik sa original</button>
+          <button type="button" id="tcUndoBtn">Undo</button>
+        </div>
+        <button type="button" class="primary tc-save-big" id="tcDownloadBtn">💾 I-save at I-download</button>
+        <button type="button" id="tcCloseBtn">Isara</button>
+      </div>
+    </div>
+    <!-- Colorcycle Editor: bubukas mula sa ••• menu ng editor, sa ilalim
+         ng Timecyc Editor. Tunay na GTA SA mobile colorcycle.dat ang
+         ine-edit (color grading ng laro, ginagamit din ng SkyGfx
+         colorFilter=Mobile): 23 weather × 8 oras × 12 float values
+         (grade matrix ng Pula/Berde/Asul). Pareho ang flow sa Timecyc
+         panel: malaking upload sa taas, status box, malaking save
+         buttons sa taas at baba. Ang hindi in-edit na rows ay
+         mananatiling eksakto tulad ng in-upload na file. -->
+    <div id="ccPanel" class="admin-overlay" role="dialog" aria-modal="true" aria-labelledby="ccTitle">
+      <div class="admin-card tc-card">
+        <h2 class="admin-title" id="ccTitle"><span class="cc-title-badge">🎨 Colorcycle Editor <span class="beta-badge">BETA</span></span></h2>
+        <button type="button" class="tc-upload-big" id="ccUploadBtn">📤 I-upload ang colorcycle.dat</button>
+        <p class="tc-upload-sub" id="ccUploadSub">I-tap ito at piliin ang colorcycle.dat mo — yun mismo ang ie-edit mo at makikita ang epekto niya sa preview sa ibaba.</p>
+        <!-- Walang accept filter dito nang sadya: pag may accept na
+             may MIME type (hal. text/plain), nagi-grey out ang iOS
+             Files picker sa .dat files at hindi sila mapipindot.
+             Walang filter = lahat mapipindot; ang .dat check ay nasa
+             JavaScript ng change handler (may Tagalog error kung
+             hindi .dat ang napili). -->
+        <input type="file" id="ccFile" class="hidden" />
+        <div class="tc-loaded" id="ccLoadedBox" role="status">
+          <p class="tc-loaded-name" id="ccLoadedName"></p>
+          <p class="tc-loaded-meta" id="ccFileInfo"></p>
+        </div>
+        <button type="button" class="primary tc-save-big" id="ccDownloadTopBtn">💾 I-save at I-download</button>
+        <div class="tc-toprow">
+          <button type="button" id="ccDefaultBtn">Gamitin ang default</button>
+        </div>
+        <div class="tc-sec">
+          <label class="lbl" for="ccWeatherSel" id="ccWeatherLbl">Weather</label>
+          <select id="ccWeatherSel"></select>
+        </div>
+        <div class="tc-sec">
+          <span class="lbl" id="ccTimeLbl">Oras</span>
+          <div id="ccTimeChips" class="tc-chips"></div>
+        </div>
+        <canvas id="ccCanvas" width="320" height="180"></canvas>
+        <div id="ccGroups" class="cc-groups"></div>
+        <div class="admin-btnrow">
+          <button type="button" id="ccResetBtn">Ibalik sa original</button>
+          <button type="button" id="ccUndoBtn">Undo</button>
+        </div>
+        <button type="button" class="primary tc-save-big" id="ccDownloadBtn">💾 I-save at I-download</button>
+        <p class="admin-note" id="ccNote"></p>
+        <button type="button" id="ccCloseBtn">Isara</button>
       </div>
     </div>
     <header id="topbar">
@@ -333,12 +651,22 @@
       <div class="topbtns">
         <button id="btnDff" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>DFF</button>
         <button id="btnTxd" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-9 9"/></svg>TXD</button>
+        <button type="button" class="infobtn" data-pop="fileinfo" aria-expanded="false" aria-label="Info tungkol sa pag-upload ng DFF at TXD"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
         <button id="btnDlTxd" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12m0 0l-5-5m5 5l5-5"/><path d="M4 21h16"/></svg>TXD</button>
         <button id="btnDlDff" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12m0 0l-5-5m5 5l5-5"/><path d="M4 21h16"/></svg>DFF</button>
         <button id="btnDlZip" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>ZIP</button>
+        <button type="button" class="infobtn" data-pop="popZip" aria-expanded="false" aria-label="Info tungkol sa ZIP download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
         <button id="btnDlAll" class="primary" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12m0 0l-5-5m5 5l5-5"/><path d="M4 21h16"/></svg><span id="btnDlAllLabel">I-download Lahat</span></button>
+        <button id="btnObj3dTop" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>3D Object</button>
+        <button id="btnAdminDots" class="dots-btn" type="button" aria-label="Admin">•••</button>
       </div>
-      <div id="fileinfo">Sample model ang naka-load — mag-upload ng DFF + TXD mo para mag-edit ng totoong file.</div>
+      <div id="dotsMenu" class="hidden" role="menu" aria-label="Menu">
+        <button type="button" id="menuAdminBtn" role="menuitem">🔐 <span id="menuAdminLbl">Admin Panel</span></button>
+        <button type="button" id="menuTcBtn" role="menuitem">🌇 <span id="menuTcLbl">Timecyc Editor</span> <span class="beta-badge">BETA</span></button>
+        <button type="button" id="menuCcBtn" role="menuitem">🎨 <span id="menuCcLbl">Colorcycle Editor</span> <span class="beta-badge">BETA</span></button>
+      </div>
+      <div id="fileinfo" class="infopop">Sample model ang naka-load — mag-upload ng DFF + TXD mo para mag-edit ng totoong file.</div>
+      <div id="popZip" class="infopop">ZIP — i-download ang TXD at DFF nang magkasama sa iisang .zip file (kung alin ang naka-load). Isang download lang, madaling i-share o i-backup.</div>
       <input type="file" id="fileDff" accept=".dff" class="hidden" />
       <input type="file" id="fileTxd" accept=".txd" class="hidden" />
       <input type="file" id="fileImg" accept="image/png,image/jpeg,image/webp" class="hidden" />
@@ -346,13 +674,14 @@
 
     <div id="exportOpts">
       <span class="lbl">Compression ng edited textures</span>
+      <button type="button" class="infobtn" data-pop="popDxt" aria-expanded="false" aria-label="Info tungkol sa compression"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
       <select id="exportFmt" aria-label="Compression ng edited textures">
         <option value="raw" selected>Walang compression — A8R8G8B8 (pinaka-safe)</option>
         <option value="auto">Auto — DXT1 pag opaque, DXT5 pag may alpha (maliit)</option>
         <option value="dxt1">DXT1 — pinakamaliit, walang alpha</option>
         <option value="dxt5">DXT5 — maliit, may alpha</option>
       </select>
-      <span class="ehint">DXT: mas maliit ang TXD at mas mabilis mag-load sa game. Ang hindi na-edit na textures, original pa rin.</span>
+      <span class="ehint infopop" id="popDxt">DXT: mas maliit ang TXD at mas mabilis mag-load sa game. Ang hindi na-edit na textures, original pa rin.</span>
     </div>
 
     <div id="dlAllNotice" class="hidden" role="status">
@@ -374,16 +703,41 @@
       <section class="pane on" id="pane3d">
         <div id="glwrap">
           <div id="glempty"><span>Walang 3D model pa.<br/>Mag-upload ng <b>.dff</b> file para makita ang model dito.</span></div>
-          <div id="glhint">
-            <span class="chip">I-drag: ikot &nbsp;·&nbsp; Pinch / scroll: zoom</span>
-            <label class="chip"><input type="checkbox" id="chkAllParts" /> Ipakita ang damaged / VLO parts</label>
-            <label class="chip">Kulay ng pintura <input type="color" id="paintColor" value="#ffffff" /></label>
-          </div>
+        </div>
+        <!-- Controls row ng 3D Preview: normal na flow sa ILALIM ng
+             canvas (hindi na overlay) para wala nang tumatakip sa
+             canvas, sa tabs, o sa isa't isa. -->
+        <div id="glhint">
+          <span class="glpop infopop" id="popGlHint">I-drag: ikot &nbsp;·&nbsp; Pinch / scroll: zoom</span>
+          <button type="button" class="chip" data-pop="popGlHint" aria-expanded="false" aria-label="Paano galawin ang 3D preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+          <label class="chip"><input type="checkbox" id="chkAllParts" /> Ipakita ang damaged / VLO parts</label>
+          <label class="chip">Kulay ng pintura <input type="color" id="paintColor" value="#ffffff" /></label>
         </div>
         <div id="partsBar">
           <span class="lbl" style="font-size:11px;color:var(--dim);font-weight:700;letter-spacing:.04em">PARTS</span>
           <div id="partsList"></div>
           <button id="btnEditPart" type="button" disabled>I-edit ang part →</button>
+        </div>
+        <!-- 3D Objects (BETA): simpleng low-poly objects na gawa sa code,
+             idinadagdag sa ibabaw ng model sa preview. Pag nag-download
+             ng DFF at naka-on ang toggle sa ibaba, ibinabake sila sa
+             mismong DFF bilang bagong geometry + frame + atomic. -->
+        <div id="obj3dPanel">
+          <div class="obj3d-head">
+            <span class="obj3d-title"><span id="obj3dTitle">3D Objects</span><span class="beta-badge">BETA</span></span>
+            <button type="button" class="infobtn" data-pop="obj3dNote" aria-expanded="false" aria-label="Info tungkol sa 3D Objects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+            <button id="btnObj3dToggle" type="button">▼ Ipakita</button>
+          </div>
+          <div id="obj3dBody" class="hidden">
+            <p class="obj3d-note infopop" id="obj3dNote">BETA — try lang ito. Magdagdag ng simpleng 3D object sa model; pag nag-download ka ng DFF, isasama ang mga object sa mismong file. Kailangan pa itong i-test sa GTA SA kung lalabas sila in-game.</p>
+            <div class="obj3d-addrow">
+              <select id="obj3dKind" aria-label="Uri ng 3D object"></select>
+              <button id="btnObj3dAdd" class="primary" type="button">+ Idagdag</button>
+            </div>
+            <div id="obj3dList"></div>
+            <div id="obj3dEditor" class="hidden"></div>
+            <label class="obj3d-dl" id="obj3dDlWrap"><input type="checkbox" id="chkObjInDff" checked /><span id="obj3dDlLabel">Isama ang 3D objects sa DFF pag nag-download (BETA)</span></label>
+          </div>
         </div>
       </section>
 
@@ -1355,7 +1709,292 @@ const RW = (() => {
     return out.buffer;
   }
 
-  return { parseTXD, buildTXD, parseDFF, formatName, CH, texGeoParts, uvSelectionVerts, uvUnmirrorPlan, buildPatchedDFF };
+  /* ---------------- 3D objects (BETA) ----------------
+     Simple low-poly primitives generated in code, in RenderWare space
+     (X = right, Y = forward, Z = up — the same space DFF vertices and
+     frame matrices live in, and the same space the preview's modelGroup
+     children use). Positions only, non-indexed triangles with outward
+     winding; flat normals are computed from the triangles on demand. */
+  function primBox(A, w, d, h, cx, cy, cz){
+    const x0 = cx - w/2, x1 = cx + w/2, y0 = cy - d/2, y1 = cy + d/2, z0 = cz - h/2, z1 = cz + h/2;
+    const q = (a, b, c, dd) => { A.push(a, b, c, a, c, dd); };
+    q([x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]); // top (+Z)
+    q([x0,y0,z0],[x0,y1,z0],[x1,y1,z0],[x1,y0,z0]); // bottom (-Z)
+    q([x1,y1,z0],[x0,y1,z0],[x0,y1,z1],[x1,y1,z1]); // front (+Y)
+    q([x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]); // back (-Y)
+    q([x1,y0,z0],[x1,y1,z0],[x1,y1,z1],[x1,y0,z1]); // right (+X)
+    q([x0,y1,z0],[x0,y0,z0],[x0,y0,z1],[x0,y1,z1]); // left (-X)
+  }
+  function primCylZ(A, r, h, seg, cx, cy, cz){
+    const z0 = cz - h/2, z1 = cz + h/2;
+    for (let i = 0; i < seg; i++){
+      const a0 = i/seg * Math.PI*2, a1 = (i+1)/seg * Math.PI*2;
+      const p0 = [cx + r*Math.cos(a0), cy + r*Math.sin(a0)];
+      const p1 = [cx + r*Math.cos(a1), cy + r*Math.sin(a1)];
+      A.push([p0[0],p0[1],z0],[p1[0],p1[1],z0],[p1[0],p1[1],z1],
+             [p0[0],p0[1],z0],[p1[0],p1[1],z1],[p0[0],p0[1],z1]); // side
+      A.push([cx,cy,z1],[p0[0],p0[1],z1],[p1[0],p1[1],z1]);       // top fan
+      A.push([cx,cy,z0],[p1[0],p1[1],z0],[p0[0],p0[1],z0]);       // bottom fan
+    }
+  }
+  function primCylX(A, r, len, seg, cx, cy, cz){
+    const tmp = [];
+    primCylZ(tmp, r, len, seg, 0, 0, 0);
+    for (const v of tmp) A.push([v[2] + cx, v[1] + cy, -v[0] + cz]); // rotate +90° about Y: Z axis -> X axis
+  }
+  function primSphere(A, r, lon, lat, cx, cy, cz){
+    const P = (lo, la) => {
+      const th = la/lat * Math.PI, ph = lo/lon * Math.PI*2;
+      return [cx + r*Math.sin(th)*Math.cos(ph), cy + r*Math.sin(th)*Math.sin(ph), cz + r*Math.cos(th)];
+    };
+    for (let j = 0; j < lat; j++){
+      for (let i = 0; i < lon; i++){
+        const a = P(i, j), b = P(i+1, j), c = P(i+1, j+1), d = P(i, j+1);
+        if (j === 0) A.push(a, d, c);                 // top pole fan
+        else if (j === lat-1) A.push(a, c, b);        // bottom pole fan
+        else A.push(a, c, b, a, d, c);
+      }
+    }
+  }
+  function primCone(A, r, h, seg, cx, cy, cz){
+    const z0 = cz - h/2, apex = [cx, cy, cz + h/2];
+    for (let i = 0; i < seg; i++){
+      const a0 = i/seg * Math.PI*2, a1 = (i+1)/seg * Math.PI*2;
+      const p0 = [cx + r*Math.cos(a0), cy + r*Math.sin(a0), z0];
+      const p1 = [cx + r*Math.cos(a1), cy + r*Math.sin(a1), z0];
+      A.push(p0, p1, apex);                            // side
+      A.push([cx, cy, z0], p1, p0);                    // base
+    }
+  }
+  function makePrimitive(kind){
+    const A = [];
+    if (kind === "box") primBox(A, 0.6, 0.6, 0.6, 0, 0, 0);
+    else if (kind === "cylinder") primCylZ(A, 0.3, 0.8, 12, 0, 0, 0);
+    else if (kind === "sphere") primSphere(A, 0.4, 12, 8, 0, 0, 0);
+    else if (kind === "cone") primCone(A, 0.4, 0.8, 12, 0, 0, 0);
+    else if (kind === "spoiler"){
+      primBox(A, 1.6, 0.3, 0.05, 0, 0, 0.3);            // wing
+      primBox(A, 0.04, 0.3, 0.14, -0.78, 0, 0.3);      // end plates
+      primBox(A, 0.04, 0.3, 0.14, 0.78, 0, 0.3);
+      primBox(A, 0.07, 0.22, 0.3, -0.55, 0, 0.13);     // posts
+      primBox(A, 0.07, 0.22, 0.3, 0.55, 0, 0.13);
+    }
+    else if (kind === "bullbar"){
+      primCylZ(A, 0.035, 0.55, 8, -0.5, 0, 0);         // uprights
+      primCylZ(A, 0.035, 0.55, 8, 0.5, 0, 0);
+      primCylX(A, 0.035, 1.05, 8, 0, 0, 0.18);         // cross bars
+      primCylX(A, 0.035, 1.05, 8, 0, 0, -0.18);
+    }
+    else if (kind === "roofrack"){
+      primBox(A, 0.05, 1.7, 0.06, -0.575, 0, 0.02);    // side rails
+      primBox(A, 0.05, 1.7, 0.06, 0.575, 0, 0.02);
+      primBox(A, 1.2, 0.05, 0.06, 0, -0.825, 0.02);    // end rails
+      primBox(A, 1.2, 0.05, 0.06, 0, 0.825, 0.02);
+      primBox(A, 1.1, 0.1, 0.03, 0, -0.45, 0);         // slats
+      primBox(A, 1.1, 0.1, 0.03, 0, 0, 0);
+      primBox(A, 1.1, 0.1, 0.03, 0, 0.45, 0);
+    }
+    else if (kind === "lightbar"){
+      primBox(A, 1.05, 0.14, 0.09, 0, 0, 0);           // base bar
+      for (const x of [-0.39, -0.13, 0.13, 0.39]) primBox(A, 0.17, 0.06, 0.13, x, 0.06, 0.01); // lamps
+      primBox(A, 0.06, 0.06, 0.08, -0.4, 0, -0.08);    // mounts
+      primBox(A, 0.06, 0.06, 0.08, 0.4, 0, -0.08);
+    }
+    else primBox(A, 0.6, 0.6, 0.6, 0, 0, 0);
+    const pos = new Float32Array(A.length * 3);
+    A.forEach((v, i) => { pos[i*3] = v[0]; pos[i*3+1] = v[1]; pos[i*3+2] = v[2]; });
+    return { positions: pos };
+  }
+  /* Download DFF with the BETA 3D objects baked in: each item becomes a
+     new frame (appended to the FrameList, parented to the model's root
+     frame), a new geometry (appended to the GeometryList — generated
+     primitive, one solid-color material, no texture), and a new atomic
+     at clump level. Everything else is copied byte-for-byte from the
+     original file; only the three counts (frames / geometries /
+     atomics) and the grown chunk sizes change.
+     item = { kind, name (ASCII), color:[r,g,b,a], rot9:[9 floats, basis
+     columns in RW space], pos:[x,y,z] RW space, scale:[sx,sy,sz] } */
+  function buildDFFWithObjects(buf, items){
+    const src = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+    if (!items || !items.length) return src.slice(0).buffer;
+    const dv = new DataView(src.buffer, src.byteOffset, src.byteLength);
+    const top = hdr(src, 0);
+    if (top.type !== CH.CLUMP) throw new Error("Hindi ito DFF file (walang Clump).");
+    const version = top.version;
+    // Same bogus-size guard as parseDFF: some exporters write a wrong
+    // size on the Clump struct chunk; it is always really 12 bytes.
+    function* clumpKids(start, end){
+      let off = start;
+      while (off + 12 <= end){
+        const h = hdr(src, off);
+        if (h.size < 0 || h.end > src.byteLength) break;
+        if (h.type === CH.STRUCT && h.size !== 12 && off === start){
+          yield { ...h, size: 12, end: off + 24, off };
+          off += 24;
+        } else {
+          yield { ...h, off };
+          off = h.end;
+        }
+      }
+    }
+    const kids = [...clumpKids(top.data, top.end)];
+    const fl = kids.find(c => c.type === CH.FRAMELIST);
+    const gl = kids.find(c => c.type === CH.GEOMETRYLIST);
+    if (!fl || !gl) throw new Error("Walang FrameList/GeometryList sa DFF.");
+    const flKids = [...children(src, fl.data, fl.end)];
+    const flStruct = flKids.find(c => c.type === CH.STRUCT);
+    if (!flStruct) throw new Error("Walang FrameList struct sa DFF.");
+    const glKids = [...children(src, gl.data, gl.end)];
+    const glStruct = glKids.find(c => c.type === CH.STRUCT) || null;
+    const numFrames = dv.getUint32(flStruct.data, true);
+    const geoKids = glKids.filter(c => c.type === CH.GEOMETRY);
+    const numGeos = glStruct && glStruct.size >= 4 ? dv.getUint32(glStruct.data, true) : geoKids.length;
+    // The model's root frame: the first frame whose parent is -1. New
+    // frames hang under it so they inherit the model's own transform
+    // (and never end up parented to a spinning wheel frame).
+    let rootFrame = numFrames > 0 ? 0 : -1;
+    for (let i = 0; i < numFrames; i++){
+      if (dv.getInt32(flStruct.data + 4 + i*56 + 48, true) === -1){ rootFrame = i; break; }
+    }
+    const concat = list => {
+      let n = 0; for (const p of list) n += p.byteLength;
+      const out = new Uint8Array(n); let o = 0;
+      for (const p of list){ out.set(p, o); o += p.byteLength; }
+      return out;
+    };
+    const chunk = (type, payload) => {
+      const out = new Uint8Array(12 + payload.byteLength);
+      const d = new DataView(out.buffer);
+      d.setUint32(0, type, true); d.setUint32(4, payload.byteLength, true); d.setUint32(8, version, true);
+      out.set(payload, 12);
+      return out;
+    };
+    const emptyExt = () => chunk(CH.EXTENSION, new Uint8Array(0));
+    function geometryChunk(item){
+      const prim = makePrimitive(item.kind).positions;
+      const nv = prim.length / 3, nt = nv / 3;
+      const [sx, sy, sz] = item.scale;
+      const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3);
+      let mnx = 1e9, mny = 1e9, mnz = 1e9, mxx = -1e9, mxy = -1e9, mxz = -1e9;
+      for (let i = 0; i < nv; i++){
+        pos[i*3] = prim[i*3] * sx; pos[i*3+1] = prim[i*3+1] * sy; pos[i*3+2] = prim[i*3+2] * sz;
+        if (pos[i*3] < mnx) mnx = pos[i*3]; if (pos[i*3] > mxx) mxx = pos[i*3];
+        if (pos[i*3+1] < mny) mny = pos[i*3+1]; if (pos[i*3+1] > mxy) mxy = pos[i*3+1];
+        if (pos[i*3+2] < mnz) mnz = pos[i*3+2]; if (pos[i*3+2] > mxz) mxz = pos[i*3+2];
+      }
+      for (let t = 0; t < nt; t++){ // flat normals
+        const a = t*9;
+        const ux = pos[a+3]-pos[a], uy = pos[a+4]-pos[a+1], uz = pos[a+5]-pos[a+2];
+        const vx = pos[a+6]-pos[a], vy = pos[a+7]-pos[a+1], vz = pos[a+8]-pos[a+2];
+        let nx = uy*vz-uz*vy, ny = uz*vx-ux*vz, nz = ux*vy-uy*vx;
+        const l = Math.sqrt(nx*nx + ny*ny + nz*nz) || 1; nx /= l; ny /= l; nz /= l;
+        for (let k = 0; k < 3; k++){ nor[t*9 + k*3] = nx; nor[t*9 + k*3 + 1] = ny; nor[t*9 + k*3 + 2] = nz; }
+      }
+      const bcx = (mnx+mxx)/2, bcy = (mny+mxy)/2, bcz = (mnz+mxz)/2;
+      let rad = 0;
+      for (let i = 0; i < nv; i++){
+        const dx = pos[i*3]-bcx, dy = pos[i*3+1]-bcy, dz = pos[i*3+2]-bcz;
+        const d2 = dx*dx + dy*dy + dz*dz; if (d2 > rad) rad = d2;
+      }
+      rad = Math.sqrt(rad) + 0.001;
+      const sb = new Uint8Array(16 + nt*8 + 16 + 8 + nv*24);
+      const sd = new DataView(sb.buffer);
+      sd.setUint32(0, 0x72, true); // POSITIONS | NORMALS | LIGHT | MODULATE MATERIAL COLOR — no UV sets, no prelit
+      sd.setUint32(4, nt, true); sd.setUint32(8, nv, true); sd.setUint32(12, 1, true);
+      let p = 16;
+      for (let t = 0; t < nt; t++){ // file order: v2, v1, materialId, v3
+        sd.setUint16(p, t*3+1, true); sd.setUint16(p+2, t*3, true); sd.setUint16(p+4, 0, true); sd.setUint16(p+6, t*3+2, true);
+        p += 8;
+      }
+      sd.setFloat32(p, bcx, true); sd.setFloat32(p+4, bcy, true); sd.setFloat32(p+8, bcz, true); sd.setFloat32(p+12, rad, true);
+      p += 16;
+      sd.setUint32(p, 1, true); sd.setUint32(p+4, 1, true); p += 8; // morph target: hasVerts, hasNormals
+      for (let i = 0; i < nv*3; i++){ sd.setFloat32(p, pos[i], true); p += 4; }
+      for (let i = 0; i < nv*3; i++){ sd.setFloat32(p, nor[i], true); p += 4; }
+      const mb = new Uint8Array(28);
+      const md = new DataView(mb.buffer);
+      mb[4] = item.color[0]; mb[5] = item.color[1]; mb[6] = item.color[2]; mb[7] = item.color.length > 3 ? item.color[3] : 255;
+      md.setFloat32(16, 1.0, true); md.setFloat32(24, 1.0, true); // surface props: ambient 1, specular 0, diffuse 1
+      const matChunk = chunk(CH.MATERIAL, concat([chunk(CH.STRUCT, mb), emptyExt()]));
+      const mlStruct = new Uint8Array(8);
+      const mld = new DataView(mlStruct.buffer);
+      mld.setUint32(0, 1, true); mld.setInt32(4, -1, true);
+      const matList = chunk(CH.MATERIALLIST, concat([chunk(CH.STRUCT, mlStruct), matChunk]));
+      return chunk(CH.GEOMETRY, concat([chunk(CH.STRUCT, sb), matList, emptyExt()]));
+    }
+    function frameExtChunk(name){
+      const nb = new Uint8Array(name.length + 1);
+      for (let i = 0; i < name.length; i++) nb[i] = name.charCodeAt(i) & 0x7f;
+      return chunk(CH.EXTENSION, chunk(CH.FRAME, nb));
+    }
+    function atomicChunk(frameIdx, geoIdx){
+      const sb = new Uint8Array(16);
+      const sd = new DataView(sb.buffer);
+      sd.setUint32(0, frameIdx, true); sd.setUint32(4, geoIdx, true); sd.setUint32(8, 5, true); // flags: collision test + render
+      return chunk(CH.ATOMIC, concat([chunk(CH.STRUCT, sb), emptyExt()]));
+    }
+    // FrameList: struct grows by one 56-byte row per object; one name
+    // extension per object is appended after the existing ones.
+    const rows = new Uint8Array(items.length * 56);
+    const rd = new DataView(rows.buffer);
+    items.forEach((item, i) => {
+      const o = i * 56;
+      for (let j = 0; j < 9; j++) rd.setFloat32(o + j*4, item.rot9[j], true);
+      rd.setFloat32(o+36, item.pos[0], true); rd.setFloat32(o+40, item.pos[1], true); rd.setFloat32(o+44, item.pos[2], true);
+      rd.setInt32(o+48, rootFrame, true);
+      rd.setInt32(o+52, 0, true);
+    });
+    const flStructNew = new Uint8Array(flStruct.size + rows.byteLength);
+    flStructNew.set(src.subarray(flStruct.data, flStruct.end), 0);
+    new DataView(flStructNew.buffer).setUint32(0, numFrames + items.length, true);
+    flStructNew.set(rows, flStruct.size);
+    const flParts = [];
+    for (const c of flKids) flParts.push(c === flStruct ? chunk(CH.STRUCT, flStructNew) : src.subarray(c.off, c.end));
+    for (const item of items) flParts.push(frameExtChunk(item.name));
+    const flNew = chunk(CH.FRAMELIST, concat(flParts));
+    // GeometryList: count patched, new geometries appended.
+    const glParts = [];
+    for (const c of glKids){
+      if (glStruct && c === glStruct){
+        const nb = new Uint8Array(c.size); nb.set(src.subarray(c.data, c.end));
+        new DataView(nb.buffer).setUint32(0, numGeos + items.length, true);
+        glParts.push(chunk(CH.STRUCT, nb));
+      } else glParts.push(src.subarray(c.off, c.end));
+    }
+    for (const item of items) glParts.push(geometryChunk(item));
+    const glNew = chunk(CH.GEOMETRYLIST, concat(glParts));
+    // Clump: struct atomic count patched; new atomics go right after
+    // the last existing atomic (or after the GeometryList if none).
+    const atomicChunks = items.map((_, i) => atomicChunk(numFrames + i, numGeos + i));
+    const lastAtomic = [...kids].reverse().find(k => k.type === CH.ATOMIC) || null;
+    const clumpStruct = kids.find(c => c.type === CH.STRUCT) || null;
+    const clumpParts = [];
+    let inserted = false;
+    for (const c of kids){
+      if (c === fl){ clumpParts.push(flNew); continue; }
+      if (c === gl){
+        clumpParts.push(glNew);
+        if (!lastAtomic && !inserted){ clumpParts.push(...atomicChunks); inserted = true; }
+        continue;
+      }
+      if (clumpStruct && c === clumpStruct){
+        const ssize = c.size !== 12 && kids[0] === c ? 12 : c.size; // same bogus-size guard as the parser
+        const nb = new Uint8Array(ssize); nb.set(src.subarray(c.data, c.data + ssize));
+        const nd = new DataView(nb.buffer);
+        nd.setUint32(0, nd.getUint32(0, true) + items.length, true);
+        clumpParts.push(chunk(CH.STRUCT, nb));
+        continue;
+      }
+      clumpParts.push(src.subarray(c.off, c.end));
+      if (lastAtomic && c === lastAtomic && !inserted){ clumpParts.push(...atomicChunks); inserted = true; }
+    }
+    if (!inserted) clumpParts.push(...atomicChunks);
+    const out = [chunk(CH.CLUMP, concat(clumpParts))];
+    if (top.end < src.byteLength) out.push(src.subarray(top.end)); // keep any trailing bytes verbatim
+    return concat(out).buffer;
+  }
+
+  return { parseTXD, buildTXD, parseDFF, formatName, CH, texGeoParts, uvSelectionVerts, uvUnmirrorPlan, buildPatchedDFF, makePrimitive, buildDFFWithObjects };
 })();
 /*__RW_CORE_END__*/
 </script>
@@ -1397,6 +2036,7 @@ const state = {
   uvVersion: 0,         // bumps on every UV change (wireframe cache key)
   viewLock: true,       // texture lock: one-finger empty drag never pans
   exportFormat: "raw", // raw | auto | dxt1 | dxt5 — para sa edited textures lang
+  obj3d: [],            // BETA 3D objects on the model: {id, kind, name, color, pos, rot, scale, _mesh}
 };
 
 function toast(msg, ms){
@@ -1442,8 +2082,9 @@ function makeDemoTextures(){
 
 /* ---------------- three.js preview ---------------- */
 const GL_OK = typeof THREE !== "undefined";
-let renderer, scene, camera, modelGroup, demoGroup, gridHelper;
+let renderer, scene, camera, modelGroup, demoGroup, gridHelper, obj3dGroup = null;
 const orbit = { theta: 0.7, phi: 1.05, radius: 10, target: null };
+let framedObj = null; // huling object na ni-frame ng camera — ginagamit ng refitGL()
 function initGL(){
   const wrap = $("#glwrap");
   renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -1457,6 +2098,10 @@ function initGL(){
   const key = new THREE.DirectionalLight(0xffffff, 0.9); key.position.set(6, 10, 4); scene.add(key);
   const rim = new THREE.DirectionalLight(0xffb02e, 0.35); rim.position.set(-8, 4, -6); scene.add(rim);
   modelGroup = new THREE.Group(); modelGroup.rotation.x = -Math.PI/2; scene.add(modelGroup);
+  // BETA 3D objects live in their own group INSIDE modelGroup, so their
+  // local space is RenderWare space (X right, Y forward, Z up) — exactly
+  // the space their baked DFF frame matrices use. clearModel keeps it.
+  obj3dGroup = new THREE.Group(); modelGroup.add(obj3dGroup);
   gridHelper = new THREE.GridHelper(80, 80, 0x2c2c33, 0x191920);
   gridHelper.material.transparent = true; gridHelper.material.opacity = .6; scene.add(gridHelper);
   resizeGL();
@@ -1496,8 +2141,27 @@ function frameObject(obj){
   if (box.isEmpty()) return;
   const c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
   orbit.target = c;
-  orbit.radius = Math.max(sz.x, sz.y, sz.z) * 1.65 + 1.5;
+  /* Auto-fit: ang distansya ay galing sa bounding sphere ng buong
+     model at sa mas makitid sa vertical/horizontal FOV ng totoong
+     aspect ng canvas — kaya buo ang kotse sa anumang laki ng canvas:
+     hindi sobrang lapit (isang gulong lang) at hindi sobrang liit sa
+     gitna. Ang theta/phi ng user ay hindi ginagalaw. */
+  const vFov = camera.fov * Math.PI / 180;
+  const hFov = 2 * Math.atan(Math.tan(vFov / 2) * Math.max(camera.aspect || 1, 0.2));
+  const fov = Math.min(vFov, hFov);
+  const sphereR = sz.length() / 2;
+  orbit.radius = Math.min(120, Math.max(1.6, sphereR / Math.sin(fov / 2) * 1.08));
   gridHelper.position.y = box.min.y - 0.01;
+  framedObj = obj;
+}
+/* I-fit ulit ang huling na-frame na model — tinatawag pag nag-resize
+   ang canvas at pag nagbukas/nagsara ang objects panel, para manatiling
+   buo at consistent ang framing. Pag may part na naka-focus, huwag
+   galawin ang framing niya. */
+function refitGL(){
+  if (!GL_OK || !camera || !framedObj) return;
+  if (state.activePart) return;
+  frameObject(framedObj);
 }
 function baseCanvasOf(tex){
   if (!tex._baseCv){
@@ -1564,8 +2228,11 @@ function buildDemoModel(){
 }
 function clearModel(){
   if (!modelGroup) return;
-  while (modelGroup.children.length){
-    const ch = modelGroup.children.pop();
+  framedObj = null;
+  const kids = modelGroup.children.slice();
+  modelGroup.children.length = 0;
+  for (const ch of kids){
+    if (ch === obj3dGroup){ modelGroup.children.push(ch); continue; } // BETA objects survive model swaps
     ch.traverse(o => { if (o.geometry) o.geometry.dispose(); });
   }
   demoGroup = null;
@@ -2584,24 +3251,27 @@ function renderOptbar(){
       <div class="grp"><label class="lbl">Outline</label>
       <div class="row"><input type="color" id="optOutColor" value="${s.outlineColor}" />
       <input type="range" id="optOutW" min="0" max="24" value="${s.outlineWidth}" style="width:70px" /></div></div>`;
-    if (!o) html += `<div class="grp"><label class="lbl">&nbsp;</label><button id="optAddText" class="primary" type="button">Idagdag</button></div>
-      <div class="grp"><label class="lbl">&nbsp;</label><span style="font-size:12px;color:var(--dim)">o i-tap ang canvas para ilagay doon</span></div>`;
+    if (!o) html += `<div class="grp"><label class="lbl">&nbsp;</label><div class="row"><button id="optAddText" class="primary" type="button">Idagdag</button><button type="button" class="infobtn" data-pop="popTextPlace" aria-expanded="false" aria-label="Info tungkol sa paglalagay ng text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button></div></div>
+      <div class="infopop" id="popTextPlace">o i-tap ang canvas para ilagay doon</div>`;
   }
   if (state.tool === "brush"){
     html += `<div class="grp"><label class="lbl">Kulay ng brush</label><input type="color" id="optBrushColor" value="${state.brush.color}" /></div>
       <div class="grp"><label class="lbl">Laki: <span id="optBrushSizeVal">${state.brush.size}</span></label>
       <input type="range" id="optBrushSize" min="1" max="200" value="${state.brush.size}" style="width:130px" /></div>
-      <span style="font-size:12px;color:var(--dim);align-self:center">I-drag sa texture para magpinta — ang bilog sa canvas ang totoong laki ng brush. Undo: kasama ang bawat stroke.</span>`;
+      <button type="button" class="infobtn" data-pop="popBrushHint" aria-expanded="false" aria-label="Info tungkol sa brush" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+      <div class="infopop" id="popBrushHint">I-drag sa texture para magpinta — ang bilog sa canvas ang totoong laki ng brush. Undo: kasama ang bawat stroke.</div>`;
   }
   if (state.tool === "eraser"){
     html += `<div class="grp"><label class="lbl">Laki ng eraser: <span id="optEraSizeVal">${state.eraserSize}</span></label>
       <input type="range" id="optEraSize" min="4" max="160" value="${state.eraserSize}" style="width:150px" /></div>
-      <span style="font-size:12px;color:var(--dim)">Binubura lang nito ang paint layer — hindi ang original texture.</span>`;
+      <button type="button" class="infobtn" data-pop="popEraserHint" aria-expanded="false" aria-label="Info tungkol sa eraser" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+      <div class="infopop" id="popEraserHint">Binubura lang nito ang paint layer — hindi ang original texture.</div>`;
   }
   if (state.tool === "image" && !o){
     html += `<div class="grp"><label class="lbl">Larawan / sticker</label>
       <button id="optAddImg" class="primary" type="button">Pumili ng PNG / larawan</button></div>
-      <span style="font-size:12px;color:var(--dim);align-self:center">PNG na may transparent background ang pinaka-ok pang-sticker.</span>`;
+      <button type="button" class="infobtn" data-pop="popImgHint" aria-expanded="false" aria-label="Info tungkol sa larawan / sticker" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+      <div class="infopop" id="popImgHint">PNG na may transparent background ang pinaka-ok pang-sticker.</div>`;
   }
   if (o && o.type === "image"){
     html += `<div class="grp"><label class="lbl">Laki ng larawan: <span id="optImgSizeVal">${Math.round(o.w)}</span>px</label>
@@ -2609,7 +3279,8 @@ function renderOptbar(){
       <div class="grp"><label class="lbl">Flip ng larawan</label>
       <div class="row"><button id="optFlipH" type="button" class="${o.flipH ? "on" : ""}">Flip ↔</button>
       <button id="optFlipV" type="button" class="${o.flipV ? "on" : ""}">Flip ↕</button></div></div>
-      <span style="font-size:12px;color:var(--dim);align-self:center">Ikot: ⟳ handle sa canvas o Ikot slider sa ibaba. Laki: dilaw na sulok ⤡ o slider — proporsyonal.</span>`;
+      <button type="button" class="infobtn" data-pop="popImgObjHint" aria-expanded="false" aria-label="Info tungkol sa paggalaw ng larawan" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+      <div class="infopop" id="popImgObjHint">Ikot: ⟳ handle sa canvas o Ikot slider sa ibaba. Laki: dilaw na sulok ⤡ o slider — proporsyonal.</div>`;
   }
   if (o){
     html += `<div class="grp"><label class="lbl">Ikot: <span id="optRotVal">${Math.round(o.rot)}°</span></label>
@@ -2622,7 +3293,8 @@ function renderOptbar(){
       <button id="optDel" type="button">Burahin</button></div></div>`;
   }
   if (!o && state.tool === "move"){
-    html += `<span style="font-size:12.5px;color:var(--dim)">I-tap ang object para piliin, i-drag agad para igalaw ito lang · Zoom: slider o +/− sa panel · Fit button: balik sa fit · Texture lock ON: ang bakanteng lugar lang ang hindi gagalaw — ang text/image na nilagay mo, lagi mong mai-drag kahit naka-ON ito. Ang LOCK button lang ang nagla-lock ng isang object.</span>
+    html += `<button type="button" class="infobtn" data-pop="popMoveHint" aria-expanded="false" aria-label="Info tungkol sa paggalaw, zoom at lock" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+      <div class="infopop" id="popMoveHint">I-tap ang object para piliin, i-drag agad para igalaw ito lang · Zoom: slider o +/− sa panel · Fit button: balik sa fit · Texture lock ON: ang bakanteng lugar lang ang hindi gagalaw — ang text/image na nilagay mo, lagi mong mai-drag kahit naka-ON ito. Ang LOCK button lang ang nagla-lock ng isang object.</div>
       <div class="grp"><label class="lbl">&nbsp;</label><button id="optResetTex" type="button">I-reset ang texture</button></div>`;
   }
   bar.innerHTML = html;
@@ -2853,7 +3525,13 @@ function setTab(which){
   $("#tabEdit").classList.toggle("on", which === "edit");
   $("#pane3d").classList.toggle("on", which === "3d");
   $("#paneEdit").classList.toggle("on", which === "edit");
-  if (which === "3d") resizeGL();
+  if (which === "3d"){
+    // Pag pasok sa 3D Preview, SARADO ang 3D Objects panel by default —
+    // bubukas lang ito pag pinindot ang top "3D Object" button o ang
+    // header/toggle ng panel mismo.
+    setObj3dPanelOpen(false);
+    resizeGL();
+  }
   // LAGING mag-auto-fit pag pumasok sa Edit Texture: buong texture,
   // nakagitna, sa totoong laki ng stage. Dati isang beses lang ito
   // tumatakbo (state._fitted), kaya naiiwan ang lumang zoom (hal. 260%)
@@ -3237,7 +3915,8 @@ function uvOptbarHtml(){
       <button id="uvReset" type="button">I-reset UV</button>
       <button id="uvDone" type="button">Tapos na</button>
     </div></div>
-  <span style="font-size:12px;color:var(--dim);align-self:center">I-drag sa canvas para ilipat ang UV ng napiling parte. Kasama ang UV edits sa Download DFF; ang TXD, hindi nagagalaw.</span>`;
+  <button type="button" class="infobtn" data-pop="popUvHint" aria-expanded="false" aria-label="Info tungkol sa UV editor" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+  <div class="infopop" id="popUvHint">I-drag sa canvas para ilipat ang UV ng napiling parte. Kasama ang UV edits sa Download DFF; ang TXD, hindi nagagalaw.</div>`;
 }
 function wireUvOptbar(){
   $$("#optbar [data-uvside]").forEach(b => b.addEventListener("click", () => {
@@ -3401,6 +4080,7 @@ function buildWorkSnapshot(){
     }
     if (uv.length) snap.uv = uv;
   }
+  if (state.obj3d && state.obj3d.length) snap.obj3d = obj3dData();
   try { if (state.txdRawBuf && state.txdRawBuf.byteLength <= 900000) snap.txdRaw = bufToB64(state.txdRawBuf); } catch(e){}
   try { if (state.dffBuffer && state.dffBuffer.byteLength <= 900000) snap.dffRaw = bufToB64(state.dffBuffer); } catch(e){}
   /* Partial ang snapshot pag may hindi naisamang piraso ng totoong
@@ -3507,7 +4187,7 @@ async function restoreWorkSession(){
     snap = JSON.parse(raw);
   } catch(e){ return; }
   if (!snap || !snap.tex) return;
-  if (!snap.tex.length && !snap.txdRaw && !snap.dffRaw) return;
+  if (!snap.tex.length && !snap.txdRaw && !snap.dffRaw && !(snap.obj3d && snap.obj3d.length)) return;
   try {
     /* UV edits ay nire-restore nang Hiwalay sa raw DFF: kung masyadong
        malaki ang DFF para sa snapshot, mananatili pa rin ang UV edits
@@ -3567,6 +4247,10 @@ async function restoreWorkSession(){
         if (!state.model){ state.uvShare = null; clearModel(); }
       }
     }
+    /* Ibalik ang BETA 3D objects (kung mayroon) — ang mga mesh nila ay
+       nasa obj3dGroup, hiwalay sa model, kaya kahit demo o TXD-only
+       ang na-restore ay babalik sila sa preview. */
+    if (snap.obj3d && snap.obj3d.length) obj3dSetData(snap.obj3d);
     /* Ibalik ang edit state sa bawat texture (demo man o uploaded). */
     const composite = (typeof usedComposite !== "undefined" && usedComposite);
     if (composite) state.txIncomplete = true; // kulang ang TXD (mga edited lang): naka-pause ang TXD downloads hanggang ma-upload ulit ang original
@@ -3595,6 +4279,287 @@ async function restoreWorkSession(){
       : "Naibalik ang session mo — nandito pa ang mga edit mo, tuloy ka lang.", 4600);
   } catch(e){ /* sirang snapshot: magpatuloy sa sariwang editor */ }
 }
+
+/* ---------------- 3D objects (BETA) ----------------
+   Simpleng low-poly objects na gawa sa code (RW.makePrimitive),
+   inilalagay sa ibabaw ng model sa 3D Preview. Ang mesh nila ay nasa
+   obj3dGroup sa loob ng modelGroup, kaya ang local space nila ay
+   RenderWare space (X = kanan, Y = harap, Z = taas) — eksaktong space
+   din ng frame matrix na isinusulat sa DFF pag nag-download, kaya ang
+   nakikita sa preview ay siya ring posisyon/ikot/laki sa file.
+   Pag naka-on ang "Isama sa DFF" toggle, ibinabake sila ni
+   RW.buildDFFWithObjects bilang bagong geometry + frame + atomic;
+   kung walang object (o naka-off), original bytes ang DFF tulad ng dati. */
+const OBJ3D_KINDS = {
+  spoiler:  { tl: "Spoiler (pakpak sa likod)", en: "Spoiler (rear wing)", color: "#23252b", pos: [0, -1.55, 0.8], rot: [0, 0, 0], scale: 1 },
+  bullbar:  { tl: "Bullbar (harang sa harap)", en: "Bullbar (front guard)", color: "#c9ccd4", pos: [0, 2.02, 0.3], rot: [0, 0, 0], scale: 1 },
+  roofrack: { tl: "Roof rack", en: "Roof rack", color: "#23252b", pos: [0, 0, 1.02], rot: [0, 0, 0], scale: 1 },
+  lightbar: { tl: "Light bar (ilaw sa bubong)", en: "Light bar (roof lights)", color: "#33363d", pos: [0, 0.3, 1.06], rot: [0, 0, 0], scale: 1 },
+  box:      { tl: "Box", en: "Box", color: "#ffb02e", pos: [0, 0, 0.9], rot: [0, 0, 0], scale: 1 },
+  cylinder: { tl: "Cylinder", en: "Cylinder", color: "#ff7847", pos: [0, 0, 0.9], rot: [0, 0, 0], scale: 1 },
+  sphere:   { tl: "Sphere (bola)", en: "Sphere", color: "#52d273", pos: [0, 0, 0.95], rot: [0, 0, 0], scale: 1 },
+  cone:     { tl: "Cone", en: "Cone", color: "#4da3ff", pos: [0, 0, 0.9], rot: [0, 0, 0], scale: 1 },
+};
+const OBJ3D_STR = {
+  tl: {
+    title: "3D Objects", add: "+ Idagdag", hide: "▲ Itago", show: "▼ Ipakita",
+    note: "BETA — try lang ito. Magdagdag ng simpleng 3D object sa model; pag nag-download ka ng DFF, isasama ang mga object sa mismong file. Kailangan pa itong i-test sa GTA SA kung lalabas sila in-game.",
+    empty: "Wala pang object. Pumili sa listahan sa itaas, tapos pindutin ang Idagdag.",
+    posX: "Pos X", posY: "Pos Y", posZ: "Pos Z",
+    rotX: "Ikot X", rotY: "Ikot Y", rotZ: "Ikot Z",
+    scale: "Laki", color: "Kulay", undo: "↩ Undo", del: "Burahin",
+    include: "Isama ang 3D objects sa DFF pag nag-download (BETA)",
+    noGl: "Hindi available ang 3D preview sa device na ito, kaya hindi makapagdagdag ng object.",
+    added: "Naidagdag: ", deleted: "Nabura ang object.", undone: "Na-undo ang huling galaw sa 3D objects."
+  },
+  en: {
+    title: "3D Objects", add: "+ Add", hide: "▲ Hide", show: "▼ Show",
+    note: "BETA — just trying it out. Add a simple 3D object to the model; when you download the DFF, the objects are baked into the file itself. This still needs testing in GTA SA to see if they show up in-game.",
+    empty: "No objects yet. Pick one from the list above, then tap Add.",
+    posX: "Pos X", posY: "Pos Y", posZ: "Pos Z",
+    rotX: "Rot X", rotY: "Rot Y", rotZ: "Rot Z",
+    scale: "Size", color: "Color", undo: "↩ Undo", del: "Delete",
+    include: "Include the 3D objects in the DFF when downloading (BETA)",
+    noGl: "The 3D preview is not available on this device, so objects can't be added.",
+    added: "Added: ", deleted: "Object deleted.", undone: "Undid the last 3D object change."
+  }
+};
+function obj3dS(){ return OBJ3D_STR[uiLang()] || OBJ3D_STR.tl; }
+let obj3dSelId = null;
+let obj3dUndoStack = [];
+let obj3dSeq = 0;
+let obj3dEditorTouched = false;
+
+function obj3dLabel(o){
+  const def = OBJ3D_KINDS[o.kind];
+  const base = def ? (def[uiLang()] || def.tl) : o.kind;
+  return o.name || base;
+}
+function makeObj3dMesh(o){
+  const prim = RW.makePrimitive(o.kind);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(prim.positions, 3));
+  g.computeVertexNormals();
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: new THREE.Color(o.color), roughness: .45, metalness: .25 }));
+  m.userData.obj3dId = o.id;
+  o._mesh = m;
+  syncObj3dMesh(o);
+  return m;
+}
+function syncObj3dMesh(o){
+  const m = o._mesh; if (!m) return;
+  m.position.set(o.pos[0], o.pos[1], o.pos[2]);
+  m.rotation.set(o.rot[0] * Math.PI/180, o.rot[1] * Math.PI/180, o.rot[2] * Math.PI/180);
+  m.scale.setScalar(o.scale);
+  if (m.material) m.material.color.set(o.color);
+}
+function obj3dData(){
+  return state.obj3d.map(o => ({ id: o.id, kind: o.kind, name: o.name, color: o.color,
+    pos: [...o.pos], rot: [...o.rot], scale: o.scale }));
+}
+function obj3dPushUndo(){
+  obj3dUndoStack.push(JSON.stringify(obj3dData()));
+  if (obj3dUndoStack.length > 40) obj3dUndoStack.shift();
+}
+function obj3dSetData(arr){
+  for (const o of state.obj3d){
+    if (o._mesh){
+      if (obj3dGroup) obj3dGroup.remove(o._mesh);
+      o._mesh.geometry.dispose(); o._mesh.material.dispose();
+      o._mesh = null;
+    }
+  }
+  state.obj3d = (arr || []).map(d => ({ id: d.id, kind: d.kind, name: d.name || "", color: d.color || "#ffffff",
+    pos: [...(d.pos || [0, 0, 0])], rot: [...(d.rot || [0, 0, 0])], scale: d.scale || 1, _mesh: null }));
+  for (const o of state.obj3d){
+    if (o.id > obj3dSeq) obj3dSeq = o.id;
+    if (GL_OK && obj3dGroup) obj3dGroup.add(makeObj3dMesh(o));
+  }
+  if (!state.obj3d.some(o => o.id === obj3dSelId))
+    obj3dSelId = state.obj3d.length ? state.obj3d[state.obj3d.length - 1].id : null;
+  renderObj3dPanel();
+}
+function addObj3d(kind){
+  const def = OBJ3D_KINDS[kind];
+  if (!def) return;
+  if (!GL_OK || !obj3dGroup){ toast(obj3dS().noGl, 3200); return; }
+  obj3dPushUndo();
+  const n = state.obj3d.filter(o => o.kind === kind).length + 1;
+  const o = { id: ++obj3dSeq, kind, name: (def[uiLang()] || def.tl) + " " + n, color: def.color,
+              pos: [...def.pos], rot: [...def.rot], scale: def.scale, _mesh: null };
+  state.obj3d.push(o);
+  obj3dGroup.add(makeObj3dMesh(o));
+  obj3dSelId = o.id;
+  renderObj3dPanel();
+  scheduleWorkSave();
+  toast(obj3dS().added + o.name);
+}
+function deleteObj3d(id){
+  const o = state.obj3d.find(x => x.id === id);
+  if (!o) return;
+  obj3dPushUndo();
+  if (o._mesh){
+    if (obj3dGroup) obj3dGroup.remove(o._mesh);
+    o._mesh.geometry.dispose(); o._mesh.material.dispose();
+  }
+  state.obj3d = state.obj3d.filter(x => x.id !== id);
+  if (obj3dSelId === id) obj3dSelId = state.obj3d.length ? state.obj3d[state.obj3d.length - 1].id : null;
+  renderObj3dPanel();
+  scheduleWorkSave();
+  toast(obj3dS().deleted);
+}
+function undoObj3d(){
+  const prev = obj3dUndoStack.pop();
+  if (prev == null) return;
+  obj3dSetData(JSON.parse(prev));
+  scheduleWorkSave();
+  toast(obj3dS().undone);
+}
+function obj3dIncludeInDff(){
+  const c = $("#chkObjInDff");
+  return !c || c.checked;
+}
+/* Ang item na ipinapasa sa RW.buildDFFWithObjects: rot9 ay ang basis
+   columns ng rotation matrix (Euler XYZ, tulad ng preview mesh),
+   pos/scale ay RW space na — walang conversion na kailangan dahil ang
+   preview mesh mismo ay nasa RW space sa loob ng modelGroup. */
+function obj3dToRWItem(o, i){
+  const e = new THREE.Euler(o.rot[0] * Math.PI/180, o.rot[1] * Math.PI/180, o.rot[2] * Math.PI/180, "XYZ");
+  const el = new THREE.Matrix4().makeRotationFromEuler(e).elements;
+  const c = new THREE.Color(o.color);
+  return { kind: o.kind, name: "xss_" + o.kind + "_" + (i + 1),
+    color: [Math.round(c.r * 255), Math.round(c.g * 255), Math.round(c.b * 255), 255],
+    rot9: [el[0], el[1], el[2], el[4], el[5], el[6], el[8], el[9], el[10]],
+    pos: [...o.pos], scale: [o.scale, o.scale, o.scale] };
+}
+function renderObj3dPanel(){
+  const listEl = $("#obj3dList");
+  if (!listEl) return;
+  const s = obj3dS();
+  $("#obj3dTitle").textContent = s.title;
+  $("#obj3dNote").textContent = s.note;
+  $("#btnObj3dAdd").textContent = s.add;
+  $("#obj3dDlLabel").textContent = s.include;
+  const tgl = $("#btnObj3dToggle");
+  if (tgl) tgl.textContent = $("#obj3dBody").classList.contains("hidden") ? s.show : s.hide;
+  $("#obj3dDlWrap").classList.toggle("off", !state.obj3d.length);
+  const chk = $("#chkObjInDff"); if (chk) chk.disabled = !state.obj3d.length;
+  const kindSel = $("#obj3dKind");
+  const prevKind = kindSel.value || "spoiler";
+  kindSel.innerHTML = Object.keys(OBJ3D_KINDS).map(k =>
+    `<option value="${k}">${escHtml(OBJ3D_KINDS[k][uiLang()] || OBJ3D_KINDS[k].tl)}</option>`).join("");
+  kindSel.value = OBJ3D_KINDS[prevKind] ? prevKind : "spoiler";
+  // list
+  if (!state.obj3d.length){
+    listEl.innerHTML = `<div class="o3-empty">${escHtml(s.empty)}</div>`;
+  } else {
+    listEl.innerHTML = state.obj3d.map(o =>
+      `<div class="o3-item${o.id === obj3dSelId ? " on" : ""}" data-oid="${o.id}">
+         <span class="o3-swatch" style="background:${escHtml(o.color)}"></span>
+         <span class="o3-name">${escHtml(obj3dLabel(o))}</span>
+         <button type="button" data-del="${o.id}" aria-label="Delete">✕</button>
+       </div>`).join("");
+    listEl.querySelectorAll(".o3-item").forEach(row => {
+      row.addEventListener("click", () => { obj3dSelId = +row.dataset.oid; renderObj3dPanel(); });
+    });
+    listEl.querySelectorAll("[data-del]").forEach(b => {
+      b.addEventListener("click", ev => { ev.stopPropagation(); deleteObj3d(+b.dataset.del); });
+    });
+  }
+  for (const o of state.obj3d)
+    if (o._mesh && o._mesh.material) o._mesh.material.emissive.setHex(o.id === obj3dSelId ? 0x3a2a00 : 0x000000);
+  // editor for the selected object
+  const ed = $("#obj3dEditor");
+  const o = state.obj3d.find(x => x.id === obj3dSelId);
+  if (!o){ ed.classList.add("hidden"); ed.innerHTML = ""; return; }
+  ed.classList.remove("hidden");
+  obj3dEditorTouched = false;
+  const slider = (lbl, kind, i, min, max, step, val, fmt) =>
+    `<div class="o3-row"><span class="o3-lbl">${lbl}</span>
+       <input type="range" data-k="${kind}" data-i="${i}" min="${min}" max="${max}" step="${step}" value="${val}" />
+       <span class="o3-val">${fmt(val)}</span></div>`;
+  const f2 = v => (+v).toFixed(2), f0 = v => Math.round(v) + "°";
+  ed.innerHTML =
+    slider(s.posX, "pos", 0, -4, 4, 0.05, o.pos[0], f2) +
+    slider(s.posY, "pos", 1, -4, 4, 0.05, o.pos[1], f2) +
+    slider(s.posZ, "pos", 2, -4, 4, 0.05, o.pos[2], f2) +
+    slider(s.rotX, "rot", 0, 0, 360, 1, o.rot[0], f0) +
+    slider(s.rotY, "rot", 1, 0, 360, 1, o.rot[1], f0) +
+    slider(s.rotZ, "rot", 2, 0, 360, 1, o.rot[2], f0) +
+    slider(s.scale, "scale", -1, 0.2, 3, 0.05, o.scale, f2) +
+    `<div class="o3-row"><span class="o3-lbl">${s.color}</span>
+       <input type="color" id="o3Color" value="${escHtml(o.color)}" />
+       <span class="o3-val">${escHtml(o.color)}</span></div>
+     <div class="o3-btnrow">
+       <button type="button" id="o3Undo" ${obj3dUndoStack.length ? "" : "disabled"}>${s.undo}</button>
+       <button type="button" class="o3-del" id="o3Del">${s.del}</button>
+     </div>`;
+  ed.querySelectorAll("input[type=range]").forEach(inp => {
+    inp.addEventListener("input", () => {
+      if (!obj3dEditorTouched){ obj3dPushUndo(); obj3dEditorTouched = true; }
+      const v = parseFloat(inp.value);
+      if (inp.dataset.k === "scale") o.scale = v;
+      else o[inp.dataset.k][+inp.dataset.i] = v;
+      syncObj3dMesh(o);
+      const valEl = inp.parentElement.querySelector(".o3-val");
+      if (valEl) valEl.textContent = inp.dataset.k === "rot" ? Math.round(v) + "°" : v.toFixed(2);
+    });
+    inp.addEventListener("change", () => { scheduleWorkSave(); const u = $("#o3Undo"); if (u) u.disabled = !obj3dUndoStack.length; });
+  });
+  const colInp = ed.querySelector("#o3Color");
+  colInp.addEventListener("input", () => {
+    if (!obj3dEditorTouched){ obj3dPushUndo(); obj3dEditorTouched = true; }
+    o.color = colInp.value;
+    syncObj3dMesh(o);
+    const valEl = colInp.parentElement.querySelector(".o3-val");
+    if (valEl) valEl.textContent = o.color;
+    const sw = listEl.querySelector(`.o3-item[data-oid="${o.id}"] .o3-swatch`);
+    if (sw) sw.style.background = o.color;
+  });
+  colInp.addEventListener("change", scheduleWorkSave);
+  ed.querySelector("#o3Undo").addEventListener("click", undoObj3d);
+  ed.querySelector("#o3Del").addEventListener("click", () => deleteObj3d(o.id));
+}
+$("#btnObj3dAdd").addEventListener("click", () => addObj3d($("#obj3dKind").value));
+/* ---------- bukas/sara ng 3D Objects panel ----------
+   SARADO by default: hindi ito awtomatikong bumubukas pag bukas ng
+   app o pag pasok sa 3D Preview (tingnan ang setTab). Bumubukas lang
+   pag pinindot ng user ang top "3D Object" button, ang toggle button,
+   o ang header mismo ng panel; ang toggle ulit ang nagsasara. Pag
+   nagbago ang estado, nire-resize/ni-re-refit ang GL para buo pa rin
+   ang model at walang ma-overlap. */
+function obj3dPanelIsOpen(){
+  const b = $("#obj3dBody");
+  return !!b && !b.classList.contains("hidden");
+}
+function setObj3dPanelOpen(open){
+  const body = $("#obj3dBody"); if (!body) return;
+  body.classList.toggle("hidden", !open);
+  const tgl = $("#btnObj3dToggle");
+  if (tgl) tgl.textContent = open ? obj3dS().hide : obj3dS().show;
+  requestAnimationFrame(() => { resizeGL(); });
+}
+$("#btnObj3dToggle").addEventListener("click", (e) => {
+  e.stopPropagation(); // ang header click handler ang hindi dapat umulit
+  setObj3dPanelOpen(!obj3dPanelIsOpen());
+});
+const obj3dHeadEl = document.querySelector("#obj3dPanel .obj3d-head");
+if (obj3dHeadEl) obj3dHeadEl.addEventListener("click", (e) => {
+  if (e.target.closest("button")) return; // ang ⓘ at ang toggle ay may sariling gawain
+  setObj3dPanelOpen(!obj3dPanelIsOpen());
+});
+/* Top toolbar "3D Object" button: lipat sa 3D Preview tab (kahit nasa
+   Edit Texture) at buksan ang 3D Objects panel. Ang BETA badge at ang
+   ⓘ ng panel ay nananatili sa panel mismo. */
+$("#btnObj3dTop").addEventListener("click", () => {
+  setTab("3d"); // isinasara muna ng setTab ang panel…
+  setObj3dPanelOpen(true); // …tapos bubuksan ito ng button na ito
+  requestAnimationFrame(() => {
+    const p = $("#obj3dPanel");
+    if (p && p.scrollIntoView) p.scrollIntoView({ block: "nearest" });
+  });
+});
+renderObj3dPanel();
 
 /* ---------------- downloads ---------------- */
 function download(blob, name){
@@ -3627,17 +4592,26 @@ function buildTxdItem(){
   } finally { for (const [t, rgba] of baked) t.rgba = rgba; }
 }
 /* Build the downloadable DFF — UV-patched when there are UV edits,
-   otherwise the original uploaded bytes. Shared by both buttons. */
+   with the BETA 3D objects baked in when they exist and the toggle is
+   on, otherwise the original uploaded bytes exactly as before.
+   Shared by all download buttons. */
 function buildDffItem(){
   if (!state.dffBuffer) return null;
+  let buf = state.dffBuffer, uvVerts = 0, objCount = 0;
   if (state.model && state.uvEdits && state.uvEdits.size){
     let n = 0; for (const m of state.uvEdits.values()) n += m.size;
-    const buf = RW.buildPatchedDFF(state.dffBuffer, state.model, state.uvEdits);
-    return { blob: new Blob([buf], { type: "application/octet-stream" }),
-             name: state.dffName || "model.dff", uvVerts: n };
+    buf = RW.buildPatchedDFF(buf, state.model, state.uvEdits);
+    uvVerts = n;
   }
-  return { blob: new Blob([state.dffBuffer], { type: "application/octet-stream" }),
-           name: state.dffName || "model.dff", uvVerts: 0 };
+  if (obj3dIncludeInDff() && state.obj3d.length){
+    buf = RW.buildDFFWithObjects(buf, state.obj3d.map(obj3dToRWItem));
+    objCount = state.obj3d.length;
+  }
+  if (buf === state.dffBuffer)
+    return { blob: new Blob([state.dffBuffer], { type: "application/octet-stream" }),
+             name: state.dffName || "model.dff", uvVerts: 0, objCount: 0 };
+  return { blob: new Blob([buf], { type: "application/octet-stream" }),
+           name: state.dffName || "model.dff", uvVerts, objCount };
 }
 function txIncompleteMsg(){
   return uiLang() === "en"
@@ -3664,7 +4638,10 @@ $("#btnDlDff").addEventListener("click", () => {
     const item = buildDffItem();
     if (!item) return;
     download(item.blob, item.name);
-    if (item.uvVerts) toast(`Na-download ang DFF na may UV edits (${item.uvVerts} vertices ang nabago) — lahat ng ibang bytes, original pa rin.`, 3600);
+    if (item.objCount) toast(uiLang() === "en"
+      ? `DFF downloaded with ${item.objCount} 3D object(s) baked in (BETA) — test it in GTA SA to see if they appear in-game.`
+      : `Na-download ang DFF na may ${item.objCount} 3D object na isinama (BETA) — i-test sa GTA SA kung lalabas sila in-game.`, 4200);
+    else if (item.uvVerts) toast(`Na-download ang DFF na may UV edits (${item.uvVerts} vertices ang nabago) — lahat ng ibang bytes, original pa rin.`, 3600);
   } catch(err){ toast("DFF export error: " + err.message, 3400); }
 });
 
@@ -3779,7 +4756,7 @@ $("#btnDlZip").addEventListener("click", async () => {
     const base = (state.txdName || state.dffName || "xss-txd").replace(/\.[^.]+$/, "");
     download(blob, base + ".zip");
     toast(items.length === 2
-      ? "Na-download ang ZIP — laman niya ang edited TXD at ang DFF (UV-patched kung may UV edits)."
+      ? "Na-download ang ZIP — laman niya ang edited TXD at ang DFF (UV-patched kung may UV edits" + (dffItem && dffItem.objCount ? `, may ${dffItem.objCount} 3D object na isinama — BETA` : "") + ")."
       : "Na-download ang ZIP — " + items[0].name + " lang ang laman (walang isang file na naka-load).", 3600);
   } catch(err){ toast("ZIP error: " + err.message, 3400); }
 });
@@ -3791,6 +4768,7 @@ function resizeGL(){
   if (r.width < 2 || r.height < 2) return;
   renderer.setSize(r.width, r.height);
   camera.aspect = r.width / r.height; camera.updateProjectionMatrix();
+  refitGL(); // bagong aspect = bagong fit, para consistent ang framing
 }
 window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
 
@@ -3869,9 +4847,35 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     try { sessionStorage.setItem(SESSION_KEY, "1"); } catch(e){}
   }
 
-  /* --- THE password check --- */
+  /* --- THE password check ---
+     Ang gate ay tumitingin muna sa passcode na naka-save sa
+     localStorage (mavs_txd_passcode — pwedeng palitan ni mavs sa
+     Admin Panel). Pag wala pang naka-save, ang default na 2607 ang
+     gamit. Ang pagpapalit sa panel ay sa device/browser lang na ito
+     gumagana. */
+  var PASS_KEY = "mavs_txd_passcode";
+  var DEFAULT_PASSCODE = "2607";
+  function getPasscode(){
+    try {
+      var saved = localStorage.getItem(PASS_KEY);
+      if (saved != null && String(saved).trim() !== "") return String(saved);
+    } catch(e){}
+    return DEFAULT_PASSCODE;
+  }
   function validateCode(code){
-    return String(code == null ? "" : code).trim() === "2607";
+    return String(code == null ? "" : code).trim() === getPasscode();
+  }
+
+  /* --- Admin password: default xsstxd2026!, pwedeng palitan sa
+     Admin Panel (naka-save sa localStorage, device/browser lang). --- */
+  var ADMIN_KEY = "mavs_txd_adminpass";
+  var DEFAULT_ADMIN_PASS = "xsstxd2026!";
+  function getAdminPass(){
+    try {
+      var savedA = localStorage.getItem(ADMIN_KEY);
+      if (savedA != null && String(savedA) !== "") return String(savedA);
+    } catch(e){}
+    return DEFAULT_ADMIN_PASS;
   }
 
   var gateEl = document.getElementById("gate");
@@ -3899,6 +4903,45 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       dlAll: "I-download Lahat",
       error: "Mali ang password \u2014 pakisuri at subukan ulit.",
       hint: "Makukuha mo ang password kay mavs pag bumili ka ng XSS TXD. Pag naipasok mo na, mananatili kang nasa editor \u2014 mag-download ka man at isara ang notice, hindi ka babalik dito. Hihingin lang ulit ang password sa panibagong bukas ng app.",
+      admAuthTitle: "Enter admin password",
+      admAuthLabel: "Admin password",
+      admConfirm: "Confirm",
+      admCancel: "Cancel",
+      admWrong: "Mali ang admin password — hindi nagbukas ang panel.",
+      admPanelTitle: "Admin Panel",
+      admSecPasscode: "Passcode ng buyer",
+      admCurLabel: "Kasalukuyang passcode:",
+      admNewPasscode: "Bagong passcode",
+      admNewPasscode2: "Ulitin ang bagong passcode",
+      admSavePasscode: "I-save ang passcode",
+      admPasscodeNote: "Paalala: ang pagpapalit dito ay sa device / browser lang na ito gumagana. Para mapalitan ang passcode para sa lahat ng buyer, kailangang i-update ang naka-publish na file — sabihin kay Kit.",
+      admResetPasscode: "I-reset ang passcode sa 2607",
+      admSecAdmin: "Admin password",
+      admCurAdmin: "Kasalukuyang admin password",
+      admNewAdmin: "Bagong admin password",
+      admNewAdmin2: "Ulitin ang bagong admin password",
+      admSaveAdmin: "I-save ang admin password",
+      admSecWork: "Saved work",
+      admClearWork: "Burahin ang lahat ng saved work",
+      admClearWorkArmed: "Sigurado ka? Pindutin ulit para burahin",
+      admClearNote: "Binubura lang nito ang work snapshot / edits na naka-save sa session. Hindi gagalawin ang passcode, admin password, at wika. Magre-reload ang app pagkatapos.",
+      admSecInfo: "Impormasyon ng app",
+      admClose: "Isara",
+      menuAdmin: "Admin Panel",
+      menuTc: "Timecyc Editor",
+      menuCc: "Colorcycle Editor",
+      admOkPasscode: "Na-save ang bagong passcode.",
+      admOkAdmin: "Na-save ang bagong admin password.",
+      admOkReset: "Na-reset na ang passcode sa 2607.",
+      admOkCleared: "Nabura ang saved work — magre-reload ang app…",
+      admErrEmpty: "Walang laman — maglagay muna.",
+      admErrMismatch: "Hindi magkatugma ang dalawang entry.",
+      admErrCurAdmin: "Mali ang kasalukuyang admin password.",
+      admInfoVersion: "Version",
+      admInfoPasscode: "Passcode ng buyer",
+      admInfoAdmin: "Admin password",
+      admInfoChanged: "napalitan na sa device na ito",
+      admInfoDefault: "default",
       legalTitle: "Privacy, Legal at Credits",
       legalBtn: "Naiintindihan ko \u2014 Magpatuloy",
       legalNote: "Pag nagpatuloy ka, lalabas ang loading screen at hihingin ang password mo.",
@@ -3915,6 +4958,45 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       dlAll: "Download All",
       error: "Wrong password \u2014 please check and try again.",
       hint: "Get the password from mavs when you buy XSS TXD. Once entered, you stay in the editor \u2014 downloading a file and closing the notice won't bring you back here. The password is only asked again on a fresh open of the app.",
+      admAuthTitle: "Enter admin password",
+      admAuthLabel: "Admin password",
+      admConfirm: "Confirm",
+      admCancel: "Cancel",
+      admWrong: "Wrong admin password — the panel did not open.",
+      admPanelTitle: "Admin Panel",
+      admSecPasscode: "Buyer passcode",
+      admCurLabel: "Current passcode:",
+      admNewPasscode: "New passcode",
+      admNewPasscode2: "Repeat the new passcode",
+      admSavePasscode: "Save passcode",
+      admPasscodeNote: "Note: changing it here only works on this device / browser. To change the passcode for all buyers, the published file has to be updated — tell Kit.",
+      admResetPasscode: "Reset passcode to 2607",
+      admSecAdmin: "Admin password",
+      admCurAdmin: "Current admin password",
+      admNewAdmin: "New admin password",
+      admNewAdmin2: "Repeat the new admin password",
+      admSaveAdmin: "Save admin password",
+      admSecWork: "Saved work",
+      admClearWork: "Delete all saved work",
+      admClearWorkArmed: "Are you sure? Tap again to delete",
+      admClearNote: "This only deletes the work snapshot / edits saved in this session. The passcode, admin password, and language are not touched. The app will reload afterwards.",
+      admSecInfo: "App info",
+      admClose: "Close",
+      menuAdmin: "Admin Panel",
+      menuTc: "Timecyc Editor",
+      menuCc: "Colorcycle Editor",
+      admOkPasscode: "New passcode saved.",
+      admOkAdmin: "New admin password saved.",
+      admOkReset: "Passcode reset to 2607.",
+      admOkCleared: "Saved work deleted — reloading the app…",
+      admErrEmpty: "Empty — type something first.",
+      admErrMismatch: "The two entries don't match.",
+      admErrCurAdmin: "Current admin password is wrong.",
+      admInfoVersion: "Version",
+      admInfoPasscode: "Buyer passcode",
+      admInfoAdmin: "Admin password",
+      admInfoChanged: "changed on this device",
+      admInfoDefault: "default",
       legalTitle: "Privacy, Legal & Credits",
       legalBtn: "I Understand \u2014 Continue",
       legalNote: "When you continue, the loading screen will appear and your password will be asked.",
@@ -3951,6 +5033,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     if (dlAllLbl && s.dlAll) dlAllLbl.textContent = s.dlAll;
     if (errorEl) errorEl.textContent = s.error;
     if (hintEl) hintEl.textContent = s.hint;
+    if (typeof applyAdminStrings === "function") applyAdminStrings();
     if (legalTitleEl && s.legalTitle) legalTitleEl.textContent = s.legalTitle;
     if (legalBodyEl && s.legalBody) legalBodyEl.innerHTML = s.legalBody;
     if (legalBtnEl && s.legalBtn) legalBtnEl.textContent = s.legalBtn;
@@ -3997,6 +5080,244 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     }
   });
   codeEl.addEventListener("input", function(){ errorEl.classList.add("hidden"); });
+
+  /* =====================================================================
+     Admin Panel — bubukas lang mula sa ••• button (sa gate o sa header
+     ng editor) pagkatapos ng tamang admin password. Lahat ng setting
+     dito ay naka-save sa localStorage ng device/browser na ito lang:
+     mavs_txd_passcode (buyer passcode, fallback 2607) at
+     mavs_txd_adminpass (admin password, fallback xsstxd2026!).
+     ===================================================================== */
+  var APP_VERSION = "v25";
+  var adminAuthEl = document.getElementById("adminAuth");
+  var adminAuthCard = document.getElementById("adminAuthCard");
+  var adminAuthForm = document.getElementById("adminAuthForm");
+  var adminAuthInput = document.getElementById("adminAuthInput");
+  var adminAuthError = document.getElementById("adminAuthError");
+  var adminPanelEl = document.getElementById("adminPanel");
+  var adminMsgEl = document.getElementById("adminMsg");
+  var clearArmTimer = null;
+
+  function admS(){ return STRINGS[currentLang]; }
+  function setAdminMsg(kind, text){
+    if (!adminMsgEl) return;
+    adminMsgEl.className = "admin-msg" + (kind ? " " + kind : "");
+    adminMsgEl.textContent = text || "";
+  }
+  function admSetText(id, text){
+    var el = document.getElementById(id);
+    if (el && text != null) el.textContent = text;
+  }
+  function syncGateInputMode(){
+    /* Numeric keypad lang pag purong numero ang passcode; pag may
+       letra/symbol na (pinalitan sa panel), full keyboard ang kailangan. */
+    if (!codeEl) return;
+    codeEl.setAttribute("inputmode", /^\d+$/.test(getPasscode()) ? "numeric" : "text");
+  }
+  function refreshAdminPanel(){
+    var s = admS();
+    admSetText("admCurPasscode", getPasscode());
+    var adminChanged = false, passChanged = false;
+    try {
+      adminChanged = localStorage.getItem(ADMIN_KEY) != null && String(localStorage.getItem(ADMIN_KEY)) !== "";
+      passChanged = localStorage.getItem(PASS_KEY) != null && String(localStorage.getItem(PASS_KEY)).trim() !== "";
+    } catch(e){}
+    var infoEl = document.getElementById("admInfo");
+    if (infoEl){
+      infoEl.innerHTML = "";
+      var lines = [
+        [s.admInfoVersion, "XSS TXD " + APP_VERSION],
+        [s.admInfoPasscode, getPasscode() + " (" + (passChanged ? s.admInfoChanged : s.admInfoDefault) + ")"],
+        [s.admInfoAdmin, "•••••• (" + (adminChanged ? s.admInfoChanged : s.admInfoDefault) + ")"]
+      ];
+      lines.forEach(function(pair, i){
+        if (i) infoEl.appendChild(document.createElement("br"));
+        infoEl.appendChild(document.createTextNode(pair[0] + ": "));
+        var b = document.createElement("b"); b.textContent = pair[1];
+        infoEl.appendChild(b);
+      });
+    }
+  }
+  function applyAdminStrings(){
+    var s = admS();
+    admSetText("adminAuthTitle", s.admAuthTitle);
+    admSetText("adminAuthLabel", s.admAuthLabel);
+    admSetText("adminAuthConfirm", s.admConfirm);
+    admSetText("adminAuthCancel", s.admCancel);
+    admSetText("adminAuthError", s.admWrong);
+    admSetText("adminPanelTitle", s.admPanelTitle);
+    admSetText("admSecPasscode", s.admSecPasscode);
+    admSetText("admCurLabel", s.admCurLabel);
+    admSetText("admNewPasscodeLabel", s.admNewPasscode);
+    admSetText("admNewPasscode2Label", s.admNewPasscode2);
+    admSetText("admSavePasscode", s.admSavePasscode);
+    admSetText("admPasscodeNote", s.admPasscodeNote);
+    var resetBtn = document.getElementById("admResetPasscode");
+    if (resetBtn) resetBtn.textContent = s.admResetPasscode;
+    admSetText("admSecAdmin", s.admSecAdmin);
+    admSetText("admCurAdminLabel", s.admCurAdmin);
+    admSetText("admNewAdminLabel", s.admNewAdmin);
+    admSetText("admNewAdmin2Label", s.admNewAdmin2);
+    admSetText("admSaveAdmin", s.admSaveAdmin);
+    admSetText("admSecWork", s.admSecWork);
+    var clearBtn = document.getElementById("admClearWork");
+    if (clearBtn && !clearBtn.classList.contains("armed")) clearBtn.textContent = s.admClearWork;
+    admSetText("admClearNote", s.admClearNote);
+    admSetText("admSecInfo", s.admSecInfo);
+    admSetText("admClose", s.admClose);
+    admSetText("menuAdminLbl", s.menuAdmin);
+    admSetText("menuTcLbl", s.menuTc);
+    admSetText("menuCcLbl", s.menuCc);
+    if (typeof window.__tcApplyLang === "function") window.__tcApplyLang(currentLang);
+    if (typeof window.__ccApplyLang === "function") window.__ccApplyLang(currentLang);
+    if (adminPanelEl && adminPanelEl.classList.contains("open")) refreshAdminPanel();
+  }
+  function openAdminAuth(){
+    if (!adminAuthEl) return;
+    if (adminAuthInput) adminAuthInput.value = "";
+    if (adminAuthError) adminAuthError.classList.remove("err");
+    adminAuthEl.classList.add("open");
+    try { adminAuthInput.focus({ preventScroll: true }); } catch(e){ if (adminAuthInput) adminAuthInput.focus(); }
+  }
+  function closeAdminAuth(){ if (adminAuthEl) adminAuthEl.classList.remove("open"); }
+  function openAdminPanel(){
+    if (!adminPanelEl) return;
+    setAdminMsg("", "");
+    ["admNewPasscode", "admNewPasscode2", "admCurAdmin", "admNewAdmin", "admNewAdmin2"].forEach(function(id){
+      var el = document.getElementById(id); if (el) el.value = "";
+    });
+    disarmClearWork();
+    refreshAdminPanel();
+    adminPanelEl.classList.add("open");
+  }
+  function closeAdminPanel(){ if (adminPanelEl) adminPanelEl.classList.remove("open"); }
+  function disarmClearWork(){
+    var btn = document.getElementById("admClearWork");
+    if (clearArmTimer){ clearTimeout(clearArmTimer); clearArmTimer = null; }
+    if (btn){ btn.classList.remove("armed"); btn.textContent = admS().admClearWork; }
+  }
+
+  var gateDotsBtn = document.getElementById("gateDots");
+  var headerDotsBtn = document.getElementById("btnAdminDots");
+  if (gateDotsBtn) gateDotsBtn.addEventListener("click", function(e){ e.preventDefault(); openAdminAuth(); });
+  /* Ang ••• sa header ng editor ay maliit na menu na ngayon:
+     "🔐 Admin Panel" (admin password muna, tulad ng dati) at sa ilalim
+     nito "🌇 Timecyc Editor". Ang ••• sa gate screen ay diretso pa
+     rin sa admin password — admin-only — para manatili ang lahat ng
+     panel sa likod ng buyer gate. */
+  var dotsMenuEl = document.getElementById("dotsMenu");
+  function closeDotsMenu(){ if (dotsMenuEl) dotsMenuEl.classList.add("hidden"); }
+  function toggleDotsMenu(){
+    if (!dotsMenuEl){ openAdminAuth(); return; }
+    dotsMenuEl.classList.toggle("hidden");
+  }
+  if (headerDotsBtn) headerDotsBtn.addEventListener("click", function(e){ e.preventDefault(); e.stopPropagation(); toggleDotsMenu(); });
+  var menuAdminBtn = document.getElementById("menuAdminBtn");
+  if (menuAdminBtn) menuAdminBtn.addEventListener("click", function(){ closeDotsMenu(); openAdminAuth(); });
+  var menuTcBtn = document.getElementById("menuTcBtn");
+  if (menuTcBtn) menuTcBtn.addEventListener("click", function(){ closeDotsMenu(); if (typeof window.__tcOpen === "function") window.__tcOpen(); });
+  var menuCcBtn = document.getElementById("menuCcBtn");
+  if (menuCcBtn) menuCcBtn.addEventListener("click", function(){ closeDotsMenu(); if (typeof window.__ccOpen === "function") window.__ccOpen(); });
+  document.addEventListener("click", function(e){
+    if (!dotsMenuEl || dotsMenuEl.classList.contains("hidden")) return;
+    if (e.target && e.target.closest && (e.target.closest("#dotsMenu") || e.target.closest("#btnAdminDots"))) return;
+    closeDotsMenu();
+  });
+  var adminAuthCancelBtn = document.getElementById("adminAuthCancel");
+  if (adminAuthCancelBtn) adminAuthCancelBtn.addEventListener("click", closeAdminAuth);
+  if (adminAuthEl) adminAuthEl.addEventListener("click", function(e){ if (e.target === adminAuthEl) closeAdminAuth(); });
+  if (adminPanelEl) adminPanelEl.addEventListener("click", function(e){ if (e.target === adminPanelEl) closeAdminPanel(); });
+  if (adminAuthForm) adminAuthForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    if (adminAuthInput && adminAuthInput.value === getAdminPass()){
+      closeAdminAuth();
+      openAdminPanel();
+    } else {
+      if (adminAuthError){ adminAuthError.textContent = admS().admWrong; adminAuthError.classList.add("err"); }
+      if (adminAuthInput) adminAuthInput.select();
+      if (adminAuthCard){
+        adminAuthCard.classList.remove("gate-shake");
+        void adminAuthCard.offsetWidth;
+        adminAuthCard.classList.add("gate-shake");
+      }
+    }
+  });
+  if (adminAuthInput) adminAuthInput.addEventListener("input", function(){
+    if (adminAuthError) adminAuthError.classList.remove("err");
+  });
+  document.addEventListener("keydown", function(e){
+    if (e.key !== "Escape") return;
+    closeDotsMenu();
+    if (adminAuthEl && adminAuthEl.classList.contains("open")) closeAdminAuth();
+    else if (adminPanelEl && adminPanelEl.classList.contains("open")) closeAdminPanel();
+  });
+
+  var admPasscodeForm = document.getElementById("admPasscodeForm");
+  if (admPasscodeForm) admPasscodeForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    var s = admS();
+    var v1 = document.getElementById("admNewPasscode").value.trim();
+    var v2 = document.getElementById("admNewPasscode2").value.trim();
+    if (!v1){ setAdminMsg("err", s.admErrEmpty); return; }
+    if (v1 !== v2){ setAdminMsg("err", s.admErrMismatch); return; }
+    try { localStorage.setItem(PASS_KEY, v1); } catch(err){}
+    syncGateInputMode();
+    refreshAdminPanel();
+    document.getElementById("admNewPasscode").value = "";
+    document.getElementById("admNewPasscode2").value = "";
+    setAdminMsg("ok", s.admOkPasscode);
+  });
+  var admResetBtn = document.getElementById("admResetPasscode");
+  if (admResetBtn) admResetBtn.addEventListener("click", function(){
+    try { localStorage.removeItem(PASS_KEY); } catch(e){}
+    syncGateInputMode();
+    refreshAdminPanel();
+    setAdminMsg("ok", admS().admOkReset);
+  });
+  var admAdminForm = document.getElementById("admAdminForm");
+  if (admAdminForm) admAdminForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    var s = admS();
+    var cur = document.getElementById("admCurAdmin").value;
+    var v1 = document.getElementById("admNewAdmin").value;
+    var v2 = document.getElementById("admNewAdmin2").value;
+    if (cur !== getAdminPass()){ setAdminMsg("err", s.admErrCurAdmin); return; }
+    if (!v1){ setAdminMsg("err", s.admErrEmpty); return; }
+    if (v1 !== v2){ setAdminMsg("err", s.admErrMismatch); return; }
+    try { localStorage.setItem(ADMIN_KEY, v1); } catch(err){}
+    ["admCurAdmin", "admNewAdmin", "admNewAdmin2"].forEach(function(id){
+      var el = document.getElementById(id); if (el) el.value = "";
+    });
+    refreshAdminPanel();
+    setAdminMsg("ok", s.admOkAdmin);
+  });
+  var admClearBtn = document.getElementById("admClearWork");
+  if (admClearBtn) admClearBtn.addEventListener("click", function(){
+    var s = admS();
+    if (!admClearBtn.classList.contains("armed")){
+      admClearBtn.classList.add("armed");
+      admClearBtn.textContent = s.admClearWorkArmed;
+      clearArmTimer = setTimeout(disarmClearWork, 4000);
+      return;
+    }
+    if (clearArmTimer){ clearTimeout(clearArmTimer); clearArmTimer = null; }
+    /* Burahin lang ang work snapshot / edits — hindi ang passcode,
+       admin password, o wika. */
+    try { sessionStorage.removeItem("mavs_txd_work"); } catch(e){}
+    try {
+      var drop = [];
+      for (var i = 0; i < localStorage.length; i++){
+        var k = localStorage.key(i);
+        if (k && k.indexOf("mavs_txd_") === 0 && k !== PASS_KEY && k !== ADMIN_KEY && k !== LANG_KEY) drop.push(k);
+      }
+      drop.forEach(function(k){ localStorage.removeItem(k); });
+    } catch(e){}
+    setAdminMsg("ok", s.admOkCleared);
+    setTimeout(function(){ try { location.reload(); } catch(e){} }, 900);
+  });
+  var admCloseBtn = document.getElementById("admClose");
+  if (admCloseBtn) admCloseBtn.addEventListener("click", closeAdminPanel);
+  syncGateInputMode();
 
   /* Legal / Privacy popup muna — bago ang loading at bago ang password.
      Walang naka-save na dismissal (walang localStorage/sessionStorage
@@ -4046,6 +5367,1576 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   } else {
     startGateFlow();
   }
+})();
+</script>
+<script>
+/* =====================================================================
+   Timecyc Editor — tunay na GTA SA timecyc.dat format.
+
+   Ang file ay may mga weather section (header na "////////// NAME",
+   22 sa standard file) at bawat weather ay may 8 rows ng oras sa
+   ganitong order: Midnight, 5AM, 6AM, 7AM, Midday, 7PM, 8PM, 10PM.
+   Bawat row (token indices):
+     0-2 Amb RGB · 3-5 Amb_Obj RGB · 6-8 Dir RGB · 9-11 SkyTop RGB ·
+     12-14 SkyBot RGB · 15-17 SunCore RGB · 18-20 SunCorona RGB ·
+     21 SunSz · 22 SprSz · 23 SprBght · 24 Shdw · 25 LightShd ·
+     26 PoleShd · 27 FarClp · 28 FogSt · 29 LightOnGround ·
+     30-32 LowClouds RGB · 33-35 BottomClouds RGB · 36-39 Water RGBA ·
+     40+ optional extras (hindi ginagalaw).
+   Tolerant ang parser: ang mga hindi in-edit na rows ay isinusulat
+   pabalik nang eksakto tulad ng original na linya; ang in-edit na
+   rows lang ang binubuo ulit mula sa tokens (kasama ang extras).
+   ===================================================================== */
+(function(){
+  "use strict";
+
+  var STR = {
+    tl: {
+      upload: "📤 I-upload ang timecyc.dat",
+      uploadSub: "I-tap ito at piliin ang timecyc.dat mo — yun mismo ang lalabas sa preview sa ibaba at yun ang ie-edit mo.",
+      saveDownload: "💾 I-save at I-download",
+      loadedPrefix: "Naka-load: ",
+      defaultLoaded: "Default sample ang naka-load — mag-upload ng sarili mong timecyc.dat para i-edit ang file mo",
+      counts: function(secs, rows, edited){
+        return secs + " weather · " + rows + " rows" + (edited ? " · " + edited + " na-edit" : "");
+      },
+      useDefault: "Gamitin ang default",
+      weather: "Weather",
+      time: "Oras",
+      times: ["Hatinggabi", "5AM", "6AM", "7AM", "Tanghali", "7PM", "8PM", "10PM"],
+      colors: { skytop: "Sky Top", skybot: "Sky Bottom", suncore: "Sun Core", suncorona: "Sun Corona", amb: "Ambient", ambobj: "Ambient Object", dir: "Directional Light", lowcloud: "Low Clouds", botcloud: "Bottom Clouds", water: "Water" },
+      sliders: { sunSz: "Sun Size", sprSz: "Sprite Size", sprBght: "Sprite Brightness", shdw: "Shadow", farClp: "Far Clip", fogSt: "Fog Start", log: "Light on Ground" },
+      reset: "Ibalik sa original",
+      undo: "Undo",
+      download: "I-download ang timecyc.dat",
+      close: "Isara",
+      defName: "Default (built-in sample)",
+      empty: "Walang na-parse na weather rows sa file na ito — subukan ang totoong timecyc.dat o ang default.",
+      notDat: "Hindi .dat file ang napili mo — piliin ang timecyc.dat file. Walang nabago sa naka-load na file.",
+      info: function(name, secs, rows, edited){
+        return name + " — " + secs + " weather · " + rows + " rows" + (edited ? " · " + edited + " na-edit" : "");
+      }
+    },
+    en: {
+      upload: "📤 Upload timecyc.dat",
+      uploadSub: "Tap here and pick your timecyc.dat — that exact file is what the preview below shows and what you will edit.",
+      saveDownload: "💾 Save & Download",
+      loadedPrefix: "Loaded: ",
+      defaultLoaded: "Default sample loaded — upload your own timecyc.dat to edit your file",
+      counts: function(secs, rows, edited){
+        return secs + " weathers · " + rows + " rows" + (edited ? " · " + edited + " edited" : "");
+      },
+      useDefault: "Use default",
+      weather: "Weather",
+      time: "Time",
+      times: ["Midnight", "5AM", "6AM", "7AM", "Midday", "7PM", "8PM", "10PM"],
+      colors: { skytop: "Sky Top", skybot: "Sky Bottom", suncore: "Sun Core", suncorona: "Sun Corona", amb: "Ambient", ambobj: "Ambient Object", dir: "Directional Light", lowcloud: "Low Clouds", botcloud: "Bottom Clouds", water: "Water" },
+      sliders: { sunSz: "Sun Size", sprSz: "Sprite Size", sprBght: "Sprite Brightness", shdw: "Shadow", farClp: "Far Clip", fogSt: "Fog Start", log: "Light on Ground" },
+      reset: "Reset this time",
+      undo: "Undo",
+      download: "Download timecyc.dat",
+      close: "Close",
+      defName: "Default (built-in sample)",
+      empty: "No weather rows could be parsed from this file — try a real timecyc.dat or the default.",
+      notDat: "That is not a .dat file — please pick your timecyc.dat file. Your loaded file was not changed.",
+      info: function(name, secs, rows, edited){
+        return name + " — " + secs + " weathers · " + rows + " rows" + (edited ? " · " + edited + " edited" : "");
+      }
+    }
+  };
+
+  var COLOR_FIELDS = [
+    { k: "skytop", i: 9 }, { k: "skybot", i: 12 }, { k: "suncore", i: 15 }, { k: "suncorona", i: 18 },
+    { k: "amb", i: 0 }, { k: "ambobj", i: 3 }, { k: "dir", i: 6 },
+    { k: "lowcloud", i: 30 }, { k: "botcloud", i: 33 }, { k: "water", i: 36 }
+  ];
+  var SLIDERS = [
+    { k: "sunSz", i: 21, min: 0, max: 10, step: 0.1 },
+    { k: "sprSz", i: 22, min: 0, max: 5, step: 0.1 },
+    { k: "sprBght", i: 23, min: 0, max: 3, step: 0.05 },
+    { k: "shdw", i: 24, min: 0, max: 16, step: 1 },
+    { k: "farClp", i: 27, min: 50, max: 3000, step: 10 },
+    { k: "fogSt", i: 28, min: 0, max: 1200, step: 5 },
+    { k: "log", i: 29, min: 0, max: 3, step: 0.05 }
+  ];
+  var HOURS = [0, 5, 6, 7, 12, 19, 20, 22];
+
+  var tcLang = "tl";
+  try {
+    var savedLang = localStorage.getItem("mavs_txd_lang");
+    if (savedLang === "en" || savedLang === "tl") tcLang = savedLang;
+  } catch(e){}
+  function S(){ return STR[tcLang]; }
+
+  function $(id){ return document.getElementById(id); }
+  function clamp255(v){ v = Math.round(v); if (v < 0) return 0; if (v > 255) return 255; return v; }
+  function fmtN(v){ return String(Math.round(v * 100) / 100); }
+  function hex2(c){
+    function h(n){ var s = clamp255(n).toString(16); return s.length < 2 ? "0" + s : s; }
+    return "#" + h(c[0]) + h(c[1]) + h(c[2]);
+  }
+  function css(c){ return "rgb(" + clamp255(c[0]) + "," + clamp255(c[1]) + "," + clamp255(c[2]) + ")"; }
+  function rgba(c, a){ return "rgba(" + clamp255(c[0]) + "," + clamp255(c[1]) + "," + clamp255(c[2]) + "," + a + ")"; }
+  function tcMix(a, b, t){ return [Math.round(a[0] + (b[0] - a[0]) * t), Math.round(a[1] + (b[1] - a[1]) * t), Math.round(a[2] + (b[2] - a[2]) * t)]; }
+  function tcScale(c, f){ return [clamp255(c[0] * f), clamp255(c[1] * f), clamp255(c[2] * f)]; }
+  function tcDesat(c, f){ var g = (c[0] + c[1] + c[2]) / 3; return [Math.round(c[0] + (g - c[0]) * f), Math.round(c[1] + (g - c[1]) * f), Math.round(c[2] + (g - c[2]) * f)]; }
+  function tcSat(c, f){ var g = (c[0] + c[1] + c[2]) / 3; return [clamp255(c[0] + (c[0] - g) * (f - 1)), clamp255(c[1] + (c[1] - g) * (f - 1)), clamp255(c[2] + (c[2] - g) * (f - 1))]; }
+
+  /* ---------------- parser / writer ----------------
+     Sa totoong timecyc.dat (kasama ang mga mod tulad ng Foggy
+     Fps++), bawat row ay may comment label ng ORAS sa itaas niya
+     ("//Midnight", "//5AM", ...). Hindi weather section ang mga
+     iyon — label lang sila ng susunod na row. Ang weather section
+     header ay tulad ng "////////// EXTRASUNNY_LA". Noon, bawat
+     time label ay nagiging sariling "section" (184 sections × 1
+     row, at "Midnight" ang laman ng Weather dropdown); ngayon,
+     ang tunay na weather headers lang ang binibilang. */
+  function tcIsTimeLabel(nm){
+    var n = String(nm || "").toLowerCase().replace(/\s+/g, "");
+    if (n === "midnight" || n === "midday" || n === "noon" ||
+        n === "dawn" || n === "dusk" || n === "sunrise" || n === "sunset") return true;
+    if (/^\d{1,2}(am|pm)$/.test(n)) return true;        /* 5AM, 7PM ... */
+    if (/^\d{1,2}h$/.test(n)) return true;              /* 5h, 19h ... */
+    if (/^\d{1,2}:\d{2}$/.test(n)) return true;         /* 5:00, 19:00 ... */
+    if (/^\d{1,2}$/.test(n) && HOURS.indexOf(parseInt(n, 10)) >= 0) return true; /* 0, 5, 6, 7, 12, 19, 20, 22 */
+    return false;
+  }
+  function tcIsWeatherHeader(nm){
+    if (!nm || nm.length > 48) return false;
+    if (!/^[A-Za-z0-9_ ]+$/.test(nm)) return false;
+    if (tcIsTimeLabel(nm)) return false;
+    if (nm.indexOf("_") >= 0) return true;              /* EXTRASUNNY_LA, EXTRACOLOURS_1 */
+    if (nm === nm.toUpperCase()) return true;           /* SUNNY, EXTRASUNNY LA */
+    if (!/\s/.test(nm)) return true;                    /* iisang token */
+    return false; /* pangungusap na comment (hal. doc block) — hindi header */
+  }
+  function tcParse(text){
+    var eol = text.indexOf("\r\n") >= 0 ? "\r\n" : "\n";
+    var lines = String(text).split(/\r\n|\r|\n/);
+    var sections = [];
+    var cur = null;
+    var allRows = [];
+    for (var i = 0; i < lines.length; i++){
+      var t = lines[i].replace(/^\s+|\s+$/g, "");
+      if (t.charAt(0) === "/"){
+        var nm = t.replace(/^\/+\s*/, "").replace(/[\/\s]+$/, "");
+        if (tcIsWeatherHeader(nm)){
+          cur = { name: nm, lineIdx: i, rows: [] };
+          sections.push(cur);
+        }
+        continue;
+      }
+      if (t){
+        var body = t.split("//")[0];
+        var toks = body.split(/\s+/).filter(function(x){ return x !== ""; });
+        var numeric = toks.length >= 40;
+        if (numeric){
+          for (var j = 0; j < toks.length; j++){
+            if (!/^-?\d+(\.\d+)?$/.test(toks[j])){ numeric = false; break; }
+          }
+        }
+        if (numeric){
+          var rowObj = { lineIdx: i, tokens: toks.slice(), orig: toks.slice(), dirty: false };
+          allRows.push(rowObj);
+          if (cur && cur.rows.length < 8) cur.rows.push(rowObj);
+        }
+      }
+    }
+    sections = sections.filter(function(s){ return s.rows.length > 0; });
+    if (!sections.length && allRows.length){
+      /* Walang section headers ang file: hatiin ang rows sa grupo
+         ng 8 (isang weather = 8 oras) na may fallback names. */
+      for (var k = 0; k < allRows.length; k += 8){
+        sections.push({ name: "Weather " + (sections.length + 1),
+          lineIdx: allRows[k].lineIdx, rows: allRows.slice(k, k + 8) });
+      }
+    }
+    return { lines: lines, eol: eol, sections: sections, name: "timecyc.dat" };
+  }
+  function tcBuild(data){
+    var out = data.lines.slice();
+    data.sections.forEach(function(s){
+      s.rows.forEach(function(r){
+        if (r.dirty) out[r.lineIdx] = r.tokens.join(" ");
+      });
+    });
+    return out.join(data.eol);
+  }
+
+  /* ---------------- built-in default sample ----------------
+     Standard SA layout: 22 weathers × 8 times. Ang isang base sunny
+     profile ang pinagmumulan; ang bawat weather category (cloudy,
+     rainy, foggy, sandstorm, extra colours) at region (LA/SM/SF/
+     Vegas) ay transform nito, kaya plausible ang lahat ng rows. */
+  var TC_DAY = [0, 0.05, 0.32, 0.75, 1, 0.5, 0.12, 0];
+  var TC_BASE_TOP = [[8,12,45],[24,38,95],[65,105,185],[40,110,215],[15,90,225],[55,100,190],[30,55,120],[10,16,55]];
+  var TC_BASE_BOT = [[14,20,50],[70,62,92],[205,145,95],[155,180,220],[120,180,245],[220,155,100],[115,80,95],[18,24,58]];
+  var TC_CATS = {
+    xsun:   { mode: "sunny", bright: 1.0,  far: 1600, fog: 900, amb: 125, shadow: 1.0 },
+    sunny:  { mode: "sunny", bright: 0.97, far: 1400, fog: 750, amb: 118, shadow: 1.0 },
+    cloudy: { mode: "gray", g: 0.55, bright: 0.8,  far: 900,  fog: 250, amb: 126, shadow: 0.45 },
+    rainy:  { mode: "gray", g: 0.62, dark: 0.78, bright: 0.68, far: 650, fog: 120, amb: 106, shadow: 0.3 },
+    foggy:  { mode: "gray", g: 0.78, bright: 0.85, far: 300,  fog: 15,  amb: 132, shadow: 0.2 },
+    sand:   { mode: "sand", bright: 0.9,  far: 550,  fog: 60,  amb: 120, shadow: 0.7 },
+    extra:  { mode: "sunny", bright: 1.0,  far: 1500, fog: 850, amb: 125, shadow: 1.0, sat: 1.25 }
+  };
+  var TC_WEATHERS = ["EXTRASUNNY_LA","SUNNY_LA","CLOUDY_LA","RAINY_LA","FOGGY_LA",
+    "EXTRASUNNY_SM","SUNNY_SM","CLOUDY_SM","RAINY_SM","FOGGY_SM",
+    "EXTRASUNNY_SF","SUNNY_SF","CLOUDY_SF","RAINY_SF","FOGGY_SF",
+    "EXTRASUNNY_VEGAS","SUNNY_VEGAS","CLOUDY_VEGAS","SANDSTORM_VEGAS","FOGGY_VEGAS",
+    "EXTRACOLOURS_1","EXTRACOLOURS_2"];
+  function tcCatOf(name){
+    if (name.indexOf("EXTRACOLOURS") === 0) return "extra";
+    if (name.indexOf("SANDSTORM") === 0) return "sand";
+    if (name.indexOf("FOGGY") === 0) return "foggy";
+    if (name.indexOf("RAINY") === 0) return "rainy";
+    if (name.indexOf("CLOUDY") === 0) return "cloudy";
+    if (name.indexOf("EXTRASUNNY") === 0) return "xsun";
+    return "sunny";
+  }
+  function tcRegionOf(name){
+    if (/_SF$/.test(name)) return "sf";
+    if (/_VEGAS$/.test(name)) return "vegas";
+    if (/_SM$/.test(name)) return "sm";
+    return "la";
+  }
+  function tcWeatherColor(name, base, i){
+    var cat = TC_CATS[tcCatOf(name)];
+    var c = base[i].slice();
+    if (cat.mode === "gray") c = tcDesat(c, cat.g);
+    if (cat.mode === "sand") c = tcMix(c, [186, 138, 78], 0.45);
+    if (cat.dark) c = tcScale(c, cat.dark);
+    if (cat.sat) c = tcSat(c, cat.sat);
+    var reg = tcRegionOf(name);
+    if (reg === "sf") c = tcDesat(c, 0.15);
+    else if (reg === "sm") c = tcDesat(c, 0.08);
+    else if (reg === "vegas") c = tcMix(c, [255, 205, 150], 0.08);
+    return c;
+  }
+  function tcBuildRow(name, i){
+    var catName = tcCatOf(name);
+    var cat = TC_CATS[catName];
+    var d = TC_DAY[i];
+    var top = tcWeatherColor(name, TC_BASE_TOP, i);
+    var bot = tcWeatherColor(name, TC_BASE_BOT, i);
+    var ambV = Math.round(22 + (cat.amb - 22) * Math.max(d, cat.mode === "gray" ? 0.35 : 0));
+    var amb = [ambV, ambV, Math.min(255, ambV + 5)];
+    var ambObj = tcScale(amb, 0.92);
+    var dir = tcMix([26, 26, 38], tcScale([255, 248, 238], cat.bright), d);
+    var suncore = (i === 2 || i === 5) ? [255, 190, 110] : [255, 242, 210];
+    if (cat.mode === "gray") suncore = tcDesat(suncore, 0.4);
+    var suncorona = (i === 2 || i === 5) ? [255, 130, 35] : [255, 150, 45];
+    if (cat.mode === "gray") suncorona = tcScale(tcDesat(suncorona, 0.45), 0.8);
+    if (cat.mode === "sand") suncorona = tcMix(suncorona, [230, 150, 70], 0.4);
+    var sunSz = [1, 1, 1.5, 1.15, 1, 1.7, 1.3, 1][i] * (catName === "foggy" ? 1.6 : 1);
+    var sprSz = catName === "rainy" ? 2.6 : 2.0;
+    var sprBght = Math.round((0.5 + 0.5 * d) * 100) / 100;
+    var shdw = Math.round([0, 0, 3, 7, 11, 7, 2, 0][i] * cat.shadow);
+    var far = Math.round(cat.far * (0.6 + 0.4 * d));
+    var log = Math.round((0.65 + 0.4 * d * cat.bright) * 100) / 100;
+    var low = tcMix(bot, [235, 238, 242], 0.3);
+    if (cat.mode === "gray") low = tcDesat(low, 0.3);
+    var botc = tcMix(top, [240, 242, 245], 0.38);
+    if (cat.mode === "gray") botc = tcDesat(botc, 0.3);
+    var water = tcScale(tcMix([80, 110, 145], bot, 0.15), 0.35 + 0.65 * d);
+    var toks = [].concat(amb, ambObj, dir, top, bot, suncore, suncorona,
+      [fmtN(sunSz), fmtN(sprSz), fmtN(sprBght), shdw, Math.ceil(shdw * 0.6), Math.ceil(shdw * 0.5), far, cat.fog, fmtN(log)],
+      low, botc, [water[0], water[1], water[2], 115]);
+    return toks.join(" ");
+  }
+  function tcDefaultText(){
+    var out = [];
+    out.push("//////////////////////////////////////////////////////////////////////////////////////////////////");
+    out.push("// timecyc.dat - XSS TXD Timecyc Editor default sample (standard GTA SA layout).");
+    out.push("// 22 weathers x 8 times: Midnight, 5AM, 6AM, 7AM, Midday, 7PM, 8PM, 10PM.");
+    TC_WEATHERS.forEach(function(w){
+      out.push("");
+      out.push("////////// " + w);
+      for (var i = 0; i < 8; i++) out.push(tcBuildRow(w, i));
+    });
+    return out.join("\r\n") + "\r\n";
+  }
+
+  /* ---------------- state + UI ---------------- */
+  var tcData = null;
+  var curSec = 0, curRow = 0;
+  var undoStack = [];
+  var lastSynced = null; /* tokens ng kasalukuyang row sa huling sync/commit */
+
+  var panelEl = $("tcPanel"), canvasEl = $("tcCanvas");
+  var weatherSel = $("tcWeatherSel"), chipsEl = $("tcTimeChips");
+  var colorsEl = $("tcColors"), slidersEl = $("tcSliders");
+  var colorCtrls = [], sliderCtrls = [];
+
+  function curRowObj(){
+    if (!tcData || !tcData.sections.length) return null;
+    var s = tcData.sections[Math.min(curSec, tcData.sections.length - 1)];
+    if (!s) return null;
+    return s.rows[Math.min(curRow, s.rows.length - 1)] || null;
+  }
+  function tok(r, i){ var v = parseFloat(r.tokens[i]); return isNaN(v) ? 0 : v; }
+  function colAt(r, i){ return [tok(r, i), tok(r, i + 1), tok(r, i + 2)]; }
+  function setTok(r, i, v, isInt){
+    r.tokens[i] = isInt ? String(Math.round(v)) : fmtN(v);
+    r.dirty = true;
+  }
+  function editedCount(){
+    var n = 0;
+    if (tcData) tcData.sections.forEach(function(s){ s.rows.forEach(function(r){ if (r.dirty) n++; }); });
+    return n;
+  }
+  function rowCount(){
+    var n = 0;
+    if (tcData) tcData.sections.forEach(function(s){ n += s.rows.length; });
+    return n;
+  }
+
+  function buildChips(){
+    if (!chipsEl) return;
+    chipsEl.innerHTML = "";
+    S().times.forEach(function(label, i){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = label;
+      if (i === curRow) b.classList.add("on");
+      b.addEventListener("click", function(){
+        curRow = i;
+        buildChips();
+        syncControls();
+        drawPreview();
+      });
+      chipsEl.appendChild(b);
+    });
+  }
+  function buildControls(){
+    if (colorsEl){
+      colorsEl.innerHTML = "";
+      colorCtrls = COLOR_FIELDS.map(function(f){
+        var row = document.createElement("div");
+        row.className = "tc-crow";
+        var lbl = document.createElement("span");
+        lbl.className = "tc-clbl";
+        lbl.textContent = S().colors[f.k];
+        var hex = document.createElement("span");
+        hex.className = "tc-hex";
+        var inp = document.createElement("input");
+        inp.type = "color";
+        inp.setAttribute("aria-label", S().colors[f.k]);
+        inp.addEventListener("input", function(){
+          var r = curRowObj(); if (!r) return;
+          var v = inp.value;
+          setTok(r, f.i, parseInt(v.substr(1, 2), 16), true);
+          setTok(r, f.i + 1, parseInt(v.substr(3, 2), 16), true);
+          setTok(r, f.i + 2, parseInt(v.substr(5, 2), 16), true);
+          hex.textContent = v;
+          drawPreview();
+          syncInfo();
+        });
+        inp.addEventListener("change", commitEdit);
+        row.appendChild(lbl); row.appendChild(hex); row.appendChild(inp);
+        colorsEl.appendChild(row);
+        return { f: f, inp: inp, hex: hex, lbl: lbl };
+      });
+    }
+    if (slidersEl){
+      slidersEl.innerHTML = "";
+      sliderCtrls = SLIDERS.map(function(f){
+        var row = document.createElement("div");
+        row.className = "o3-row";
+        var lbl = document.createElement("span");
+        lbl.className = "o3-lbl";
+        lbl.textContent = S().sliders[f.k];
+        var inp = document.createElement("input");
+        inp.type = "range";
+        inp.min = f.min; inp.max = f.max; inp.step = f.step;
+        inp.setAttribute("aria-label", S().sliders[f.k]);
+        var val = document.createElement("span");
+        val.className = "o3-val";
+        inp.addEventListener("input", function(){
+          var r = curRowObj(); if (!r) return;
+          setTok(r, f.i, parseFloat(inp.value), f.step >= 1);
+          val.textContent = r.tokens[f.i];
+          drawPreview();
+          syncInfo();
+        });
+        inp.addEventListener("change", commitEdit);
+        row.appendChild(lbl); row.appendChild(inp); row.appendChild(val);
+        slidersEl.appendChild(row);
+        return { f: f, inp: inp, val: val, lbl: lbl };
+      });
+    }
+  }
+  function commitEdit(){
+    var r = curRowObj(); if (!r || !lastSynced) return;
+    if (r.tokens.join(" ") !== lastSynced.join(" ")){
+      undoStack.push({ sec: curSec, row: curRow, tokens: lastSynced.slice(), dirty: wasDirtyBefore(lastSynced, r) });
+      lastSynced = r.tokens.slice();
+    }
+    syncUndoBtn();
+  }
+  function wasDirtyBefore(prevTokens, r){
+    return prevTokens.join(" ") !== r.orig.join(" ");
+  }
+  function syncUndoBtn(){
+    var u = $("tcUndoBtn"); if (u) u.disabled = !undoStack.length;
+    var rs = $("tcResetBtn");
+    if (rs){
+      var r = curRowObj();
+      rs.disabled = !r || r.tokens.join(" ") === r.orig.join(" ");
+    }
+  }
+  function syncInfo(){
+    var info = $("tcFileInfo");
+    var nameEl = $("tcLoadedName");
+    if (!info && !nameEl) return;
+    if (!tcData || !tcData.sections.length){
+      if (nameEl) nameEl.textContent = "";
+      if (info) info.textContent = S().empty;
+      return;
+    }
+    if (nameEl){
+      if (tcData.isDefault){
+        nameEl.textContent = S().defaultLoaded;
+      } else {
+        nameEl.textContent = "";
+        var pre = document.createTextNode(S().loadedPrefix);
+        var b = document.createElement("b");
+        b.textContent = tcData.name;
+        nameEl.appendChild(pre);
+        nameEl.appendChild(b);
+      }
+    }
+    if (info) info.textContent = S().counts(tcData.sections.length, rowCount(), editedCount());
+  }
+  function syncControls(){
+    var r = curRowObj();
+    if (weatherSel){
+      weatherSel.innerHTML = "";
+      if (tcData) tcData.sections.forEach(function(s, i){
+        var o = document.createElement("option");
+        o.value = i; o.textContent = s.name;
+        weatherSel.appendChild(o);
+      });
+      weatherSel.value = String(Math.min(curSec, Math.max(0, (tcData ? tcData.sections.length : 1) - 1)));
+      weatherSel.disabled = !r;
+    }
+    colorCtrls.forEach(function(c){
+      if (!r){ c.inp.disabled = true; return; }
+      c.inp.disabled = false;
+      var v = hex2(colAt(r, c.f.i));
+      c.inp.value = v;
+      c.hex.textContent = v;
+    });
+    sliderCtrls.forEach(function(c){
+      if (!r){ c.inp.disabled = true; c.val.textContent = ""; return; }
+      c.inp.disabled = false;
+      c.inp.value = tok(r, c.f.i);
+      c.val.textContent = r.tokens[c.f.i];
+    });
+    var dl = $("tcDownloadBtn"); if (dl) dl.disabled = !r;
+    var dlTop = $("tcDownloadTopBtn"); if (dlTop) dlTop.disabled = !r;
+    lastSynced = r ? r.tokens.slice() : null;
+    syncUndoBtn();
+    syncInfo();
+  }
+
+  /* ---------------- 3D scene preview (Three.js) ----------------
+     Totoong 3D scene tulad ng DFF 3D Preview: sky dome (gradient ng
+     SkyTop → SkyBot), araw na may SunCore/SunCorona at laki mula sa
+     SunSz, mga ulap na naka-tint ng LowClouds/BottomClouds, ground,
+     water plane na may Water RGBA, fog mula sa FogSt/FarClp, at isang
+     sample low-poly car na naiilawan ng Amb/Dir ng napiling row.
+     Nagre-render on demand tuwing may edit (walang loop). Kung walang
+     THREE o pumalya ang WebGL, ang 2D canvas preview sa ibaba ang
+     gagamitin (fallback). */
+  var tc3d = null;        /* { renderer, scene, camera, ... } pag ready */
+  var tc3dFailed = false; /* true = huwag nang subukan ulit, 2D na lang */
+
+  function tcGlowTexture(hard){
+    var c = document.createElement("canvas"); c.width = 128; c.height = 128;
+    var g = c.getContext("2d");
+    var gr = g.createRadialGradient(64, 64, 2, 64, 64, 64);
+    if (hard){ gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(0.55, "rgba(255,255,255,1)"); gr.addColorStop(0.78, "rgba(255,255,255,0.35)"); gr.addColorStop(1, "rgba(255,255,255,0)"); }
+    else { gr.addColorStop(0, "rgba(255,255,255,0.9)"); gr.addColorStop(0.4, "rgba(255,255,255,0.38)"); gr.addColorStop(1, "rgba(255,255,255,0)"); }
+    g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(c);
+  }
+  function tcPuffTexture(){
+    var c = document.createElement("canvas"); c.width = 256; c.height = 128;
+    var g = c.getContext("2d");
+    var puffs = [[70, 78, 52], [128, 66, 64], [186, 78, 50], [100, 84, 44], [158, 86, 46]];
+    puffs.forEach(function(p){
+      var gr = g.createRadialGradient(p[0], p[1], 2, p[0], p[1], p[2]);
+      gr.addColorStop(0, "rgba(255,255,255,0.55)");
+      gr.addColorStop(1, "rgba(255,255,255,0)");
+      g.fillStyle = gr;
+      g.fillRect(0, 0, 256, 128);
+    });
+    return new THREE.CanvasTexture(c);
+  }
+  function tc3dInit(wrap){
+    /* THREE na hindi pa nag-load (CDN mabagal) ay HINDI permanenteng
+       failure: 2D muna ngayon, subukan ulit sa susunod na draw. Ang
+       totoong WebGL exception lang ang permanenteng fallback. */
+    if (typeof THREE === "undefined") { return false; }
+    try {
+      var renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(wrap.clientWidth, wrap.clientHeight || 212);
+      wrap.appendChild(renderer.domElement);
+
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera(55, wrap.clientWidth / (wrap.clientHeight || 212), 0.1, 2400);
+      camera.position.set(9.5, 3.4, 11.5);
+      camera.lookAt(0, 1.0, 0);
+
+      /* sky dome: gradient SkyTop → SkyBot */
+      var skyMat = new THREE.ShaderMaterial({
+        side: THREE.BackSide, depthWrite: false, fog: false,
+        uniforms: {
+          topColor: { value: new THREE.Color(0x10265a) },
+          botColor: { value: new THREE.Color(0x78a6e0) }
+        },
+        vertexShader: "varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+        fragmentShader: "uniform vec3 topColor; uniform vec3 botColor; varying vec3 vP;" +
+          "void main(){ float h = clamp(normalize(vP).y * 1.6 + 0.12, 0.0, 1.0);" +
+          " gl_FragColor = vec4(mix(botColor, topColor, pow(h, 0.75)), 1.0); }"
+      });
+      scene.add(new THREE.Mesh(new THREE.SphereGeometry(1000, 28, 14), skyMat));
+
+      var softTex = tcGlowTexture(false), hardTex = tcGlowTexture(true), puffTex = tcPuffTexture();
+
+      /* araw: corona + core sprites; buwan para sa gabi */
+      var corona = new THREE.Sprite(new THREE.SpriteMaterial({ map: softTex, transparent: true, opacity: 0.85, depthWrite: false, fog: false }));
+      var sunCore = new THREE.Sprite(new THREE.SpriteMaterial({ map: hardTex, transparent: true, depthWrite: false, fog: false }));
+      scene.add(corona); scene.add(sunCore);
+      var moon = new THREE.Sprite(new THREE.SpriteMaterial({ map: hardTex, transparent: true, depthWrite: false, fog: false, color: 0xdfe6f2 }));
+      moon.scale.set(46, 46, 1);
+      moon.position.set(320, 330, -520);
+      scene.add(moon);
+
+      /* mga ulap (LowClouds) + banda sa horizon (BottomClouds) */
+      var cloudMat = new THREE.SpriteMaterial({ map: puffTex, transparent: true, opacity: 0.92, depthWrite: false });
+      var clouds = [];
+      [[-190, 105, -330, 260, 74], [40, 135, -380, 320, 88], [230, 95, -300, 210, 60], [-330, 150, -420, 340, 92], [330, 150, -430, 300, 84], [-60, 80, -260, 180, 50]].forEach(function(p){
+        var sp = new THREE.Sprite(cloudMat);
+        sp.position.set(p[0], p[1], p[2]); sp.scale.set(p[3], p[4], 1);
+        scene.add(sp); clouds.push(sp);
+      });
+      var bandMat = new THREE.SpriteMaterial({ map: puffTex, transparent: true, opacity: 0.8, depthWrite: false });
+      var bands = [];
+      [[-160, 26, -350, 520, 46], [190, 20, -360, 520, 40]].forEach(function(p){
+        var sp = new THREE.Sprite(bandMat);
+        sp.position.set(p[0], p[1], p[2]); sp.scale.set(p[3], p[4], 1);
+        scene.add(sp); bands.push(sp);
+      });
+
+      /* ground + water (malayo, sa likod ng kotse — banda sa horizon) */
+      var groundMat = new THREE.MeshStandardMaterial({ color: 0x23261f, roughness: 1, metalness: 0 });
+      var ground = new THREE.Mesh(new THREE.CircleGeometry(1000, 40), groundMat);
+      ground.rotation.x = -Math.PI / 2;
+      scene.add(ground);
+      var waterMat = new THREE.MeshStandardMaterial({ color: 0x2c4a66, roughness: 0.18, metalness: 0.1, transparent: true, opacity: 0.6 });
+      var water = new THREE.Mesh(new THREE.PlaneGeometry(2000, 760), waterMat);
+      water.rotation.x = -Math.PI / 2;
+      water.position.set(0, 0.03, -420);
+      scene.add(water);
+
+      /* sample low-poly car, neutral ang pintura para makita ang ilaw */
+      var car = new THREE.Group();
+      var paintMat = new THREE.MeshStandardMaterial({ color: 0xd6d9de, roughness: 0.32, metalness: 0.55 });
+      var glassMat = new THREE.MeshStandardMaterial({ color: 0x0d1015, roughness: 0.15, metalness: 0.6 });
+      var trimMat = new THREE.MeshStandardMaterial({ color: 0x17181c, roughness: 0.7, metalness: 0.2 });
+      var body = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.55, 1.8), paintMat); body.position.y = 0.58; car.add(body);
+      var nose = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.34, 1.76), paintMat); nose.position.set(2.35, 0.47, 0); car.add(nose);
+      var cabin = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.52, 1.62), glassMat); cabin.position.set(-0.25, 1.08, 0); car.add(cabin);
+      var roof = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.07, 1.5), paintMat); roof.position.set(-0.25, 1.37, 0); car.add(roof);
+      var wheelGeo = new THREE.CylinderGeometry(0.37, 0.37, 0.27, 18); wheelGeo.rotateX(Math.PI / 2);
+      var hubGeo = new THREE.CylinderGeometry(0.17, 0.17, 0.29, 12); hubGeo.rotateX(Math.PI / 2);
+      var hubMat = new THREE.MeshStandardMaterial({ color: 0x9ba1a9, roughness: 0.4, metalness: 0.6 });
+      [[1.5, 0.85], [1.5, -0.85], [-1.5, 0.85], [-1.5, -0.85]].forEach(function(p){
+        var w = new THREE.Mesh(wheelGeo, trimMat); w.position.set(p[0], 0.37, p[1]); car.add(w);
+        var h = new THREE.Mesh(hubGeo, hubMat); h.position.set(p[0], 0.37, p[1]); car.add(h);
+      });
+      var lightMat = new THREE.MeshBasicMaterial({ color: 0xfff2c8 });
+      [[2.82, 0.55], [2.82, -0.55]].forEach(function(p){
+        var hl = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.13, 0.34), lightMat);
+        hl.position.set(p[0], p[1], 0); car.add(hl);
+      });
+      scene.add(car);
+      /* malambot na anino sa ilalim ng kotse */
+      var aoTex = tcGlowTexture(false);
+      var ao = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 3.4),
+        new THREE.MeshBasicMaterial({ map: aoTex, color: 0x000000, transparent: true, opacity: 0.5, depthWrite: false }));
+      ao.rotation.x = -Math.PI / 2; ao.position.y = 0.02;
+      scene.add(ao);
+
+      var ambLight = new THREE.AmbientLight(0x808080, 0.7); scene.add(ambLight);
+      var dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+      dirLight.position.set(30, 50, -40); scene.add(dirLight);
+
+      scene.fog = new THREE.Fog(0x78a6e0, 200, 500);
+
+      tc3d = { renderer: renderer, scene: scene, camera: camera, skyMat: skyMat,
+        corona: corona, sunCore: sunCore, moon: moon, cloudMat: cloudMat, bandMat: bandMat,
+        groundMat: groundMat, waterMat: waterMat, ambLight: ambLight, dirLight: dirLight };
+      return true;
+    } catch (e) {
+      tc3dFailed = true;
+      return false;
+    }
+  }
+  function tc3dResize(){
+    var wrap = $("tcGlWrap");
+    if (!tc3d || !wrap || !wrap.clientWidth) return;
+    var w = wrap.clientWidth, h = wrap.clientHeight || 212;
+    tc3d.renderer.setSize(w, h);
+    tc3d.camera.aspect = w / h;
+    tc3d.camera.updateProjectionMatrix();
+  }
+  /* I-update ang scene mula sa row at i-render. true = 3D ang
+     nagpakita (nakatago ang 2D canvas); false = 2D fallback. */
+  function tc3dRender(r){
+    if (tc3dFailed) return false;
+    var wrap = $("tcGlWrap");
+    if (!wrap) return false;
+    if (!tc3d){
+      /* Panel sarado = walang sukat ang wrap — 2D na lang muna.
+         Panel bukas = alisin muna ang .hidden ng wrap para masukat,
+         saka i-init ang scene. */
+      if (!panelEl || !panelEl.classList.contains("open")) return false;
+      wrap.classList.remove("hidden");
+      if (!wrap.clientWidth || !tc3dInit(wrap)){
+        wrap.classList.add("hidden");
+        if (canvasEl) canvasEl.style.display = "";
+        return false;
+      }
+      if (canvasEl) canvasEl.style.display = "none";
+    }
+    if (tc3d._w !== wrap.clientWidth){ tc3d._w = wrap.clientWidth; tc3dResize(); }
+    var top = colAt(r, 9), bot = colAt(r, 12);
+    tc3d.skyMat.uniforms.topColor.value.setRGB(top[0] / 255, top[1] / 255, top[2] / 255);
+    tc3d.skyMat.uniforms.botColor.value.setRGB(bot[0] / 255, bot[1] / 255, bot[2] / 255);
+
+    var hour = HOURS[curRow];
+    var sunSz = tok(r, 21);
+    var day = hour >= 5 && hour <= 20;
+    var t = (hour - 6) / 12; if (t < 0) t = 0; if (t > 1) t = 1;
+    var elev = Math.sin(Math.PI * t);
+    var sunPos = new THREE.Vector3((t - 0.5) * 1050, 50 + elev * 520, -560);
+    tc3d.sunCore.position.copy(sunPos);
+    tc3d.corona.position.copy(sunPos);
+    var coreS = 34 + sunSz * 26;
+    tc3d.sunCore.scale.set(coreS, coreS, 1);
+    var corS = coreS * (3.1 + sunSz * 0.55);
+    tc3d.corona.scale.set(corS, corS, 1);
+    tc3d.sunCore.material.color.setRGB.apply(tc3d.sunCore.material.color, colAt(r, 15).map(function(v){ return v / 255; }));
+    tc3d.corona.material.color.setRGB.apply(tc3d.corona.material.color, colAt(r, 18).map(function(v){ return v / 255; }));
+    tc3d.sunCore.visible = day; tc3d.corona.visible = day;
+    tc3d.moon.visible = !day;
+
+    var lc = colAt(r, 30), bc = colAt(r, 33);
+    tc3d.cloudMat.color.setRGB(lc[0] / 255, lc[1] / 255, lc[2] / 255);
+    tc3d.bandMat.color.setRGB(bc[0] / 255, bc[1] / 255, bc[2] / 255);
+
+    var wtr = colAt(r, 36);
+    tc3d.waterMat.color.setRGB(wtr[0] / 255, wtr[1] / 255, wtr[2] / 255);
+    var wa = tok(r, 39) / 255; if (wa <= 0) wa = 1;
+    tc3d.waterMat.opacity = Math.min(1, Math.max(0.25, wa));
+
+    var amb = colAt(r, 0), dir = colAt(r, 6);
+    tc3d.ambLight.color.setRGB(amb[0] / 255, amb[1] / 255, amb[2] / 255);
+    tc3d.ambLight.intensity = 0.3 + ((amb[0] + amb[1] + amb[2]) / 765) * 0.95;
+    tc3d.dirLight.color.setRGB(dir[0] / 255, dir[1] / 255, dir[2] / 255);
+    tc3d.dirLight.intensity = day ? 0.3 + elev * 0.85 : 0.18;
+    var lp = day ? sunPos : tc3d.moon.position;
+    tc3d.dirLight.position.set(lp.x * 0.08, Math.max(14, lp.y * 0.08), lp.z * 0.08);
+    tc3d.groundMat.color.setRGB(
+      Math.min(1, amb[0] / 255 * 0.38 + 0.03),
+      Math.min(1, amb[1] / 255 * 0.38 + 0.035),
+      Math.min(1, amb[2] / 255 * 0.38 + 0.03));
+
+    var fogSt = tok(r, 28), farClp = tok(r, 27);
+    var fNear = Math.max(6, fogSt * 0.25);
+    var fFar = Math.max(fNear + 40, farClp * 0.25);
+    tc3d.scene.fog.color.setRGB(bot[0] / 255, bot[1] / 255, bot[2] / 255);
+    tc3d.scene.fog.near = fNear;
+    tc3d.scene.fog.far = fFar;
+
+    tc3d.renderer.render(tc3d.scene, tc3d.camera);
+    return true;
+  }
+
+  /* ---------------- live sky preview (2D fallback) ---------------- */
+  function blob(ctx, x, y, w, h){
+    ctx.beginPath();
+    if (ctx.ellipse) ctx.ellipse(x, y, w, h, 0, 0, 6.2832);
+    else ctx.arc(x, y, w, 0, 6.2832);
+    ctx.fill();
+  }
+  function drawPreview(){
+    if (!canvasEl) return;
+    var ctx = canvasEl.getContext("2d");
+    if (!ctx) return;
+    var W = canvasEl.width, H = canvasEl.height;
+    var r = curRowObj();
+    if (!r){ ctx.fillStyle = "#0a0a0c"; ctx.fillRect(0, 0, W, H); return; }
+    /* 3D scene muna; pag hindi available ang WebGL, dito sa 2D itutuloy. */
+    if (tc3dRender(r)) return;
+    var top = colAt(r, 9), bot = colAt(r, 12);
+    var horizon = Math.round(H * 0.76);
+    var g = ctx.createLinearGradient(0, 0, 0, horizon);
+    g.addColorStop(0, css(top));
+    g.addColorStop(1, css(bot));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, horizon);
+    /* bottom clouds: malambot na banda sa may horizon */
+    var bc = colAt(r, 33);
+    var g2 = ctx.createLinearGradient(0, horizon - 52, 0, horizon);
+    g2.addColorStop(0, rgba(bc, 0));
+    g2.addColorStop(1, rgba(bc, 0.55));
+    ctx.fillStyle = g2;
+    ctx.fillRect(0, horizon - 52, W, 52);
+    /* araw (o buwan pag gabi) */
+    var hour = HOURS[curRow];
+    var sunSz = tok(r, 21);
+    var sunX = -1, sunDrawn = false;
+    if (hour >= 5 && hour <= 20){
+      var t = (hour - 6) / 12;
+      if (t < 0) t = 0; if (t > 1) t = 1;
+      var elev = Math.sin(Math.PI * t);
+      var sx = W * (0.14 + 0.72 * t), sy = horizon - 12 - elev * (H * 0.52);
+      var corona = colAt(r, 18), core = colAt(r, 15);
+      var cr = 26 + sunSz * 30;
+      var rg = ctx.createRadialGradient(sx, sy, 2, sx, sy, cr);
+      rg.addColorStop(0, rgba(corona, 0.85));
+      rg.addColorStop(1, rgba(corona, 0));
+      ctx.fillStyle = rg;
+      ctx.beginPath(); ctx.arc(sx, sy, cr, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = css(core);
+      ctx.beginPath(); ctx.arc(sx, sy, 6 + sunSz * 6.5, 0, 6.2832); ctx.fill();
+      sunX = sx; sunDrawn = true;
+    } else {
+      ctx.fillStyle = "rgba(220,225,235,0.92)";
+      ctx.beginPath(); ctx.arc(W * 0.78, H * 0.2, 13, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "rgba(220,225,235,0.25)";
+      ctx.beginPath(); ctx.arc(W * 0.78, H * 0.2, 24, 0, 6.2832); ctx.fill();
+    }
+    /* low clouds */
+    var lc = colAt(r, 30);
+    ctx.fillStyle = rgba(lc, 0.75);
+    blob(ctx, W * 0.22, H * 0.30, 92, 19);
+    blob(ctx, W * 0.31, H * 0.335, 68, 15);
+    blob(ctx, W * 0.68, H * 0.22, 112, 21);
+    blob(ctx, W * 0.77, H * 0.26, 74, 14);
+    /* fog: mas mababa ang FogSt, mas makapal ang hamog sa horizon */
+    var fogSt = tok(r, 28);
+    var fa = 1 - fogSt / 700;
+    if (fa < 0) fa = 0; if (fa > 0.8) fa = 0.8;
+    if (fa > 0.02){
+      var g3 = ctx.createLinearGradient(0, H * 0.3, 0, horizon);
+      g3.addColorStop(0, rgba(bot, 0));
+      g3.addColorStop(1, rgba(bot, fa));
+      ctx.fillStyle = g3;
+      ctx.fillRect(0, Math.round(H * 0.3), W, horizon - Math.round(H * 0.3));
+    }
+    /* tubig */
+    var wtr = colAt(r, 36);
+    var wa = tok(r, 39);
+    var wAlpha = wa > 0 ? wa / 255 : 1;
+    if (wAlpha < 0.3) wAlpha = 0.3; if (wAlpha > 1) wAlpha = 1;
+    var wg = ctx.createLinearGradient(0, horizon, 0, H);
+    wg.addColorStop(0, rgba(tcMix(wtr, [255, 255, 255], 0.14), wAlpha));
+    wg.addColorStop(1, rgba(tcScale(wtr, 0.7), wAlpha));
+    ctx.fillStyle = wg;
+    ctx.fillRect(0, horizon, W, H - horizon);
+    if (sunDrawn){
+      ctx.fillStyle = rgba(colAt(r, 18), 0.30);
+      var rw = 10 + sunSz * 10;
+      ctx.fillRect(sunX - rw / 2, horizon, rw, H - horizon);
+    }
+  }
+
+  /* ---------------- load / save ---------------- */
+  function setData(data, name){
+    tcData = data;
+    tcData.name = name;
+    curSec = 0; curRow = 0;
+    undoStack = [];
+    buildChips();
+    syncControls();
+    drawPreview();
+  }
+  function loadDefault(){
+    var d = tcParse(tcDefaultText());
+    d.isDefault = true;
+    setData(d, S().defName);
+  }
+
+  function applyTcStrings(){
+    var s = S();
+    var u = $("tcUploadBtn"); if (u) u.textContent = s.upload;
+    var us = $("tcUploadSub"); if (us) us.textContent = s.uploadSub;
+    var d = $("tcDefaultBtn"); if (d) d.textContent = s.useDefault;
+    var w = $("tcWeatherLbl"); if (w) w.textContent = s.weather;
+    var t = $("tcTimeLbl"); if (t) t.textContent = s.time;
+    var rs = $("tcResetBtn"); if (rs) rs.textContent = s.reset;
+    var un = $("tcUndoBtn"); if (un) un.textContent = s.undo;
+    var dl = $("tcDownloadBtn"); if (dl) dl.textContent = s.saveDownload;
+    var dlTop = $("tcDownloadTopBtn"); if (dlTop) dlTop.textContent = s.saveDownload;
+    var cl = $("tcCloseBtn"); if (cl) cl.textContent = s.close;
+    buildChips();
+    buildControls();
+    syncControls();
+    drawPreview();
+  }
+
+  function openTc(){
+    if (!panelEl) return;
+    if (!tcData) loadDefault();
+    panelEl.classList.add("open");
+    syncControls();
+    tc3dResize();
+    drawPreview();
+    /* Isang redraw pa pag tapos na ang layout ng bagong bukas na
+       panel, para siguradong may sukat ang preview wrap. */
+    if (window.requestAnimationFrame){
+      requestAnimationFrame(function(){ tc3dResize(); drawPreview(); });
+    }
+  }
+  function closeTc(){ if (panelEl) panelEl.classList.remove("open"); }
+
+  /* ---------------- wiring ---------------- */
+  buildChips();
+  buildControls();
+  applyTcStrings();
+
+  if (weatherSel) weatherSel.addEventListener("change", function(){
+    curSec = parseInt(weatherSel.value, 10) || 0;
+    curRow = 0;
+    buildChips();
+    syncControls();
+    drawPreview();
+  });
+  var upBtn = $("tcUploadBtn"), fileInp = $("tcFile");
+  if (upBtn && fileInp) upBtn.addEventListener("click", function(){ fileInp.click(); });
+  if (fileInp) fileInp.addEventListener("change", function(){
+    var f = fileInp.files && fileInp.files[0];
+    fileInp.value = "";
+    if (!f) return;
+    /* Walang accept filter ang input (para hindi ma-grey out ang
+       .dat sa iOS picker), kaya dito vine-verify na .dat talaga ang
+       napili. Kung hindi, Tagalog error sa status box at hindi
+       gagalawin ang naka-load na file. */
+    if (!/\.dat$/i.test(f.name || "")){
+      var nm = $("tcLoadedName"), inf = $("tcFileInfo");
+      if (nm) nm.textContent = S().notDat;
+      if (inf) inf.textContent = "";
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(){
+      var d = tcParse(String(reader.result || ""));
+      d.isDefault = false;
+      if (!d.sections.length){
+        tcData = d;
+        curSec = 0; curRow = 0; undoStack = [];
+        buildChips(); syncControls(); drawPreview();
+        return;
+      }
+      setData(d, f.name || "timecyc.dat");
+    };
+    reader.readAsText(f);
+  });
+  var defBtn = $("tcDefaultBtn");
+  if (defBtn) defBtn.addEventListener("click", loadDefault);
+  var resetBtn = $("tcResetBtn");
+  if (resetBtn) resetBtn.addEventListener("click", function(){
+    var r = curRowObj(); if (!r) return;
+    if (r.tokens.join(" ") === r.orig.join(" ")) return;
+    undoStack.push({ sec: curSec, row: curRow, tokens: r.tokens.slice(), dirty: r.dirty });
+    r.tokens = r.orig.slice();
+    r.dirty = false;
+    syncControls();
+    drawPreview();
+  });
+  var undoBtn = $("tcUndoBtn");
+  if (undoBtn) undoBtn.addEventListener("click", function(){
+    var e = undoStack.pop(); if (!e || !tcData) return;
+    var sec = tcData.sections[e.sec]; if (!sec) return;
+    var r = sec.rows[e.row]; if (!r) return;
+    r.tokens = e.tokens.slice();
+    r.dirty = e.dirty;
+    curSec = e.sec; curRow = e.row;
+    buildChips();
+    syncControls();
+    drawPreview();
+  });
+  function tcSaveDownload(){
+    if (!tcData || !tcData.sections.length) return;
+    var text = tcBuild(tcData);
+    /* application/octet-stream + download="timecyc.dat": para ang
+       file ay eksaktong "timecyc.dat" ang pangalan — hindi
+       dinadagdagan ng .txt ng browser / iOS Safari. */
+    var blob = new Blob([text], { type: "application/octet-stream" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "timecyc.dat";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){
+      try { URL.revokeObjectURL(a.href); } catch(e){}
+      if (a.parentNode) a.parentNode.removeChild(a);
+    }, 400);
+  }
+  var dlBtn = $("tcDownloadBtn");
+  if (dlBtn) dlBtn.addEventListener("click", tcSaveDownload);
+  var dlTopBtn = $("tcDownloadTopBtn");
+  if (dlTopBtn) dlTopBtn.addEventListener("click", tcSaveDownload);
+  var closeBtn = $("tcCloseBtn");
+  if (closeBtn) closeBtn.addEventListener("click", closeTc);
+  if (panelEl) panelEl.addEventListener("click", function(e){ if (e.target === panelEl) closeTc(); });
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape" && panelEl && panelEl.classList.contains("open")) closeTc();
+  });
+
+  window.__tcOpen = openTc;
+  window.__tcApplyLang = function(lang){
+    tcLang = (lang === "en") ? "en" : "tl";
+    if (tcData && tcData.isDefault) tcData.name = S().defName;
+    applyTcStrings();
+  };
+  /* Pang-verify lang: parser/writer/state na ma-check mula sa labas. */
+  window.__tcDebug = {
+    parse: tcParse,
+    build: tcBuild,
+    defaultText: tcDefaultText,
+    data: function(){ return tcData; },
+    is3d: function(){ return !!tc3d; },
+    failed3d: function(){ return tc3dFailed; }
+  };
+})();
+</script>
+<script>
+/* =====================================================================
+   Colorcycle Editor (BETA) — tunay na GTA SA mobile colorcycle.dat.
+
+   Format (mula sa SkyGfx source, aap/skygfx src/postfx.cpp,
+   Colorcycle::Initialise): sunod-sunod na binabasa ng game ang file
+   bilang 23 weather × 8 oras na linya; bawat linya ay 12 floats:
+     0-3   red grade   (r, g, b, a)
+     4-7   green grade (r, g, b, a)
+     8-11  blue grade  (r, g, b, a)
+   Ang output channel = dot(input RGB, grade.rgb) + grade.a — isang
+   3×4 color matrix na siyang color grading/filter ng laro. Ang order
+   ng oras ay tulad ng timecyc (0, 5, 6, 7, 12, 19, 20, 22) at ang
+   weather index 20 ay UNDERWATER, 21-22 ang EXTRACOLOURS.
+   Structure-preserving ang editor: ang hindi in-edit na linya ay
+   isinusulat pabalik nang byte-identical; ang in-edit lang ang
+   binubuo ulit (12 values, 3-decimal format tulad ng original file).
+   ===================================================================== */
+(function(){
+  "use strict";
+
+  var STR = {
+    tl: {
+      upload: "📤 I-upload ang colorcycle.dat",
+      uploadSub: "I-tap ito at piliin ang colorcycle.dat mo — yun mismo ang ie-edit mo at makikita ang epekto niya sa preview sa ibaba.",
+      saveDownload: "💾 I-save at I-download",
+      loadedPrefix: "Naka-load: ",
+      defaultLoaded: "Default sample ang naka-load — mag-upload ng sarili mong colorcycle.dat para i-edit ang file mo",
+      counts: function(secs, rows, edited){
+        return secs + " weather · " + rows + " rows" + (edited ? " · " + edited + " na-edit" : "");
+      },
+      useDefault: "Gamitin ang default",
+      weather: "Weather",
+      time: "Oras",
+      times: ["Hatinggabi", "5AM", "6AM", "7AM", "Tanghali", "7PM", "8PM", "10PM"],
+      groups: ["Pula (output)", "Berde (output)", "Asul (output)"],
+      comps: ["← R", "← G", "← B", "Offset"],
+      reset: "Ibalik sa original",
+      undo: "Undo",
+      close: "Isara",
+      defName: "Default (built-in sample)",
+      empty: "Walang na-parse na rows sa file na ito — subukan ang totoong colorcycle.dat o ang default.",
+      notDat: "Hindi .dat file ang napili mo — piliin ang colorcycle.dat file. Walang nabago sa naka-load na file.",
+      note: "BETA — Ang colorcycle.dat ay addendum ng timecyc.dat sa GTA SA mobile: siya ang nagko-control ng color grading / filter ng laro (sa PC, ginagamit din ito ng SkyGfx pag colorFilter=Mobile). Ilagay ang na-download na file sa data folder, kasama ng timecyc.dat. Hindi ganap na naka-dokumento ang format nito sa public wiki, kaya structure-preserving ang editor na ito: ang hindi mo in-edit na rows ay eksaktong tulad pa rin ng original na file. Ang preview sa itaas ay pagtatantya ng grade — hindi ito eksaktong render ng game."
+    },
+    en: {
+      upload: "📤 Upload colorcycle.dat",
+      uploadSub: "Tap here and pick your colorcycle.dat — that exact file is what you will edit, and its effect shows in the preview below.",
+      saveDownload: "💾 Save & Download",
+      loadedPrefix: "Loaded: ",
+      defaultLoaded: "Default sample loaded — upload your own colorcycle.dat to edit your file",
+      counts: function(secs, rows, edited){
+        return secs + " weathers · " + rows + " rows" + (edited ? " · " + edited + " edited" : "");
+      },
+      useDefault: "Use default",
+      weather: "Weather",
+      time: "Time",
+      times: ["Midnight", "5AM", "6AM", "7AM", "Midday", "7PM", "8PM", "10PM"],
+      groups: ["Red (output)", "Green (output)", "Blue (output)"],
+      comps: ["← R", "← G", "← B", "Offset"],
+      reset: "Reset this time",
+      undo: "Undo",
+      close: "Close",
+      defName: "Default (built-in sample)",
+      empty: "No rows could be parsed from this file — try a real colorcycle.dat or the default.",
+      notDat: "That is not a .dat file — please pick your colorcycle.dat file. Your loaded file was not changed.",
+      note: "BETA — colorcycle.dat is an addendum to timecyc.dat in GTA SA mobile: it controls the game's color grading / filter (on PC, SkyGfx also uses it when colorFilter=Mobile). Put the downloaded file in the data folder, next to timecyc.dat. The format is not fully documented on public wikis, so this editor is structure-preserving: rows you do not edit stay exactly as in the original file. The preview above is an approximation of the grade — not an exact render of the game."
+    }
+  };
+
+  /* Weather order ng game (index 20 = UNDERWATER, 21-22 = extra). */
+  var CC_WEATHERS = ["EXTRASUNNY_LA","SUNNY_LA","CLOUDY_LA","RAINY_LA","FOGGY_LA",
+    "EXTRASUNNY_SM","SUNNY_SM","CLOUDY_SM","RAINY_SM","FOGGY_SM",
+    "EXTRASUNNY_SF","SUNNY_SF","CLOUDY_SF","RAINY_SF","FOGGY_SF",
+    "EXTRASUNNY_VEGAS","SUNNY_VEGAS","CLOUDY_VEGAS","SANDSTORM_VEGAS","FOGGY_VEGAS",
+    "UNDERWATER","EXTRACOLOURS_1","EXTRACOLOURS_2"];
+  var GROUP_DOTS = ["#ff5a4e", "#57d977", "#5aa2ff"];
+
+  var ccLang = "tl";
+  try {
+    var savedLang = localStorage.getItem("mavs_txd_lang");
+    if (savedLang === "en" || savedLang === "tl") ccLang = savedLang;
+  } catch(e){}
+  function S(){ return STR[ccLang]; }
+  function $(id){ return document.getElementById(id); }
+  function fmtF(v){
+    var n = Math.round(v * 1000) / 1000;
+    if (n === 0) n = 0; /* iwasan ang -0.000 */
+    return n.toFixed(3);
+  }
+  function isNumTok(x){ return /^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(x); }
+
+  /* ---------------- parser / writer ---------------- */
+  function ccParse(text){
+    var eol = text.indexOf("\r\n") >= 0 ? "\r\n" : "\n";
+    var lines = String(text).split(/\r\n|\r|\n/);
+    var flat = [];
+    for (var i = 0; i < lines.length; i++){
+      var t = lines[i].replace(/^\s+|\s+$/g, "");
+      if (!t || t.charAt(0) === "/") continue;
+      var toks = t.split(/\s+/).filter(function(x){ return x !== ""; });
+      if (toks.length < 12) continue;
+      var ok = true;
+      for (var j = 0; j < toks.length; j++){ if (!isNumTok(toks[j])){ ok = false; break; } }
+      if (ok) flat.push({ lineIdx: i, tokens: toks.slice(), orig: toks.slice(), dirty: false });
+    }
+    var groups = [];
+    for (var k = 0; k < flat.length; k += 8){
+      groups.push({ rows: flat.slice(k, k + 8) });
+    }
+    return { lines: lines, eol: eol, groups: groups, name: "colorcycle.dat" };
+  }
+  function ccBuild(data){
+    var out = data.lines.slice();
+    data.groups.forEach(function(g){
+      g.rows.forEach(function(r){
+        if (r.dirty) out[r.lineIdx] = r.tokens.join(" ");
+      });
+    });
+    return out.join(data.eol);
+  }
+
+  /* ---------------- built-in default sample ----------------
+     23 weather × 8 oras, identity-based grade na may magaan na
+     timpla bawat category (mainit pag sunny, malamig/desat pag
+     cloudy/rainy, lifted pag foggy, teal pag underwater). */
+  var CC_CATS = {
+    sunny:  [[1.03, 0.02, -0.02, 0], [0.01, 1.00, 0.01, 0], [-0.02, 0.02, 0.99, 0]],
+    cloudy: [[0.86, 0.09, 0.05, 0.010], [0.07, 0.87, 0.06, 0.010], [0.05, 0.08, 0.87, 0.010]],
+    rainy:  [[0.78, 0.08, 0.06, 0.004], [0.06, 0.82, 0.08, 0.004], [0.05, 0.09, 0.89, 0.004]],
+    foggy:  [[0.72, 0.12, 0.08, 0.055], [0.10, 0.74, 0.10, 0.055], [0.08, 0.11, 0.75, 0.055]],
+    sand:   [[1.06, 0.10, -0.05, 0.008], [0.02, 0.88, 0.02, 0.004], [-0.05, 0.05, 0.72, 0]],
+    under:  [[0.14, 0.26, 0.20, 0], [0.05, 0.84, 0.34, 0.010], [0.05, 0.30, 0.80, 0.020]],
+    extra:  [[1.12, 0.05, -0.04, 0], [0.03, 1.08, 0.03, 0], [-0.03, 0.04, 1.10, 0]]
+  };
+  function ccCatOf(name){
+    if (name === "UNDERWATER") return "under";
+    if (name.indexOf("EXTRACOLOURS") === 0) return "extra";
+    if (name.indexOf("SANDSTORM") === 0) return "sand";
+    if (name.indexOf("FOGGY") === 0) return "foggy";
+    if (name.indexOf("RAINY") === 0) return "rainy";
+    if (name.indexOf("CLOUDY") === 0) return "cloudy";
+    return "sunny";
+  }
+  function ccDefaultText(){
+    var out = [];
+    CC_WEATHERS.forEach(function(w){
+      var m = CC_CATS[ccCatOf(w)];
+      for (var h = 0; h < 8; h++){
+        var toks = [];
+        for (var ch = 0; ch < 3; ch++){
+          for (var c = 0; c < 4; c++){
+            var v = m[ch][c];
+            if (c < 3){
+              if (h === 0 || h === 7) v *= 0.92;              /* gabi: mas madilim */
+              if ((h === 2 || h === 5) && ch === 0 && c === 0) v += 0.03; /* sunrise/sunset: mainit */
+              if ((h === 0 || h === 7) && ch === 2 && c === 2) v += 0.02; /* gabi: dagdag asul */
+            }
+            toks.push(fmtF(v));
+          }
+        }
+        out.push(toks.join(" "));
+      }
+    });
+    return out.join("\r\n") + "\r\n";
+  }
+
+  /* ---------------- state + UI ---------------- */
+  var ccData = null;
+  var curG = 0, curR = 0;
+  var undoStack = [];
+  var lastSynced = null;
+
+  var panelEl = $("ccPanel"), canvasEl = $("ccCanvas");
+  var weatherSel = $("ccWeatherSel"), chipsEl = $("ccTimeChips");
+  var groupsEl = $("ccGroups");
+  var valCtrls = []; /* 12 entries {i, range, num} */
+
+  function curRowObj(){
+    if (!ccData || !ccData.groups.length) return null;
+    var g = ccData.groups[Math.min(curG, ccData.groups.length - 1)];
+    if (!g) return null;
+    return g.rows[Math.min(curR, g.rows.length - 1)] || null;
+  }
+  function tok(r, i){ var v = parseFloat(r.tokens[i]); return isNaN(v) ? 0 : v; }
+  function setTok(r, i, v){
+    r.tokens[i] = fmtF(v);
+    r.dirty = true;
+  }
+  function editedCount(){
+    var n = 0;
+    if (ccData) ccData.groups.forEach(function(g){ g.rows.forEach(function(r){ if (r.dirty) n++; }); });
+    return n;
+  }
+  function rowCount(){
+    var n = 0;
+    if (ccData) ccData.groups.forEach(function(g){ n += g.rows.length; });
+    return n;
+  }
+  function groupName(gi){
+    return CC_WEATHERS[gi] || ("Weather " + (gi + 1));
+  }
+
+  function buildChips(){
+    if (!chipsEl) return;
+    chipsEl.innerHTML = "";
+    var g = ccData && ccData.groups.length ? ccData.groups[Math.min(curG, ccData.groups.length - 1)] : null;
+    var n = g ? g.rows.length : 8;
+    for (var i = 0; i < n; i++){
+      (function(i){
+        var b = document.createElement("button");
+        b.type = "button";
+        b.textContent = S().times[i] || ("Row " + (i + 1));
+        if (i === curR) b.classList.add("on");
+        b.addEventListener("click", function(){
+          curR = i;
+          buildChips();
+          syncControls();
+          drawCcPreview();
+        });
+        chipsEl.appendChild(b);
+      })(i);
+    }
+  }
+  function buildControls(){
+    if (!groupsEl) return;
+    groupsEl.innerHTML = "";
+    valCtrls = [];
+    for (var ch = 0; ch < 3; ch++){
+      (function(ch){
+        var box = document.createElement("div");
+        box.className = "cc-group";
+        var h = document.createElement("h4");
+        var dot = document.createElement("span");
+        dot.className = "cc-dot";
+        dot.style.background = GROUP_DOTS[ch];
+        var lbl = document.createElement("span");
+        lbl.textContent = S().groups[ch];
+        lbl.className = "cc-glbl";
+        h.appendChild(dot); h.appendChild(lbl);
+        box.appendChild(h);
+        for (var c = 0; c < 4; c++){
+          (function(c){
+            var idx = ch * 4 + c;
+            var row = document.createElement("div");
+            row.className = "cc-vrow";
+            var vl = document.createElement("span");
+            vl.className = "cc-vlbl";
+            vl.textContent = S().comps[c];
+            var range = document.createElement("input");
+            range.type = "range";
+            range.min = -0.5; range.max = 2; range.step = 0.005;
+            range.setAttribute("aria-label", S().groups[ch] + " " + S().comps[c]);
+            var num = document.createElement("input");
+            num.type = "number";
+            num.step = 0.005; num.min = -1; num.max = 3;
+            num.setAttribute("aria-label", S().groups[ch] + " " + S().comps[c]);
+            range.addEventListener("input", function(){
+              var r = curRowObj(); if (!r) return;
+              setTok(r, idx, parseFloat(range.value));
+              num.value = r.tokens[idx];
+              drawCcPreview();
+              syncInfo();
+            });
+            range.addEventListener("change", commitEdit);
+            num.addEventListener("change", function(){
+              var r = curRowObj(); if (!r) return;
+              var v = parseFloat(num.value);
+              if (isNaN(v)) { num.value = r.tokens[idx]; return; }
+              if (v < -1) v = -1; if (v > 3) v = 3;
+              setTok(r, idx, v);
+              num.value = r.tokens[idx];
+              range.value = Math.max(-0.5, Math.min(2, v));
+              commitEdit();
+              drawCcPreview();
+              syncInfo();
+            });
+            row.appendChild(vl); row.appendChild(range); row.appendChild(num);
+            box.appendChild(row);
+            valCtrls.push({ i: idx, range: range, num: num });
+          })(c);
+        }
+        groupsEl.appendChild(box);
+      })(ch);
+    }
+  }
+  function commitEdit(){
+    var r = curRowObj(); if (!r || !lastSynced) return;
+    if (r.tokens.join(" ") !== lastSynced.join(" ")){
+      undoStack.push({ g: curG, row: curR, tokens: lastSynced.slice(), dirty: lastSynced.join(" ") !== r.orig.join(" ") });
+      lastSynced = r.tokens.slice();
+    }
+    syncUndoBtn();
+  }
+  function syncUndoBtn(){
+    var u = $("ccUndoBtn"); if (u) u.disabled = !undoStack.length;
+    var rs = $("ccResetBtn");
+    if (rs){
+      var r = curRowObj();
+      rs.disabled = !r || r.tokens.join(" ") === r.orig.join(" ");
+    }
+  }
+  function syncInfo(){
+    var info = $("ccFileInfo");
+    var nameEl = $("ccLoadedName");
+    if (!ccData || !ccData.groups.length){
+      if (nameEl) nameEl.textContent = "";
+      if (info) info.textContent = S().empty;
+      return;
+    }
+    if (nameEl){
+      if (ccData.isDefault){
+        nameEl.textContent = S().defaultLoaded;
+      } else {
+        nameEl.textContent = "";
+        var pre = document.createTextNode(S().loadedPrefix);
+        var b = document.createElement("b");
+        b.textContent = ccData.name;
+        nameEl.appendChild(pre);
+        nameEl.appendChild(b);
+      }
+    }
+    if (info) info.textContent = S().counts(ccData.groups.length, rowCount(), editedCount());
+  }
+  function syncControls(){
+    var r = curRowObj();
+    if (weatherSel){
+      weatherSel.innerHTML = "";
+      if (ccData) ccData.groups.forEach(function(g, i){
+        var o = document.createElement("option");
+        o.value = i; o.textContent = groupName(i);
+        weatherSel.appendChild(o);
+      });
+      weatherSel.value = String(Math.min(curG, Math.max(0, (ccData ? ccData.groups.length : 1) - 1)));
+      weatherSel.disabled = !r;
+    }
+    valCtrls.forEach(function(c){
+      if (!r){ c.range.disabled = true; c.num.disabled = true; c.num.value = ""; return; }
+      c.range.disabled = false; c.num.disabled = false;
+      var v = tok(r, c.i);
+      c.range.value = Math.max(-0.5, Math.min(2, v));
+      c.num.value = r.tokens[c.i];
+    });
+    var dl = $("ccDownloadBtn"); if (dl) dl.disabled = !r;
+    var dlTop = $("ccDownloadTopBtn"); if (dlTop) dlTop.disabled = !r;
+    lastSynced = r ? r.tokens.slice() : null;
+    syncUndoBtn();
+    syncInfo();
+  }
+
+  /* ---------------- live grade preview ----------------
+     Sample scene (ginuhit minsan sa offscreen canvas), tapos ang
+     grade matrix ng napiling row ang ina-apply per pixel:
+     out = M · in + offset. Pagtatantya lang ng totoong game filter. */
+  var sceneCanvas = null;
+  function buildSceneCanvas(){
+    var c = document.createElement("canvas");
+    c.width = 320; c.height = 180;
+    var g = c.getContext("2d");
+    var sky = g.createLinearGradient(0, 0, 0, 118);
+    sky.addColorStop(0, "#2c6cd2"); sky.addColorStop(1, "#a9cff5");
+    g.fillStyle = sky; g.fillRect(0, 0, 320, 118);
+    g.fillStyle = "#fff3b0";
+    g.beginPath(); g.arc(262, 36, 17, 0, 6.2832); g.fill();
+    g.fillStyle = "rgba(255,243,176,0.35)";
+    g.beginPath(); g.arc(262, 36, 30, 0, 6.2832); g.fill();
+    g.fillStyle = "#f4f7fa";
+    [[52, 40, 34, 11], [86, 46, 26, 9], [168, 30, 40, 12], [200, 38, 28, 9]].forEach(function(p){
+      g.beginPath(); g.ellipse(p[0], p[1], p[2], p[3], 0, 0, 6.2832); g.fill();
+    });
+    g.fillStyle = "#5d8a4a"; g.fillRect(0, 106, 320, 34);
+    g.fillStyle = "#3f7a34"; g.fillRect(0, 128, 320, 34);
+    g.fillStyle = "#2e6fb0"; g.fillRect(0, 140, 132, 22);       /* tubig */
+    g.fillStyle = "#565a60";                                     /* kalsada */
+    g.beginPath(); g.moveTo(150, 162); g.lineTo(320, 162); g.lineTo(320, 128); g.lineTo(196, 128); g.closePath(); g.fill();
+    g.strokeStyle = "#e8e8e8"; g.lineWidth = 2; g.setLineDash([7, 7]);
+    g.beginPath(); g.moveTo(238, 162); g.lineTo(252, 129); g.stroke();
+    g.setLineDash([]);
+    /* pulang kotse */
+    g.fillStyle = "#d23b2e";
+    g.fillRect(52, 108, 96, 20);
+    g.fillRect(70, 95, 56, 15);
+    g.fillStyle = "#20242c";
+    g.fillRect(76, 97, 20, 11); g.fillRect(102, 97, 18, 11);
+    g.fillStyle = "#141414";
+    g.beginPath(); g.arc(72, 129, 10, 0, 6.2832); g.fill();
+    g.beginPath(); g.arc(128, 129, 10, 0, 6.2832); g.fill();
+    g.fillStyle = "#9aa0a8";
+    g.beginPath(); g.arc(72, 129, 4.5, 0, 6.2832); g.fill();
+    g.beginPath(); g.arc(128, 129, 4.5, 0, 6.2832); g.fill();
+    /* color swatches sa ibaba — dito pinakahalata ang grade */
+    var sw = ["#e33b2f", "#35c24a", "#2f6fe4", "#f2d13c", "#37c8d8", "#c84bd8", "#e8b08a", "#8a8f96"];
+    sw.forEach(function(col, i){
+      g.fillStyle = col;
+      g.fillRect(i * 40, 162, 40, 18);
+    });
+    return c;
+  }
+  function drawCcPreview(){
+    if (!canvasEl) return;
+    var ctx = canvasEl.getContext("2d");
+    if (!ctx) return;
+    if (!sceneCanvas) sceneCanvas = buildSceneCanvas();
+    ctx.drawImage(sceneCanvas, 0, 0);
+    var r = curRowObj();
+    if (!r) return;
+    var m = [];
+    for (var i = 0; i < 12; i++) m.push(tok(r, i));
+    try {
+      var img = ctx.getImageData(0, 0, canvasEl.width, canvasEl.height);
+      var d = img.data;
+      for (var p = 0; p < d.length; p += 4){
+        var R = d[p], G = d[p + 1], B = d[p + 2];
+        d[p]     = R * m[0] + G * m[1] + B * m[2] + m[3] * 255;
+        d[p + 1] = R * m[4] + G * m[5] + B * m[6] + m[7] * 255;
+        d[p + 2] = R * m[8] + G * m[9] + B * m[10] + m[11] * 255;
+      }
+      ctx.putImageData(img, 0, 0);
+    } catch (e){ /* getImageData hindi available — scene na lang ang kita */ }
+  }
+
+  /* ---------------- load / save ---------------- */
+  function setData(data, name){
+    ccData = data;
+    ccData.name = name;
+    curG = 0; curR = 0;
+    undoStack = [];
+    buildChips();
+    syncControls();
+    drawCcPreview();
+  }
+  function loadDefault(){
+    var d = ccParse(ccDefaultText());
+    d.isDefault = true;
+    setData(d, S().defName);
+  }
+
+  function applyCcStrings(){
+    var s = S();
+    var u = $("ccUploadBtn"); if (u) u.textContent = s.upload;
+    var us = $("ccUploadSub"); if (us) us.textContent = s.uploadSub;
+    var d = $("ccDefaultBtn"); if (d) d.textContent = s.useDefault;
+    var w = $("ccWeatherLbl"); if (w) w.textContent = s.weather;
+    var t = $("ccTimeLbl"); if (t) t.textContent = s.time;
+    var rs = $("ccResetBtn"); if (rs) rs.textContent = s.reset;
+    var un = $("ccUndoBtn"); if (un) un.textContent = s.undo;
+    var dl = $("ccDownloadBtn"); if (dl) dl.textContent = s.saveDownload;
+    var dlTop = $("ccDownloadTopBtn"); if (dlTop) dlTop.textContent = s.saveDownload;
+    var cl = $("ccCloseBtn"); if (cl) cl.textContent = s.close;
+    var nt = $("ccNote"); if (nt) nt.textContent = s.note;
+    var title = $("ccTitle");
+    if (title) title.innerHTML = "";
+    if (title){
+      var span = document.createElement("span");
+      span.className = "cc-title-badge";
+      span.textContent = "🎨 Colorcycle Editor ";
+      var badge = document.createElement("span");
+      badge.className = "beta-badge";
+      badge.textContent = "BETA";
+      span.appendChild(badge);
+      title.appendChild(span);
+    }
+    buildChips();
+    buildControls();
+    syncControls();
+    drawCcPreview();
+  }
+
+  function openCc(){
+    if (!panelEl) return;
+    if (!ccData) loadDefault();
+    panelEl.classList.add("open");
+    syncControls();
+    drawCcPreview();
+  }
+  function closeCc(){ if (panelEl) panelEl.classList.remove("open"); }
+
+  /* ---------------- wiring ---------------- */
+  buildChips();
+  buildControls();
+  applyCcStrings();
+
+  if (weatherSel) weatherSel.addEventListener("change", function(){
+    curG = parseInt(weatherSel.value, 10) || 0;
+    curR = 0;
+    buildChips();
+    syncControls();
+    drawCcPreview();
+  });
+  var upBtn = $("ccUploadBtn"), fileInp = $("ccFile");
+  if (upBtn && fileInp) upBtn.addEventListener("click", function(){ fileInp.click(); });
+  if (fileInp) fileInp.addEventListener("change", function(){
+    var f = fileInp.files && fileInp.files[0];
+    fileInp.value = "";
+    if (!f) return;
+    /* Walang accept filter ang input (para hindi ma-grey out ang
+       .dat sa iOS picker), kaya dito vine-verify na .dat talaga ang
+       napili. Kung hindi, Tagalog error sa status box at hindi
+       gagalawin ang naka-load na file. */
+    if (!/\.dat$/i.test(f.name || "")){
+      var nm = $("ccLoadedName"), inf = $("ccFileInfo");
+      if (nm) nm.textContent = S().notDat;
+      if (inf) inf.textContent = "";
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(){
+      var d = ccParse(String(reader.result || ""));
+      d.isDefault = false;
+      if (!d.groups.length){
+        ccData = d;
+        curG = 0; curR = 0; undoStack = [];
+        buildChips(); syncControls(); drawCcPreview();
+        return;
+      }
+      setData(d, f.name || "colorcycle.dat");
+    };
+    reader.readAsText(f);
+  });
+  var defBtn = $("ccDefaultBtn");
+  if (defBtn) defBtn.addEventListener("click", loadDefault);
+  var resetBtn = $("ccResetBtn");
+  if (resetBtn) resetBtn.addEventListener("click", function(){
+    var r = curRowObj(); if (!r) return;
+    if (r.tokens.join(" ") === r.orig.join(" ")) return;
+    undoStack.push({ g: curG, row: curR, tokens: r.tokens.slice(), dirty: r.dirty });
+    r.tokens = r.orig.slice();
+    r.dirty = false;
+    syncControls();
+    drawCcPreview();
+  });
+  var undoBtn = $("ccUndoBtn");
+  if (undoBtn) undoBtn.addEventListener("click", function(){
+    var e = undoStack.pop(); if (!e || !ccData) return;
+    var g = ccData.groups[e.g]; if (!g) return;
+    var r = g.rows[e.row]; if (!r) return;
+    r.tokens = e.tokens.slice();
+    r.dirty = e.dirty;
+    curG = e.g; curR = e.row;
+    buildChips();
+    syncControls();
+    drawCcPreview();
+  });
+  function ccSaveDownload(){
+    if (!ccData || !ccData.groups.length) return;
+    var text = ccBuild(ccData);
+    /* application/octet-stream + download="colorcycle.dat": eksaktong
+       "colorcycle.dat" ang filename — walang .txt na dagdag. */
+    var blob = new Blob([text], { type: "application/octet-stream" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "colorcycle.dat";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){
+      try { URL.revokeObjectURL(a.href); } catch(e){}
+      if (a.parentNode) a.parentNode.removeChild(a);
+    }, 400);
+  }
+  var dlBtn = $("ccDownloadBtn");
+  if (dlBtn) dlBtn.addEventListener("click", ccSaveDownload);
+  var dlTopBtn = $("ccDownloadTopBtn");
+  if (dlTopBtn) dlTopBtn.addEventListener("click", ccSaveDownload);
+  var closeBtn = $("ccCloseBtn");
+  if (closeBtn) closeBtn.addEventListener("click", closeCc);
+  if (panelEl) panelEl.addEventListener("click", function(e){ if (e.target === panelEl) closeCc(); });
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape" && panelEl && panelEl.classList.contains("open")) closeCc();
+  });
+
+  window.__ccOpen = openCc;
+  window.__ccApplyLang = function(lang){
+    ccLang = (lang === "en") ? "en" : "tl";
+    if (ccData && ccData.isDefault) ccData.name = S().defName;
+    applyCcStrings();
+  };
+  /* Pang-verify lang: parser/writer/state na ma-check mula sa labas. */
+  window.__ccDebug = {
+    parse: ccParse,
+    build: ccBuild,
+    defaultText: ccDefaultText,
+    data: function(){ return ccData; }
+  };
+})();
+</script>
+<script>
+/* ---------- ⓘ guide bubbles ----------
+   Bawat button na may data-pop="<id>" ay toggle ng bubble na may
+   ganoong id (class .infopop). Isang bubble lang ang bukas sa isang
+   pagkakataon; pindot ulit sa ⓘ, o pindot sa labas ng bubble at ng
+   ⓘ, ang nagsasara. Purong display state ito — walang ginalaw sa
+   kahit anong editor/gate/admin logic. */
+(function(){
+  "use strict";
+  function closeAll(){
+    var pops = document.querySelectorAll(".infopop.open");
+    for (var i = 0; i < pops.length; i++) pops[i].classList.remove("open");
+    var btns = document.querySelectorAll("[data-pop].on");
+    for (var j = 0; j < btns.length; j++){
+      btns[j].classList.remove("on");
+      btns[j].setAttribute("aria-expanded", "false");
+    }
+  }
+  document.addEventListener("click", function(e){
+    var btn = e.target && e.target.closest ? e.target.closest("[data-pop]") : null;
+    if (btn){
+      var pop = document.getElementById(btn.getAttribute("data-pop"));
+      if (!pop) return;
+      var willOpen = !pop.classList.contains("open");
+      closeAll();
+      if (willOpen){
+        pop.classList.add("open");
+        btn.classList.add("on");
+        btn.setAttribute("aria-expanded", "true");
+      }
+      return;
+    }
+    if (e.target && e.target.closest && e.target.closest(".infopop")) return;
+    closeAll();
+  });
 })();
 </script>
   </body>
