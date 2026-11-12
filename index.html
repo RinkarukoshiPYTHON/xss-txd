@@ -374,6 +374,11 @@
       .tc-chips{display:flex; flex-wrap:wrap; gap:6px;}
       .tc-chips button{min-height:40px; padding:0 13px; border-radius:999px; font-size:13px;}
       .tc-chips button.on{background:var(--accent); border-color:var(--accent); color:#161006;}
+      /* Banner ng sakop pag naka-batch (select-all) mode sa Timecyc /
+         Colorcycle: laging kita kung ilang rows ang maaapektuhan. */
+      .tc-batch-banner{background:#2b2008; border:1px solid var(--accent); color:var(--txt);
+        border-radius:10px; padding:9px 12px; font-size:13px; font-weight:700; line-height:1.45;}
+      .tc-batch-banner.hidden{display:none;}
       #tcCanvas{width:100%; height:212px; flex:none; display:block; border-radius:12px; border:1px solid var(--line); background:#000;}
       .tc-colors{display:flex; flex-direction:column; gap:4px;}
       .tc-crow{display:flex; align-items:center; gap:10px; min-height:48px;}
@@ -587,6 +592,7 @@
           <span class="lbl" id="tcTimeLbl">Oras</span>
           <div id="tcTimeChips" class="tc-chips"></div>
         </div>
+        <div id="tcBatchBanner" class="tc-batch-banner hidden" role="status"></div>
         <div id="tcGlWrap" class="hidden" aria-label="3D preview"></div>
         <canvas id="tcCanvas" width="640" height="360"></canvas>
         <div id="tcColors" class="tc-colors"></div>
@@ -635,6 +641,7 @@
           <span class="lbl" id="ccTimeLbl">Oras</span>
           <div id="ccTimeChips" class="tc-chips"></div>
         </div>
+        <div id="ccBatchBanner" class="tc-batch-banner hidden" role="status"></div>
         <canvas id="ccCanvas" width="320" height="180"></canvas>
         <div id="ccGroups" class="cc-groups"></div>
         <div class="admin-btnrow">
@@ -5403,6 +5410,11 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       useDefault: "Gamitin ang default",
       weather: "Weather",
       time: "Oras",
+      allWeatherOpt: "🌐 Lahat ng weather",
+      allTimeChip: "Lahat ng oras",
+      allWeatherWord: "LAHAT ng weather",
+      allTimeWord: "LAHAT ng oras",
+      batchBanner: function(w, t, n){ return "Ina-edit: " + w + " · " + t + " — " + n + " rows ang maaapektuhan ng edit mo"; },
       times: ["Hatinggabi", "5AM", "6AM", "7AM", "Tanghali", "7PM", "8PM", "10PM"],
       colors: { skytop: "Sky Top", skybot: "Sky Bottom", suncore: "Sun Core", suncorona: "Sun Corona", amb: "Ambient", ambobj: "Ambient Object", dir: "Directional Light", lowcloud: "Low Clouds", botcloud: "Bottom Clouds", water: "Water" },
       sliders: { sunSz: "Sun Size", sprSz: "Sprite Size", sprBght: "Sprite Brightness", shdw: "Shadow", farClp: "Far Clip", fogSt: "Fog Start", log: "Light on Ground" },
@@ -5429,6 +5441,11 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       useDefault: "Use default",
       weather: "Weather",
       time: "Time",
+      allWeatherOpt: "🌐 All weathers",
+      allTimeChip: "All times",
+      allWeatherWord: "ALL weathers",
+      allTimeWord: "ALL times",
+      batchBanner: function(w, t, n){ return "Editing: " + w + " · " + t + " — " + n + " rows will be changed by your edit"; },
       times: ["Midnight", "5AM", "6AM", "7AM", "Midday", "7PM", "8PM", "10PM"],
       colors: { skytop: "Sky Top", skybot: "Sky Bottom", suncore: "Sun Core", suncorona: "Sun Corona", amb: "Ambient", ambobj: "Ambient Object", dir: "Directional Light", lowcloud: "Low Clouds", botcloud: "Bottom Clouds", water: "Water" },
       sliders: { sunSz: "Sun Size", sprSz: "Sprite Size", sprBght: "Sprite Brightness", shdw: "Shadow", farClp: "Far Clip", fogSt: "Fog Start", log: "Light on Ground" },
@@ -5662,6 +5679,13 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   var curSec = 0, curRow = 0;
   var undoStack = [];
   var lastSynced = null; /* tokens ng kasalukuyang row sa huling sync/commit */
+  /* Batch (select-all) mode: selAllW = lahat ng weather ang target,
+     selAllT = lahat ng oras ang target. curSec/curRow ang nananatiling
+     "anchor" — yun ang ipinapakita ng controls at ng preview. */
+  var selAllW = false, selAllT = false;
+  /* Snapshot ng lahat ng target rows bago magsimula ang isang edit
+     gesture; mula rito ang nag-iisang undo entry ng buong batch. */
+  var editBase = null;
 
   var panelEl = $("tcPanel"), canvasEl = $("tcCanvas");
   var weatherSel = $("tcWeatherSel"), chipsEl = $("tcTimeChips");
@@ -5690,6 +5714,47 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     if (tcData) tcData.sections.forEach(function(s){ n += s.rows.length; });
     return n;
   }
+  /* Ang mga row na maaapektuhan ng susunod na edit, ayon sa batch
+     mode: (napiling weather o lahat) × (napiling oras o lahat). */
+  function targetRows(){
+    var out = [];
+    if (!tcData) return out;
+    tcData.sections.forEach(function(s, si){
+      if (!selAllW && si !== curSec) return;
+      s.rows.forEach(function(r, ri){
+        if (!selAllT && ri !== curRow) return;
+        out.push({ sec: si, row: ri, obj: r });
+      });
+    });
+    return out;
+  }
+  function rowAt(sec, row){
+    var s = tcData ? tcData.sections[sec] : null;
+    return s ? (s.rows[row] || null) : null;
+  }
+  /* Tawagin bago ang unang mutation ng isang edit gesture: kinukunan
+     ng snapshot ang lahat ng target rows para sa batch undo. */
+  function beginEdit(){
+    if (editBase) return;
+    editBase = targetRows().map(function(t){
+      return { sec: t.sec, row: t.row, tokens: t.obj.tokens.slice(),
+        dirty: t.obj.tokens.join(" ") !== t.obj.orig.join(" ") };
+    });
+  }
+  /* Banner ng sakop: kita lang pag naka-batch mode, para laging alam
+     ng user kung ano at ilang rows ang maaapektuhan ng edit niya. */
+  function syncBatchBanner(){
+    var b = $("tcBatchBanner"); if (!b) return;
+    if ((!selAllW && !selAllT) || !tcData || !tcData.sections.length){
+      b.classList.add("hidden"); b.textContent = ""; return;
+    }
+    var s = S();
+    var secObj = tcData.sections[Math.min(curSec, tcData.sections.length - 1)];
+    var wName = selAllW ? s.allWeatherWord : (secObj ? secObj.name : "");
+    var tName = selAllT ? s.allTimeWord : (s.times[curRow] || "");
+    b.textContent = s.batchBanner(wName, tName, targetRows().length);
+    b.classList.remove("hidden");
+  }
 
   function buildChips(){
     if (!chipsEl) return;
@@ -5698,15 +5763,30 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       var b = document.createElement("button");
       b.type = "button";
       b.textContent = label;
-      if (i === curRow) b.classList.add("on");
+      if (i === curRow && !selAllT) b.classList.add("on");
       b.addEventListener("click", function(){
         curRow = i;
+        selAllT = false;
         buildChips();
         syncControls();
         drawPreview();
       });
       chipsEl.appendChild(b);
     });
+    /* Chip na "Lahat ng oras": ang edit ay mailalapat sa lahat ng
+       oras ng napiling weather — o sa lahat ng weather at oras pag
+       "Lahat ng weather" din ang napili sa dropdown. */
+    var all = document.createElement("button");
+    all.type = "button";
+    all.textContent = S().allTimeChip;
+    if (selAllT) all.classList.add("on");
+    all.addEventListener("click", function(){
+      selAllT = true;
+      buildChips();
+      syncControls();
+      drawPreview();
+    });
+    chipsEl.appendChild(all);
   }
   function buildControls(){
     if (colorsEl){
@@ -5723,11 +5803,15 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
         inp.type = "color";
         inp.setAttribute("aria-label", S().colors[f.k]);
         inp.addEventListener("input", function(){
-          var r = curRowObj(); if (!r) return;
+          var targets = targetRows(); if (!targets.length) return;
+          beginEdit();
           var v = inp.value;
-          setTok(r, f.i, parseInt(v.substr(1, 2), 16), true);
-          setTok(r, f.i + 1, parseInt(v.substr(3, 2), 16), true);
-          setTok(r, f.i + 2, parseInt(v.substr(5, 2), 16), true);
+          var rr = parseInt(v.substr(1, 2), 16), gg = parseInt(v.substr(3, 2), 16), bb = parseInt(v.substr(5, 2), 16);
+          targets.forEach(function(t){
+            setTok(t.obj, f.i, rr, true);
+            setTok(t.obj, f.i + 1, gg, true);
+            setTok(t.obj, f.i + 2, bb, true);
+          });
           hex.textContent = v;
           drawPreview();
           syncInfo();
@@ -5753,9 +5837,12 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
         var val = document.createElement("span");
         val.className = "o3-val";
         inp.addEventListener("input", function(){
-          var r = curRowObj(); if (!r) return;
-          setTok(r, f.i, parseFloat(inp.value), f.step >= 1);
-          val.textContent = r.tokens[f.i];
+          var targets = targetRows(); if (!targets.length) return;
+          beginEdit();
+          var v = parseFloat(inp.value), isInt = f.step >= 1;
+          targets.forEach(function(t){ setTok(t.obj, f.i, v, isInt); });
+          var r = curRowObj();
+          val.textContent = r ? r.tokens[f.i] : "";
           drawPreview();
           syncInfo();
         });
@@ -5766,23 +5853,33 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       });
     }
   }
+  /* Pag kumpleto ang isang edit gesture (change event): kung may
+     nabago sa alinmang target row mula sa editBase snapshot, ISANG
+     undo entry lang ang itinatala — ang buong batch ay sabay na
+     mare-revert ng isang Undo. Sa single mode, iisang row lang ang
+     nasa entry, tulad ng dati. */
   function commitEdit(){
-    var r = curRowObj(); if (!r || !lastSynced) return;
-    if (r.tokens.join(" ") !== lastSynced.join(" ")){
-      undoStack.push({ sec: curSec, row: curRow, tokens: lastSynced.slice(), dirty: wasDirtyBefore(lastSynced, r) });
-      lastSynced = r.tokens.slice();
+    if (editBase){
+      var changed = false;
+      for (var i = 0; i < editBase.length; i++){
+        var row = rowAt(editBase[i].sec, editBase[i].row);
+        if (row && row.tokens.join(" ") !== editBase[i].tokens.join(" ")){ changed = true; break; }
+      }
+      if (changed) undoStack.push({ batch: editBase });
+      editBase = null;
     }
+    var r = curRowObj();
+    lastSynced = r ? r.tokens.slice() : null;
     syncUndoBtn();
-  }
-  function wasDirtyBefore(prevTokens, r){
-    return prevTokens.join(" ") !== r.orig.join(" ");
   }
   function syncUndoBtn(){
     var u = $("tcUndoBtn"); if (u) u.disabled = !undoStack.length;
     var rs = $("tcResetBtn");
     if (rs){
-      var r = curRowObj();
-      rs.disabled = !r || r.tokens.join(" ") === r.orig.join(" ");
+      var targets = targetRows();
+      rs.disabled = !targets.length || targets.every(function(t){
+        return t.obj.tokens.join(" ") === t.obj.orig.join(" ");
+      });
     }
   }
   function syncInfo(){
@@ -5812,12 +5909,17 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     var r = curRowObj();
     if (weatherSel){
       weatherSel.innerHTML = "";
+      /* Unang option: "Lahat ng weather" — batch mode sa lahat ng
+         weather, sa kasalukuyang napiling oras. */
+      var oAll = document.createElement("option");
+      oAll.value = "__all__"; oAll.textContent = S().allWeatherOpt;
+      weatherSel.appendChild(oAll);
       if (tcData) tcData.sections.forEach(function(s, i){
         var o = document.createElement("option");
         o.value = i; o.textContent = s.name;
         weatherSel.appendChild(o);
       });
-      weatherSel.value = String(Math.min(curSec, Math.max(0, (tcData ? tcData.sections.length : 1) - 1)));
+      weatherSel.value = selAllW ? "__all__" : String(Math.min(curSec, Math.max(0, (tcData ? tcData.sections.length : 1) - 1)));
       weatherSel.disabled = !r;
     }
     colorCtrls.forEach(function(c){
@@ -5836,8 +5938,10 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     var dl = $("tcDownloadBtn"); if (dl) dl.disabled = !r;
     var dlTop = $("tcDownloadTopBtn"); if (dlTop) dlTop.disabled = !r;
     lastSynced = r ? r.tokens.slice() : null;
+    editBase = null;
     syncUndoBtn();
     syncInfo();
+    syncBatchBanner();
   }
 
   /* ---------------- 3D scene preview (Three.js) ----------------
@@ -6162,6 +6266,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     tcData = data;
     tcData.name = name;
     curSec = 0; curRow = 0;
+    selAllW = false; selAllT = false; editBase = null;
     undoStack = [];
     buildChips();
     syncControls();
@@ -6212,8 +6317,16 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   applyTcStrings();
 
   if (weatherSel) weatherSel.addEventListener("change", function(){
-    curSec = parseInt(weatherSel.value, 10) || 0;
-    curRow = 0;
+    if (weatherSel.value === "__all__"){
+      selAllW = true;
+    } else {
+      selAllW = false;
+      curSec = parseInt(weatherSel.value, 10) || 0;
+    }
+    /* Minor fix: hindi na nire-reset sa Hatinggabi ang napiling oras
+       pag nagpapalit ng weather — kung Tanghali ang napili, yun pa
+       rin ang ie-edit sa bagong weather; at pag "Lahat ng weather"
+       ang pinili, yun ang oras na mailalapat sa lahat ng weather. */
     buildChips();
     syncControls();
     drawPreview();
@@ -6241,6 +6354,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       if (!d.sections.length){
         tcData = d;
         curSec = 0; curRow = 0; undoStack = [];
+        selAllW = false; selAllT = false; editBase = null;
         buildChips(); syncControls(); drawPreview();
         return;
       }
@@ -6252,22 +6366,39 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   if (defBtn) defBtn.addEventListener("click", loadDefault);
   var resetBtn = $("tcResetBtn");
   if (resetBtn) resetBtn.addEventListener("click", function(){
-    var r = curRowObj(); if (!r) return;
-    if (r.tokens.join(" ") === r.orig.join(" ")) return;
-    undoStack.push({ sec: curSec, row: curRow, tokens: r.tokens.slice(), dirty: r.dirty });
-    r.tokens = r.orig.slice();
-    r.dirty = false;
+    /* Ibalik sa original ang lahat ng target rows (sa single mode:
+       ang napiling row lang, tulad ng dati) — isang undo entry. */
+    var targets = targetRows(); if (!targets.length) return;
+    var snap = [], anyDiff = false;
+    targets.forEach(function(t){
+      if (t.obj.tokens.join(" ") !== t.obj.orig.join(" ")) anyDiff = true;
+      snap.push({ sec: t.sec, row: t.row, tokens: t.obj.tokens.slice(), dirty: t.obj.dirty });
+    });
+    if (!anyDiff) return;
+    undoStack.push({ batch: snap });
+    targets.forEach(function(t){ t.obj.tokens = t.obj.orig.slice(); t.obj.dirty = false; });
+    editBase = null;
     syncControls();
     drawPreview();
   });
   var undoBtn = $("tcUndoBtn");
   if (undoBtn) undoBtn.addEventListener("click", function(){
     var e = undoStack.pop(); if (!e || !tcData) return;
-    var sec = tcData.sections[e.sec]; if (!sec) return;
-    var r = sec.rows[e.row]; if (!r) return;
-    r.tokens = e.tokens.slice();
-    r.dirty = e.dirty;
-    curSec = e.sec; curRow = e.row;
+    editBase = null;
+    if (e.batch){
+      /* Batch entry: sabay-sabay na ibalik ang lahat ng rows ng
+         batch sa iisang Undo. */
+      e.batch.forEach(function(b){
+        var row = rowAt(b.sec, b.row);
+        if (row){ row.tokens = b.tokens.slice(); row.dirty = b.dirty; }
+      });
+    } else {
+      var sec = tcData.sections[e.sec]; if (!sec) return;
+      var r = sec.rows[e.row]; if (!r) return;
+      r.tokens = e.tokens.slice();
+      r.dirty = e.dirty;
+      curSec = e.sec; curRow = e.row;
+    }
     buildChips();
     syncControls();
     drawPreview();
@@ -6313,7 +6444,8 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     defaultText: tcDefaultText,
     data: function(){ return tcData; },
     is3d: function(){ return !!tc3d; },
-    failed3d: function(){ return tc3dFailed; }
+    failed3d: function(){ return tc3dFailed; },
+    batch: function(){ return { allW: selAllW, allT: selAllT, targets: targetRows().length, undo: undoStack.length }; }
   };
 })();
 </script>
@@ -6351,6 +6483,11 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       useDefault: "Gamitin ang default",
       weather: "Weather",
       time: "Oras",
+      allWeatherOpt: "🌐 Lahat ng weather",
+      allTimeChip: "Lahat ng oras",
+      allWeatherWord: "LAHAT ng weather",
+      allTimeWord: "LAHAT ng oras",
+      batchBanner: function(w, t, n){ return "Ina-edit: " + w + " · " + t + " — " + n + " rows ang maaapektuhan ng edit mo"; },
       times: ["Hatinggabi", "5AM", "6AM", "7AM", "Tanghali", "7PM", "8PM", "10PM"],
       groups: ["Pula (output)", "Berde (output)", "Asul (output)"],
       comps: ["← R", "← G", "← B", "Offset"],
@@ -6374,6 +6511,11 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       useDefault: "Use default",
       weather: "Weather",
       time: "Time",
+      allWeatherOpt: "🌐 All weathers",
+      allTimeChip: "All times",
+      allWeatherWord: "ALL weathers",
+      allTimeWord: "ALL times",
+      batchBanner: function(w, t, n){ return "Editing: " + w + " · " + t + " — " + n + " rows will be changed by your edit"; },
       times: ["Midnight", "5AM", "6AM", "7AM", "Midday", "7PM", "8PM", "10PM"],
       groups: ["Red (output)", "Green (output)", "Blue (output)"],
       comps: ["← R", "← G", "← B", "Offset"],
@@ -6489,6 +6631,13 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   var curG = 0, curR = 0;
   var undoStack = [];
   var lastSynced = null;
+  /* Batch (select-all) mode, tulad ng Timecyc Editor: selAllW = lahat
+     ng weather, selAllT = lahat ng oras. curG/curR ang "anchor" na
+     ipinapakita ng controls at preview. */
+  var selAllW = false, selAllT = false;
+  /* Snapshot ng lahat ng target rows bago ang isang edit gesture —
+     mula rito ang nag-iisang undo entry ng buong batch. */
+  var editBase = null;
 
   var panelEl = $("ccPanel"), canvasEl = $("ccCanvas");
   var weatherSel = $("ccWeatherSel"), chipsEl = $("ccTimeChips");
@@ -6519,6 +6668,45 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   function groupName(gi){
     return CC_WEATHERS[gi] || ("Weather " + (gi + 1));
   }
+  /* Ang mga row na maaapektuhan ng susunod na edit, ayon sa batch
+     mode: (napiling weather o lahat) × (napiling oras o lahat). */
+  function targetRows(){
+    var out = [];
+    if (!ccData) return out;
+    ccData.groups.forEach(function(g, gi){
+      if (!selAllW && gi !== curG) return;
+      g.rows.forEach(function(r, ri){
+        if (!selAllT && ri !== curR) return;
+        out.push({ g: gi, row: ri, obj: r });
+      });
+    });
+    return out;
+  }
+  function rowAt(g, row){
+    var gr = ccData ? ccData.groups[g] : null;
+    return gr ? (gr.rows[row] || null) : null;
+  }
+  /* Tawagin bago ang unang mutation ng isang edit gesture: snapshot
+     ng lahat ng target rows para sa batch undo. */
+  function beginEdit(){
+    if (editBase) return;
+    editBase = targetRows().map(function(t){
+      return { g: t.g, row: t.row, tokens: t.obj.tokens.slice(),
+        dirty: t.obj.tokens.join(" ") !== t.obj.orig.join(" ") };
+    });
+  }
+  /* Banner ng sakop: kita lang pag naka-batch mode. */
+  function syncBatchBanner(){
+    var b = $("ccBatchBanner"); if (!b) return;
+    if ((!selAllW && !selAllT) || !ccData || !ccData.groups.length){
+      b.classList.add("hidden"); b.textContent = ""; return;
+    }
+    var s = S();
+    var wName = selAllW ? s.allWeatherWord : groupName(Math.min(curG, ccData.groups.length - 1));
+    var tName = selAllT ? s.allTimeWord : (s.times[curR] || "");
+    b.textContent = s.batchBanner(wName, tName, targetRows().length);
+    b.classList.remove("hidden");
+  }
 
   function buildChips(){
     if (!chipsEl) return;
@@ -6530,9 +6718,10 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
         var b = document.createElement("button");
         b.type = "button";
         b.textContent = S().times[i] || ("Row " + (i + 1));
-        if (i === curR) b.classList.add("on");
+        if (i === curR && !selAllT) b.classList.add("on");
         b.addEventListener("click", function(){
           curR = i;
+          selAllT = false;
           buildChips();
           syncControls();
           drawCcPreview();
@@ -6540,6 +6729,20 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
         chipsEl.appendChild(b);
       })(i);
     }
+    /* Chip na "Lahat ng oras": ang edit ay mailalapat sa lahat ng
+       oras ng napiling weather — o sa lahat ng weather at oras pag
+       "Lahat ng weather" din ang napili sa dropdown. */
+    var all = document.createElement("button");
+    all.type = "button";
+    all.textContent = S().allTimeChip;
+    if (selAllT) all.classList.add("on");
+    all.addEventListener("click", function(){
+      selAllT = true;
+      buildChips();
+      syncControls();
+      drawCcPreview();
+    });
+    chipsEl.appendChild(all);
   }
   function buildControls(){
     if (!groupsEl) return;
@@ -6575,19 +6778,24 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
             num.step = 0.005; num.min = -1; num.max = 3;
             num.setAttribute("aria-label", S().groups[ch] + " " + S().comps[c]);
             range.addEventListener("input", function(){
-              var r = curRowObj(); if (!r) return;
-              setTok(r, idx, parseFloat(range.value));
-              num.value = r.tokens[idx];
+              var targets = targetRows(); if (!targets.length) return;
+              beginEdit();
+              var v = parseFloat(range.value);
+              targets.forEach(function(t){ setTok(t.obj, idx, v); });
+              var r = curRowObj();
+              num.value = r ? r.tokens[idx] : "";
               drawCcPreview();
               syncInfo();
             });
             range.addEventListener("change", commitEdit);
             num.addEventListener("change", function(){
+              var targets = targetRows(); if (!targets.length) return;
               var r = curRowObj(); if (!r) return;
               var v = parseFloat(num.value);
               if (isNaN(v)) { num.value = r.tokens[idx]; return; }
               if (v < -1) v = -1; if (v > 3) v = 3;
-              setTok(r, idx, v);
+              beginEdit();
+              targets.forEach(function(t){ setTok(t.obj, idx, v); });
               num.value = r.tokens[idx];
               range.value = Math.max(-0.5, Math.min(2, v));
               commitEdit();
@@ -6603,20 +6811,30 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       })(ch);
     }
   }
+  /* Tulad ng Timecyc: isang edit gesture = isang undo entry, kahit
+     batch ang in-edit — sabay na mare-revert ng isang Undo. */
   function commitEdit(){
-    var r = curRowObj(); if (!r || !lastSynced) return;
-    if (r.tokens.join(" ") !== lastSynced.join(" ")){
-      undoStack.push({ g: curG, row: curR, tokens: lastSynced.slice(), dirty: lastSynced.join(" ") !== r.orig.join(" ") });
-      lastSynced = r.tokens.slice();
+    if (editBase){
+      var changed = false;
+      for (var i = 0; i < editBase.length; i++){
+        var row = rowAt(editBase[i].g, editBase[i].row);
+        if (row && row.tokens.join(" ") !== editBase[i].tokens.join(" ")){ changed = true; break; }
+      }
+      if (changed) undoStack.push({ batch: editBase });
+      editBase = null;
     }
+    var r = curRowObj();
+    lastSynced = r ? r.tokens.slice() : null;
     syncUndoBtn();
   }
   function syncUndoBtn(){
     var u = $("ccUndoBtn"); if (u) u.disabled = !undoStack.length;
     var rs = $("ccResetBtn");
     if (rs){
-      var r = curRowObj();
-      rs.disabled = !r || r.tokens.join(" ") === r.orig.join(" ");
+      var targets = targetRows();
+      rs.disabled = !targets.length || targets.every(function(t){
+        return t.obj.tokens.join(" ") === t.obj.orig.join(" ");
+      });
     }
   }
   function syncInfo(){
@@ -6645,12 +6863,16 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     var r = curRowObj();
     if (weatherSel){
       weatherSel.innerHTML = "";
+      /* Unang option: "Lahat ng weather" — batch mode. */
+      var oAll = document.createElement("option");
+      oAll.value = "__all__"; oAll.textContent = S().allWeatherOpt;
+      weatherSel.appendChild(oAll);
       if (ccData) ccData.groups.forEach(function(g, i){
         var o = document.createElement("option");
         o.value = i; o.textContent = groupName(i);
         weatherSel.appendChild(o);
       });
-      weatherSel.value = String(Math.min(curG, Math.max(0, (ccData ? ccData.groups.length : 1) - 1)));
+      weatherSel.value = selAllW ? "__all__" : String(Math.min(curG, Math.max(0, (ccData ? ccData.groups.length : 1) - 1)));
       weatherSel.disabled = !r;
     }
     valCtrls.forEach(function(c){
@@ -6663,8 +6885,10 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     var dl = $("ccDownloadBtn"); if (dl) dl.disabled = !r;
     var dlTop = $("ccDownloadTopBtn"); if (dlTop) dlTop.disabled = !r;
     lastSynced = r ? r.tokens.slice() : null;
+    editBase = null;
     syncUndoBtn();
     syncInfo();
+    syncBatchBanner();
   }
 
   /* ---------------- live grade preview ----------------
@@ -6743,6 +6967,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     ccData = data;
     ccData.name = name;
     curG = 0; curR = 0;
+    selAllW = false; selAllT = false; editBase = null;
     undoStack = [];
     buildChips();
     syncControls();
@@ -6800,8 +7025,14 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   applyCcStrings();
 
   if (weatherSel) weatherSel.addEventListener("change", function(){
-    curG = parseInt(weatherSel.value, 10) || 0;
-    curR = 0;
+    if (weatherSel.value === "__all__"){
+      selAllW = true;
+    } else {
+      selAllW = false;
+      curG = parseInt(weatherSel.value, 10) || 0;
+    }
+    /* Minor fix, tulad ng Timecyc: hindi na nire-reset ang napiling
+       oras pag nagpapalit ng weather. */
     buildChips();
     syncControls();
     drawCcPreview();
@@ -6829,6 +7060,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       if (!d.groups.length){
         ccData = d;
         curG = 0; curR = 0; undoStack = [];
+        selAllW = false; selAllT = false; editBase = null;
         buildChips(); syncControls(); drawCcPreview();
         return;
       }
@@ -6840,22 +7072,38 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   if (defBtn) defBtn.addEventListener("click", loadDefault);
   var resetBtn = $("ccResetBtn");
   if (resetBtn) resetBtn.addEventListener("click", function(){
-    var r = curRowObj(); if (!r) return;
-    if (r.tokens.join(" ") === r.orig.join(" ")) return;
-    undoStack.push({ g: curG, row: curR, tokens: r.tokens.slice(), dirty: r.dirty });
-    r.tokens = r.orig.slice();
-    r.dirty = false;
+    /* Ibalik sa original ang lahat ng target rows (single mode: ang
+       napiling row lang) — isang undo entry para sa buong reset. */
+    var targets = targetRows(); if (!targets.length) return;
+    var snap = [], anyDiff = false;
+    targets.forEach(function(t){
+      if (t.obj.tokens.join(" ") !== t.obj.orig.join(" ")) anyDiff = true;
+      snap.push({ g: t.g, row: t.row, tokens: t.obj.tokens.slice(), dirty: t.obj.dirty });
+    });
+    if (!anyDiff) return;
+    undoStack.push({ batch: snap });
+    targets.forEach(function(t){ t.obj.tokens = t.obj.orig.slice(); t.obj.dirty = false; });
+    editBase = null;
     syncControls();
     drawCcPreview();
   });
   var undoBtn = $("ccUndoBtn");
   if (undoBtn) undoBtn.addEventListener("click", function(){
     var e = undoStack.pop(); if (!e || !ccData) return;
-    var g = ccData.groups[e.g]; if (!g) return;
-    var r = g.rows[e.row]; if (!r) return;
-    r.tokens = e.tokens.slice();
-    r.dirty = e.dirty;
-    curG = e.g; curR = e.row;
+    editBase = null;
+    if (e.batch){
+      /* Batch entry: sabay-sabay na ibalik ang lahat ng rows. */
+      e.batch.forEach(function(b){
+        var row = rowAt(b.g, b.row);
+        if (row){ row.tokens = b.tokens.slice(); row.dirty = b.dirty; }
+      });
+    } else {
+      var g = ccData.groups[e.g]; if (!g) return;
+      var r = g.rows[e.row]; if (!r) return;
+      r.tokens = e.tokens.slice();
+      r.dirty = e.dirty;
+      curG = e.g; curR = e.row;
+    }
     buildChips();
     syncControls();
     drawCcPreview();
@@ -6898,7 +7146,8 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     parse: ccParse,
     build: ccBuild,
     defaultText: ccDefaultText,
-    data: function(){ return ccData; }
+    data: function(){ return ccData; },
+    batch: function(){ return { allW: selAllW, allT: selAllT, targets: targetRows().length, undo: undoStack.length }; }
   };
 })();
 </script>
