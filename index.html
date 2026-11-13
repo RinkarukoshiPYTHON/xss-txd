@@ -153,6 +153,19 @@
       #partsList::-webkit-scrollbar, #editPartsList::-webkit-scrollbar{display:none;}
       .partchip{flex:none; min-height:44px; font-size:13.5px; padding:0 16px; border-radius:999px;}
       .partchip.on{background:var(--accent); border-color:var(--accent); color:#161006;}
+      /* Ped pose bar (3D Preview): kita lang pag ped/skin model ang
+         naka-load (may Skin plugin + bones na na-parse). */
+      #poseBar{display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--panel); border-top:1px solid var(--line); flex:none; flex-wrap:wrap;}
+      #poseBar.hidden{display:none;}
+      #poseBar .lbl{flex:none;}
+      #poseList{display:flex; gap:6px; flex-wrap:wrap; flex:1;}
+      /* Sticker packs (Edit Texture → IMAGE tool) */
+      .stk-grid{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;}
+      .stk-grid button{width:58px; height:58px; min-height:58px; padding:5px; border-radius:12px; background:var(--panel2);}
+      .stk-grid button img{width:100%; height:100%; object-fit:contain; display:block; pointer-events:none;}
+      .stk-packbtns{display:flex; gap:6px; flex-wrap:wrap;}
+      .stk-packbtns button{min-height:40px; padding:0 13px; border-radius:999px; font-size:13px;}
+      .stk-packbtns button.on{background:var(--accent); border-color:var(--accent); color:#161006;}
       #btnEditPart{flex:none; min-height:44px;}
       /* ---------- 3D objects (BETA) ---------- */
       #obj3dPanel{background:var(--panel); border-top:1px solid var(--line); padding:8px 10px calc(8px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:8px; flex:none;}
@@ -405,6 +418,33 @@
       .cc-vrow input[type=range]{flex:1; min-width:0;}
       .cc-vrow input[type=number]{width:74px; flex:none; min-height:40px; text-align:right; font-variant-numeric:tabular-nums;}
       .cc-title-badge{display:inline-flex; align-items:center; gap:8px;}
+      /* ---------- Cheats gate + Weapon / Handling / Ped panels ----------
+         Ang tatlong editor na ito ay nasa likod ng "🔓 Cheats" password
+         (tulad ng Admin Panel auth). Ang field rows ay slider + number
+         input, tulad ng Colorcycle rows pero mas mahaba ang label. */
+      .cheats-list{display:flex; flex-direction:column; gap:8px;}
+      .cheat-item{display:flex; align-items:center; gap:9px; width:100%; min-height:56px;
+        padding:0 14px; font-size:15.5px; font-weight:700; text-align:left; border-radius:12px;}
+      .cheat-item .beta-badge{margin-left:auto;}
+      .de-fields{display:flex; flex-direction:column; gap:2px; background:var(--panel2);
+        border:1px solid var(--line); border-radius:12px; padding:6px 10px 10px;}
+      .de-row{display:flex; align-items:center; gap:8px; min-height:44px;}
+      .de-row .de-lbl{width:118px; flex:none; font-size:12px; font-weight:700; color:var(--dim); line-height:1.25;}
+      .de-row input[type=range]{flex:1; min-width:0;}
+      .de-row input[type=number]{width:76px; flex:none; min-height:40px; text-align:right; font-variant-numeric:tabular-nums;}
+      .de-row select{flex:1; min-width:0;}
+      .de-row input[type=text]{flex:1; min-width:0; min-height:40px; text-align:right;
+        font-variant-numeric:tabular-nums; font-family:ui-monospace,Menlo,Consolas,monospace;}
+      /* Collapsible field groups (Handling Editor: Engine, Traction,
+         Brakes, Suspension, Iba pa) — sarado by default para maikli
+         ang panel sa phone; ang pangunahing sliders ay laging bukas
+         sa itaas, labas ng kahit anong group. */
+      .de-group{border-top:1px solid var(--line); margin-top:6px;}
+      .de-group summary{min-height:44px; display:flex; align-items:center; gap:8px; cursor:pointer;
+        font-size:13px; font-weight:800; letter-spacing:.03em; color:var(--text); list-style:none;}
+      .de-group summary::-webkit-details-marker{display:none;}
+      .de-group summary::after{content:"▾"; margin-left:auto; color:var(--dim); font-size:15px;}
+      .de-group:not([open]) summary::after{transform:rotate(-90deg);}
       @media (prefers-reduced-motion: reduce){
         .gate-spinner{animation-duration:2.4s;}
         .gate-bar-fill{animation:none; width:100%;}
@@ -593,6 +633,11 @@
           <div id="tcTimeChips" class="tc-chips"></div>
         </div>
         <div id="tcBatchBanner" class="tc-batch-banner hidden" role="status"></div>
+        <div class="tc-sec">
+          <span class="lbl" id="tcPresetsLbl">Presets</span>
+          <div id="tcPresets" class="tc-chips"></div>
+          <p class="tc-loaded-meta" id="tcPresetInfo" role="status"></p>
+        </div>
         <div id="tcGlWrap" class="hidden" aria-label="3D preview"></div>
         <canvas id="tcCanvas" width="640" height="360"></canvas>
         <div id="tcColors" class="tc-colors"></div>
@@ -653,6 +698,153 @@
         <button type="button" id="ccCloseBtn">Isara</button>
       </div>
     </div>
+    <!-- Cheats: bubukas mula sa ••• menu ng editor, sa ilalim ng
+         Colorcycle Editor. Tulad ng Admin Panel, may sariling password
+         muna ("Enter cheat password") bago makita ang listahan ng
+         tatlong cheat editor (Weapon / Handling / Ped). -->
+    <div id="cheatAuth" class="admin-overlay" role="dialog" aria-modal="true" aria-labelledby="cheatAuthTitle">
+      <div class="admin-card" id="cheatAuthCard">
+        <h2 class="admin-title" id="cheatAuthTitle">Enter cheat password</h2>
+        <form id="cheatAuthForm" novalidate>
+          <label for="cheatAuthInput" id="cheatAuthLabel">Cheat password</label>
+          <input id="cheatAuthInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="64" />
+          <p id="cheatAuthError" class="admin-msg" role="alert">Mali ang cheat password — hindi nagbukas ang Cheats.</p>
+          <div class="admin-btnrow">
+            <button type="button" class="ghost" id="cheatAuthCancel">Cancel</button>
+            <button type="submit" class="primary" id="cheatAuthConfirm">Confirm</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div id="cheatsPanel" class="admin-overlay" role="dialog" aria-modal="true" aria-labelledby="cheatsTitle">
+      <div class="admin-card">
+        <h2 class="admin-title" id="cheatsTitle">🔓 Cheats</h2>
+        <div class="cheats-list">
+          <button type="button" class="cheat-item" id="cheatWpBtn">🔫 <span id="cheatWpLbl">Weapon Editor</span> <span class="beta-badge">BETA</span></button>
+          <button type="button" class="cheat-item" id="cheatHdBtn">🚗 <span id="cheatHdLbl">Handling Editor</span> <span class="beta-badge">BETA</span></button>
+          <button type="button" class="cheat-item" id="cheatPdBtn">🚶 <span id="cheatPdLbl">Ped Editor</span> <span class="beta-badge">BETA</span></button>
+        </div>
+        <button type="button" id="cheatsCloseBtn">Isara</button>
+      </div>
+    </div>
+    <!-- Weapon Editor (BETA): nasa likod ng Cheats password. Tunay na
+         GTA SA weapon.dat ang ine-edit: gun entries na nagsisimula sa
+         "$". Ang hindi in-edit na linya ay mananatiling eksakto tulad
+         ng in-upload na file. -->
+    <div id="wpPanel" class="admin-overlay" role="dialog" aria-modal="true" aria-labelledby="wpTitle">
+      <div class="admin-card tc-card">
+        <h2 class="admin-title" id="wpTitle"><span class="cc-title-badge">🔫 Weapon Editor <span class="beta-badge">BETA</span></span></h2>
+        <button type="button" class="tc-upload-big" id="wpUploadBtn">📤 I-upload ang weapon.dat</button>
+        <p class="tc-upload-sub" id="wpUploadSub">I-tap ito at piliin ang weapon.dat mo — yun mismo ang ie-edit mo.</p>
+        <!-- Walang accept filter dito nang sadya (tulad ng Timecyc /
+             Colorcycle): para hindi ma-grey out ang .dat sa iOS Files
+             picker. Ang .dat check ay nasa JavaScript ng change
+             handler, may Tagalog error kung hindi .dat ang napili. -->
+        <input type="file" id="wpFile" class="hidden" />
+        <div class="tc-loaded" id="wpLoadedBox" role="status">
+          <p class="tc-loaded-name" id="wpLoadedName"></p>
+          <p class="tc-loaded-meta" id="wpFileInfo"></p>
+        </div>
+        <button type="button" class="primary tc-save-big" id="wpDownloadTopBtn">💾 I-save at I-download</button>
+        <div class="tc-toprow">
+          <button type="button" id="wpDefaultBtn">Gamitin ang default</button>
+        </div>
+        <div class="tc-sec">
+          <label class="lbl" for="wpEntrySel" id="wpEntryLbl">Baril</label>
+          <select id="wpEntrySel"></select>
+        </div>
+        <p class="admin-note" id="wpNote"></p>
+        <div id="wpBatchBanner" class="tc-batch-banner hidden" role="status"></div>
+        <div id="wpFields" class="de-fields"></div>
+        <div class="admin-btnrow">
+          <button type="button" id="wpResetBtn">Ibalik sa original</button>
+          <button type="button" id="wpUndoBtn">Undo</button>
+        </div>
+        <button type="button" class="primary tc-save-big" id="wpDownloadBtn">💾 I-save at I-download</button>
+        <button type="button" id="wpCloseBtn">Isara</button>
+      </div>
+    </div>
+    <!-- Handling Editor (BETA): nasa likod ng Cheats password. Tunay
+         na GTA SA handling.cfg ang ine-edit (standard data lines).
+         Ang hindi in-edit na linya ay mananatiling eksakto tulad ng
+         in-upload na file. -->
+    <div id="hdPanel" class="admin-overlay" role="dialog" aria-modal="true" aria-labelledby="hdTitle">
+      <div class="admin-card tc-card">
+        <h2 class="admin-title" id="hdTitle"><span class="cc-title-badge">🚗 Handling Editor <span class="beta-badge">BETA</span></span></h2>
+        <button type="button" class="tc-upload-big" id="hdUploadBtn">📤 I-upload ang handling.cfg</button>
+        <p class="tc-upload-sub" id="hdUploadSub">I-tap ito at piliin ang handling.cfg mo — yun mismo ang ie-edit mo.</p>
+        <!-- Walang accept filter dito nang sadya (tulad ng Timecyc /
+             Colorcycle): para lahat ng file ay mapipindot sa iOS Files
+             picker. Ang .cfg check ay nasa JavaScript ng change
+             handler, may Tagalog error kung hindi .cfg ang napili. -->
+        <input type="file" id="hdFile" class="hidden" />
+        <div class="tc-loaded" id="hdLoadedBox" role="status">
+          <p class="tc-loaded-name" id="hdLoadedName"></p>
+          <p class="tc-loaded-meta" id="hdFileInfo"></p>
+        </div>
+        <button type="button" class="primary tc-save-big" id="hdDownloadTopBtn">💾 I-save at I-download</button>
+        <div class="tc-toprow">
+          <button type="button" id="hdDefaultBtn">Gamitin ang default</button>
+        </div>
+        <div class="tc-sec">
+          <label class="lbl" for="hdEntrySel" id="hdEntryLbl">Sasakyan</label>
+          <select id="hdEntrySel"></select>
+        </div>
+        <div id="hdBatchBanner" class="tc-batch-banner hidden" role="status"></div>
+        <div class="tc-sec">
+          <span class="lbl" id="hdPresetsLbl">Presets</span>
+          <div id="hdPresets" class="tc-chips"></div>
+          <p class="tc-loaded-meta" id="hdPresetInfo" role="status"></p>
+        </div>
+        <div id="hdFields" class="de-fields"></div>
+        <div class="admin-btnrow">
+          <button type="button" id="hdResetBtn">Ibalik sa original</button>
+          <button type="button" id="hdUndoBtn">Undo</button>
+        </div>
+        <button type="button" class="primary tc-save-big" id="hdDownloadBtn">💾 I-save at I-download</button>
+        <p class="admin-note" id="hdNote"></p>
+        <button type="button" id="hdCloseBtn">Isara</button>
+      </div>
+    </div>
+    <!-- Ped Editor (BETA): nasa likod ng Cheats password. Tunay na
+         GTA SA pedstats.dat ang ine-edit (STAT_* entries). Walang
+         run-speed field sa file na ito — ang bilis ng takbo ng ped ay
+         galing sa animation group niya, hindi sa isang number dito.
+         Ang hindi in-edit na linya ay mananatiling eksakto tulad ng
+         in-upload na file. -->
+    <div id="pdPanel" class="admin-overlay" role="dialog" aria-modal="true" aria-labelledby="pdTitle">
+      <div class="admin-card tc-card">
+        <h2 class="admin-title" id="pdTitle"><span class="cc-title-badge">🚶 Ped Editor <span class="beta-badge">BETA</span></span></h2>
+        <button type="button" class="tc-upload-big" id="pdUploadBtn">📤 I-upload ang pedstats.dat</button>
+        <p class="tc-upload-sub" id="pdUploadSub">I-tap ito at piliin ang pedstats.dat mo — yun mismo ang ie-edit mo.</p>
+        <!-- Walang accept filter dito nang sadya (tulad ng Timecyc /
+             Colorcycle): para hindi ma-grey out ang .dat sa iOS Files
+             picker. Ang .dat check ay nasa JavaScript ng change
+             handler, may Tagalog error kung hindi .dat ang napili. -->
+        <input type="file" id="pdFile" class="hidden" />
+        <div class="tc-loaded" id="pdLoadedBox" role="status">
+          <p class="tc-loaded-name" id="pdLoadedName"></p>
+          <p class="tc-loaded-meta" id="pdFileInfo"></p>
+        </div>
+        <button type="button" class="primary tc-save-big" id="pdDownloadTopBtn">💾 I-save at I-download</button>
+        <div class="tc-toprow">
+          <button type="button" id="pdDefaultBtn">Gamitin ang default</button>
+        </div>
+        <div class="tc-sec">
+          <label class="lbl" for="pdEntrySel" id="pdEntryLbl">Ped stat</label>
+          <select id="pdEntrySel"></select>
+        </div>
+        <div id="pdBatchBanner" class="tc-batch-banner hidden" role="status"></div>
+        <div id="pdFields" class="de-fields"></div>
+        <div class="admin-btnrow">
+          <button type="button" id="pdResetBtn">Ibalik sa original</button>
+          <button type="button" id="pdUndoBtn">Undo</button>
+        </div>
+        <button type="button" class="primary tc-save-big" id="pdDownloadBtn">💾 I-save at I-download</button>
+        <p class="admin-note" id="pdNote"></p>
+        <button type="button" id="pdCloseBtn">Isara</button>
+      </div>
+    </div>
     <header id="topbar">
       <div id="brand">XSS <b>TXD</b></div>
       <div class="topbtns">
@@ -671,6 +863,7 @@
         <button type="button" id="menuAdminBtn" role="menuitem">🔐 <span id="menuAdminLbl">Admin Panel</span></button>
         <button type="button" id="menuTcBtn" role="menuitem">🌇 <span id="menuTcLbl">Timecyc Editor</span> <span class="beta-badge">BETA</span></button>
         <button type="button" id="menuCcBtn" role="menuitem">🎨 <span id="menuCcLbl">Colorcycle Editor</span> <span class="beta-badge">BETA</span></button>
+        <button type="button" id="menuCheatsBtn" role="menuitem">🔓 <span id="menuCheatsLbl">Cheats</span></button>
       </div>
       <div id="fileinfo" class="infopop">Sample model ang naka-load — mag-upload ng DFF + TXD mo para mag-edit ng totoong file.</div>
       <div id="popZip" class="infopop">ZIP — i-download ang TXD at DFF nang magkasama sa iisang .zip file (kung alin ang naka-load). Isang download lang, madaling i-share o i-backup.</div>
@@ -724,6 +917,13 @@
           <span class="lbl" style="font-size:11px;color:var(--dim);font-weight:700;letter-spacing:.04em">PARTS</span>
           <div id="partsList"></div>
           <button id="btnEditPart" type="button" disabled>I-edit ang part →</button>
+        </div>
+        <!-- Ped pose: kita lang pag ped/skin model (may Skin plugin at
+             bones) ang naka-load sa 3D Preview. Preview lang ito —
+             hindi nagbabago ang DFF file na mada-download. -->
+        <div id="poseBar" class="hidden">
+          <span class="lbl" style="font-size:11px;color:var(--dim);font-weight:700;letter-spacing:.04em">POSE</span>
+          <div id="poseList"></div>
         </div>
         <!-- 3D Objects (BETA): simpleng low-poly objects na gawa sa code,
              idinadagdag sa ibabaw ng model sa preview. Pag nag-download
@@ -1399,10 +1599,55 @@ const RW = (() => {
     // its extension; the preview uses that flag to stand the model upright.
     for (const c of children(u8, chunk.data, chunk.end)){
       if (c.type === CH.EXTENSION){
-        for (const ec of children(u8, c.data, c.end)) if (ec.type === CH.SKIN) g.skinned = true;
+        for (const ec of children(u8, c.data, c.end)){
+          if (ec.type === CH.SKIN){
+            g.skinned = true;
+            g.skin = parseSkinPlugin(u8, ec, numVerts, dv);
+          }
+        }
       }
     }
     return g;
+  }
+
+  /* Skin plugin (0x116) stream layout — na-verify sa totoong ped DFF
+     (clytwins/maccer): header 4 bytes (numBones, numUsedBones,
+     maxWeightsPerVertex, pad) · boneIndex[numUsedBones] (hierarchy
+     indices ng mga ginamit na bones) · per-vertex bone indices
+     (numVerts × maxW bytes — ang value ay HIERARCHY index mismo,
+     0 = walang laman ang slot) · per-vertex weights (numVerts × maxW
+     float32) · inverse bind matrices (numBones × 64 bytes) · ilang
+     trailing bytes. Vine-verify ang weights (sum ≈ 1 sa samples) at
+     ang index range bago tanggapin; pag hindi tumugma ang layout,
+     null ang balik para hindi magpakita ng pose UI na mali ang datos. */
+  function parseSkinPlugin(u8, ec, numVerts, dv){
+    try {
+      const d = ec.data, end = ec.end;
+      if (!numVerts || end - d < 4) return null;
+      const numBones = u8[d], numUsed = u8[d + 1], maxW = u8[d + 2];
+      if (!numBones || numBones > 255 || !numUsed || maxW < 1 || maxW > 4) return null;
+      const idxOff = d + 4 + numUsed;
+      const wOff = idxOff + numVerts * maxW;
+      const mOff = wOff + numVerts * maxW * 4;
+      if (mOff + numBones * 64 > end) return null;
+      const indices = u8.slice(idxOff, idxOff + numVerts * maxW);
+      let mx = 0;
+      for (let i = 0; i < indices.length; i++) if (indices[i] > mx) mx = indices[i];
+      if (mx >= numBones) return null;
+      let ok = 0, tot = 0;
+      for (let v = 0; v < numVerts; v += 977){
+        let s = 0;
+        for (let k = 0; k < maxW; k++) s += dv.getFloat32(wOff + (v * maxW + k) * 4, true);
+        tot++;
+        if (Math.abs(s - 1) < 0.05 || s === 0) ok++;
+      }
+      if (tot && ok / tot < 0.8) return null;
+      const weights = new Float32Array(numVerts * maxW);
+      for (let i = 0; i < weights.length; i++) weights[i] = dv.getFloat32(wOff + i * 4, true);
+      const boneIndex = [];
+      for (let i = 0; i < numUsed; i++) boneIndex.push(u8[d + 4 + i]);
+      return { numBones, maxW, indices, weights, boneIndex };
+    } catch(e){ return null; }
   }
 
   function parseDFF(buf){
@@ -1448,7 +1693,15 @@ const RW = (() => {
             } else if (fc.type === CH.EXTENSION){
               for (const ec of children(u8, fc.data, fc.end)){
                 if (ec.type === CH.FRAME && model.frames[idx]) model.frames[idx].name = readName(u8, ec.data, ec.size);
-                else if (ec.type === CH.HANIM && model.frames[idx]) model.frames[idx].hanim = true;
+                else if (ec.type === CH.HANIM && model.frames[idx]){
+                  model.frames[idx].hanim = true;
+                  /* HAnim frame extension: ang 12-byte na version ay
+                     (256, boneId, 0) — boneId ang nasa +4. Ang root
+                     bone frame ay may malaking hierarchy chunk
+                     (header + numBones × (boneId, idx, flags)). */
+                  if (ec.size === 12) model.frames[idx].boneId = dv.getInt32(ec.data + 4, true);
+                  else if (ec.size > 100) model.frames[idx].hierChunk = { data: ec.data, size: ec.size };
+                }
               }
               idx++;
             }
@@ -1479,6 +1732,36 @@ const RW = (() => {
     for (let i = 0; i < model.frames.length; i++){
       const f = model.frames[i];
       if (f.hanim && !(f.parent >= 0 && model.frames[f.parent] && model.frames[f.parent].hanim)){ model.boneRoot = i; break; }
+    }
+    /* Hierarchy index → frame index (kailangan ng ped posing: ang
+       skin vertex indices ay hierarchy indices). Mula sa hierarchy
+       chunk ng root bone (boneId bawat entry) + boneId ng bawat frame;
+       fallback: ang HAnim frames sa pagkakasunod nila. */
+    model.hierFrames = null;
+    {
+      const byBoneId = {};
+      model.frames.forEach((f, i) => { if (f.boneId != null) byBoneId[f.boneId] = i; });
+      const hierFrame = model.frames.find(f => f.hierChunk);
+      if (hierFrame){
+        const hd = hierFrame.hierChunk;
+        try {
+          const cnt = dv.getInt32(hd.data + 8, true);
+          if (cnt > 0 && cnt <= 512 && hd.data + 20 + cnt * 12 <= hd.data + hd.size){
+            const arr = [];
+            for (let i = 0; i < cnt; i++){
+              const bid = dv.getInt32(hd.data + 20 + i * 12, true);
+              arr.push(byBoneId[bid] != null ? byBoneId[bid] : -1);
+            }
+            if (arr[0] < 0) arr[0] = model.frames.indexOf(hierFrame);
+            if (arr.some(x => x >= 0)) model.hierFrames = arr;
+          }
+        } catch(e){}
+      }
+      if (!model.hierFrames){
+        const arr = [];
+        model.frames.forEach((f, i) => { if (f.hanim) arr.push(i); });
+        if (arr.length) model.hierFrames = arr;
+      }
     }
     if (!model.geometries.length) throw new Error("Walang geometry na nakita sa DFF.");
     return model;
@@ -2245,6 +2528,10 @@ function clearModel(){
   demoGroup = null;
   paintMats = [];
   state.activePart = null;
+  pedGroup = null;
+  pedMeshes = [];
+  pedPoseName = "normal";
+  syncPoseUI();
   renderParts();
 }
 /* GTA paint slots are stored as marker colors in the DFF — primary
@@ -2321,13 +2608,240 @@ function buildModelFromDFF(model){
       mesh.matrix.premultiply(rotOnly.transpose());
     }
     mesh.userData.frameName = (model.frames[at.frameIndex] || {}).name || "";
+    if (geo.skinned && geo.skin && model.hierFrames){
+      /* Ped pose: hiwalay na kopya ng positions ang i-a-animate, para
+         ang geo.positions (at ang DFF download / UV editor) ay hindi
+         kailanman magalaw. */
+      bg.setAttribute("position", new THREE.BufferAttribute(geo.positions.slice(), 3));
+      mesh.userData.skin = geo.skin;
+      mesh.userData.basePos = geo.positions;
+      mesh.userData.baseNor = geo.normals ? geo.normals.slice() : null;
+    }
     group.add(mesh);
   }
   modelGroup.add(group);
+  /* Ped pose state: tanging meshes na may kumpletong skin + hierarchy
+     mapping ang puwedeng i-pose. */
+  pedGroup = group;
+  pedMeshes = [];
+  pedPoseName = "normal";
+  group.children.forEach(m => {
+    if (!m.userData.skin) return;
+    const sk = m.userData.skin;
+    let covered = 0, used = 0;
+    const seen = {};
+    for (let i = 0; i < sk.indices.length; i++){
+      const hi = sk.indices[i];
+      if (hi === 0 || seen[hi]) continue;
+      seen[hi] = 1; used++;
+      if (model.hierFrames[hi] != null && model.hierFrames[hi] >= 0) covered++;
+    }
+    if (used && covered / used >= 0.8) pedMeshes.push(m);
+  });
   applyPartVisibility();
   renderParts();
   frameObject(group);
+  syncPoseUI();
   return group.children.length > 0;
+}
+/* ---------------- Ped pose (3D Preview) ----------------
+   Pag ped/skin model ang naka-load (Skin plugin + HAnim bones na
+   na-parse at na-validate), puwedeng i-pose ang model sa preview:
+   ang bawat vertex ay ginagalaw ayon sa skin weights niya at sa
+   pose rotation ng bones (linear blend skinning, CPU). Preview
+   lang ito — ang DFF na mada-download ay ang original pa rin.
+   Ang pose rotations ay naka-define sa WORLD space ng skeleton at
+   ang mga axis (spine / facing / lateral) ay galing mismo sa bind
+   skeleton ng model, kaya hindi ito naka-depende sa iisang file.
+   Na-validate ang math sa totoong clytwins.dff: identity pose =
+   original positions (mean error ~0.001), at bawat pose ay
+   sinukat ang galaw ng kamay/paa centroids. */
+let pedGroup = null, pedMeshes = [], pedPoseName = "normal";
+const PED_POSES = [
+  { id: "normal", label: "🧍 Normal", defs: [] },
+  { id: "handsup", label: "🙌 Kamay nakataas", defs: [
+    { role: "upperarmL", axis: "facing", deg: 150 }, { role: "upperarmR", axis: "facing", deg: -150 },
+    { role: "forearmL", axis: "facing", deg: 22 }, { role: "forearmR", axis: "facing", deg: -22 } ] },
+  { id: "sit", label: "🪑 Nakaupo", defs: [
+    { role: "thighL", axis: "lateral", deg: -88 }, { role: "thighR", axis: "lateral", deg: -88 },
+    { role: "calfL", axis: "lateral", deg: 88 }, { role: "calfR", axis: "lateral", deg: 88 } ] },
+  { id: "kneel", label: "🧎 Nakaluhod", defs: [
+    { role: "thighL", axis: "lateral", deg: -12 }, { role: "thighR", axis: "lateral", deg: -12 },
+    { role: "calfL", axis: "lateral", deg: 112 }, { role: "calfR", axis: "lateral", deg: 112 } ] },
+  { id: "walk", label: "🚶 Naglalakad", defs: [
+    { role: "thighL", axis: "lateral", deg: -35 }, { role: "thighR", axis: "lateral", deg: 25 },
+    { role: "calfL", axis: "lateral", deg: 12 }, { role: "calfR", axis: "lateral", deg: 40 },
+    { role: "upperarmL", axis: "lateral", deg: 20 }, { role: "upperarmR", axis: "lateral", deg: -25 } ] }
+];
+function pedBoneRoles(model){
+  const roles = {};
+  const put = (role, fi) => { if (roles[role] == null) roles[role] = fi; };
+  model.frames.forEach((f, fi) => {
+    const raw = (f.name || "").toLowerCase();
+    const toks = raw.split(/[^a-z]+/).filter(Boolean);
+    const sq = raw.replace(/[^a-z0-9]/g, "");
+    let side = null;
+    if (toks.includes("l") || toks.includes("left") || /^l/.test(sq)) side = "L";
+    else if (toks.includes("r") || toks.includes("right") || /^r/.test(sq)) side = "R";
+    const has = s => sq.includes(s);
+    if (has("upperarm")) put("upperarm" + (side || ""), fi);
+    else if (has("forearm") || has("forarm")) put("forearm" + (side || ""), fi);
+    else if (has("thigh")) put("thigh" + (side || ""), fi);
+    else if (has("calf") || has("shin")) put("calf" + (side || ""), fi);
+    else if (has("pelvis") || has("hips")) put("pelvis", fi);
+    else if (has("head")) put("head", fi);
+    else if (has("neck")) put("neck", fi);
+  });
+  // side-less bones: gamitin sa magkabilang role kung walang naka-side
+  for (const base of ["upperarm", "forearm", "thigh", "calf"]){
+    if (roles[base] != null){
+      if (roles[base + "L"] == null) roles[base + "L"] = roles[base];
+      if (roles[base + "R"] == null) roles[base + "R"] = roles[base];
+    }
+  }
+  return roles;
+}
+/* Bind world matrices sa convention ng file mismo (rotation rows =
+   rows), tulad ng na-validate na skinning math — hiwalay ito sa
+   worldOf ng preview mesh (atomic transform lang ang gamit noon). */
+function pedBindWorlds(model){
+  const worlds = model.frames.map(() => null);
+  function worldOf(i, depth){
+    if (worlds[i] || depth > 64) return worlds[i] || new THREE.Matrix4();
+    const f = model.frames[i];
+    const r = f.rot.every(v => v === 0) ? [1,0,0, 0,1,0, 0,0,1] : f.rot;
+    const m = new THREE.Matrix4().set(
+      r[0], r[1], r[2], f.pos[0],
+      r[3], r[4], r[5], f.pos[1],
+      r[6], r[7], r[8], f.pos[2],
+      0, 0, 0, 1);
+    if (f.parent >= 0 && f.parent !== i) m.premultiply(worldOf(f.parent, depth + 1));
+    worlds[i] = m;
+    return m;
+  }
+  model.frames.forEach((_, i) => worldOf(i, 0));
+  return worlds;
+}
+function pedAxes(model, bind, roles){
+  const posOf = fi => fi == null ? null : new THREE.Vector3().setFromMatrixPosition(bind[fi]);
+  const pelvis = posOf(roles.pelvis), head = posOf(roles.head) || posOf(roles.neck);
+  let spine = new THREE.Vector3(1, 0, 0);
+  if (pelvis && head){
+    const s = head.clone().sub(pelvis);
+    if (s.lengthSq() > 1e-8) spine = s.normalize();
+  }
+  const tl = posOf(roles.thighL), tr = posOf(roles.thighR);
+  let lateral = new THREE.Vector3(0, 0, 1);
+  if (tl && tr){
+    const l = tl.clone().sub(tr);
+    if (l.lengthSq() > 1e-8) lateral = l.normalize();
+  }
+  let facing = new THREE.Vector3().crossVectors(lateral, spine);
+  if (facing.lengthSq() < 1e-8) facing = new THREE.Vector3(0, 1, 0); else facing.normalize();
+  return { spine, lateral, facing };
+}
+function applyPedPose(pose){
+  if (!pedGroup || !pedMeshes.length || !state.model) return;
+  const model = state.model;
+  pedPoseName = pose.id;
+  if (!pose.defs.length){
+    // Normal: ibalik ang eksaktong original positions/normals.
+    for (const mesh of pedMeshes){
+      const posAttr = mesh.geometry.attributes.position;
+      posAttr.array.set(mesh.userData.basePos);
+      posAttr.needsUpdate = true;
+      if (mesh.userData.baseNor && mesh.geometry.attributes.normal)
+        mesh.geometry.attributes.normal.array.set(mesh.userData.baseNor);
+      if (mesh.geometry.attributes.normal) mesh.geometry.attributes.normal.needsUpdate = true;
+    }
+    frameObject(pedGroup);
+    return;
+  }
+  const bind = pedBindWorlds(model);
+  const roles = pedBoneRoles(model);
+  const axes = pedAxes(model, bind, roles);
+  const poseByFrame = {};
+  for (const d of pose.defs){
+    const fi = roles[d.role];
+    if (fi == null) continue;
+    const axis = axes[d.axis] || axes.lateral;
+    const Rw = new THREE.Matrix4().makeRotationAxis(axis, d.deg * Math.PI / 180);
+    // World-space rotation → local space ng bone:
+    // Rlocal = W3^-1 · Rw · W3 (W3 = bind world rotation ng bone)
+    const W3 = new THREE.Matrix4().extractRotation(bind[fi]);
+    const Rlocal = W3.clone().invert().multiply(Rw).multiply(W3);
+    poseByFrame[fi] = poseByFrame[fi] ? poseByFrame[fi].multiply(Rlocal) : Rlocal;
+  }
+  // Posed worlds: posed(i) = posed(parent) · local(i) · Rlocal(i)
+  const posed = model.frames.map(() => null);
+  function posedOf(i, depth){
+    if (posed[i] || depth > 64) return posed[i] || new THREE.Matrix4();
+    const f = model.frames[i];
+    let local;
+    if (f.parent >= 0 && f.parent !== i && bind[f.parent]){
+      local = bind[f.parent].clone().invert().multiply(bind[i]);
+      local = posedOf(f.parent, depth + 1).clone().multiply(local);
+    } else local = bind[i].clone();
+    if (poseByFrame[i]) local.multiply(poseByFrame[i]);
+    posed[i] = local;
+    return local;
+  }
+  model.frames.forEach((_, i) => posedOf(i, 0));
+  const boneM = {};
+  (model.hierFrames || []).forEach((fi, hi) => {
+    if (fi != null && fi >= 0 && posed[fi] && bind[fi])
+      boneM[hi] = posed[fi].clone().multiply(bind[fi].clone().invert());
+  });
+  if (model.boneRoot >= 0 && posed[model.boneRoot] && bind[model.boneRoot] && boneM[0] == null)
+    boneM[0] = posed[model.boneRoot].clone().multiply(bind[model.boneRoot].clone().invert());
+  const v = new THREE.Vector3();
+  for (const mesh of pedMeshes){
+    const sk = mesh.userData.skin, base = mesh.userData.basePos;
+    const posAttr = mesh.geometry.attributes.position;
+    const out = posAttr.array;
+    const mw = sk.maxW, idx = sk.indices, wts = sk.weights;
+    const nv = base.length / 3;
+    for (let vi = 0; vi < nv; vi++){
+      let x = 0, y = 0, z = 0, wsum = 0;
+      const bx = base[vi * 3], by = base[vi * 3 + 1], bz = base[vi * 3 + 2];
+      for (let k = 0; k < mw; k++){
+        const w = wts[vi * mw + k];
+        if (!w) continue;
+        const M = boneM[idx[vi * mw + k]];
+        if (!M) continue;
+        v.set(bx, by, bz).applyMatrix4(M);
+        x += w * v.x; y += w * v.y; z += w * v.z; wsum += w;
+      }
+      if (wsum > 1e-6){
+        out[vi * 3] = x / wsum; out[vi * 3 + 1] = y / wsum; out[vi * 3 + 2] = z / wsum;
+      } else {
+        out[vi * 3] = bx; out[vi * 3 + 1] = by; out[vi * 3 + 2] = bz;
+      }
+    }
+    posAttr.needsUpdate = true;
+    mesh.geometry.computeVertexNormals();
+  }
+  frameObject(pedGroup);
+}
+function renderPoseButtons(){
+  const list = $("#poseList");
+  if (!list) return;
+  list.innerHTML = "";
+  for (const p of PED_POSES){
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "partchip" + (pedPoseName === p.id ? " on" : "");
+    b.textContent = p.label;
+    b.addEventListener("click", () => { applyPedPose(p); renderPoseButtons(); });
+    list.appendChild(b);
+  }
+}
+function syncPoseUI(){
+  const bar = $("#poseBar");
+  if (!bar) return;
+  const has = pedMeshes.length > 0;
+  bar.classList.toggle("hidden", !has);
+  if (has) renderPoseButtons();
 }
 function applyPartVisibility(){
   if (!modelGroup) return;
@@ -3237,6 +3751,215 @@ function addImageObject(img){
   toast("Larawan nailagay — i-drag para igalaw, ⤡ sulok o slider para sa laki, ⟳ handle o Ikot slider para ikutin, at Flip ↔ / ↕ buttons para baligtarin.");
 }
 
+/* ---------------- sticker packs ----------------
+   Ready-made stickers na dito mismo sa page iginuguhit (procedural
+   canvas shapes — walang external images). Ang bawat sticker ay
+   nire-render sa 256×256 canvas, ginagawang PNG data URL, at
+   ipinapasa sa addImageObject — kaya eksaktong tulad ng in-upload
+   na larawan ang kilos niya: draggable, resize/rotate handles,
+   lock, Layers panel, undo, at kasama sa session snapshot. */
+let stickerPack = "logos";
+const _stickerCache = {};
+function _flamePath(g, x, y, w, h){
+  g.beginPath();
+  g.moveTo(x + w * 0.5, y);
+  g.bezierCurveTo(x + w * 0.74, y + h * 0.26, x + w * 0.99, y + h * 0.42, x + w * 0.93, y + h * 0.68);
+  g.bezierCurveTo(x + w * 0.88, y + h * 0.9, x + w * 0.7, y + h, x + w * 0.5, y + h);
+  g.bezierCurveTo(x + w * 0.3, y + h, x + w * 0.12, y + h * 0.9, x + w * 0.07, y + h * 0.68);
+  g.bezierCurveTo(x + w * 0.01, y + h * 0.42, x + w * 0.26, y + h * 0.26, x + w * 0.5, y);
+  g.closePath();
+}
+function _flame(g, x, y, w, h, cols){
+  const layers = [[1, cols[0]], [0.7, cols[1]], [0.44, cols[2]]];
+  for (const [k, c] of layers){
+    const lw = w * k, lh = h * k;
+    _flamePath(g, x + (w - lw) / 2, y + (h - lh), lw, lh);
+    g.fillStyle = c;
+    g.fill();
+  }
+}
+function _star(g, cx, cy, rO, rI, color){
+  g.beginPath();
+  for (let i = 0; i < 10; i++){
+    const r = i % 2 ? rI : rO, a = -Math.PI / 2 + i * Math.PI / 5;
+    const px = cx + r * Math.cos(a), py = cy + r * Math.sin(a);
+    i ? g.lineTo(px, py) : g.moveTo(px, py);
+  }
+  g.closePath();
+  g.fillStyle = color;
+  g.fill();
+}
+const STICKER_PACKS = [
+  { id: "logos", label: "🏷️ Logos", items: [
+    { id: "xss", label: "XSS badge", draw(g){
+      g.beginPath(); g.arc(128, 128, 108, 0, 7); g.fillStyle = "#101014"; g.fill();
+      g.lineWidth = 13; g.strokeStyle = "#ffb02e"; g.stroke();
+      g.beginPath(); g.arc(128, 128, 82, 0, 7); g.lineWidth = 3; g.strokeStyle = "#3a3a42"; g.stroke();
+      g.fillStyle = "#ffb02e"; g.font = "900 62px Arial, sans-serif";
+      g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillText("XSS", 128, 122);
+      g.fillStyle = "#e8e8ee"; g.font = "700 21px Arial, sans-serif";
+      g.fillText("T X D", 128, 168);
+    } },
+    { id: "bolt", label: "Lightning bolt", draw(g){
+      g.beginPath();
+      const pts = [[140, 18], [66, 142], [116, 142], [96, 238], [196, 104], [142, 104]];
+      pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y));
+      g.closePath();
+      g.fillStyle = "#ffb02e"; g.fill();
+      g.lineWidth = 9; g.lineJoin = "round"; g.strokeStyle = "#14100a"; g.stroke();
+    } },
+    { id: "crown", label: "Crown", draw(g){
+      g.beginPath();
+      g.moveTo(38, 196); g.lineTo(30, 84); g.lineTo(84, 138); g.lineTo(128, 62);
+      g.lineTo(172, 138); g.lineTo(226, 84); g.lineTo(218, 196);
+      g.closePath();
+      g.fillStyle = "#f5b921"; g.fill();
+      g.lineWidth = 8; g.lineJoin = "round"; g.strokeStyle = "#7a5410"; g.stroke();
+      g.fillStyle = "#7a5410"; g.fillRect(38, 202, 180, 16);
+      [[128, 48], [30, 66], [226, 66]].forEach(([x, y]) => {
+        g.beginPath(); g.arc(x, y, 13, 0, 7); g.fillStyle = "#ffdf6b"; g.fill();
+        g.lineWidth = 5; g.strokeStyle = "#7a5410"; g.stroke();
+      });
+    } },
+    { id: "star", label: "Star", draw(g){
+      _star(g, 128, 128, 108, 44, "#ffb02e");
+      _star(g, 128, 128, 108, 44, "rgba(0,0,0,0)");
+      g.beginPath();
+      for (let i = 0; i < 10; i++){
+        const r = i % 2 ? 44 : 108, a = -Math.PI / 2 + i * Math.PI / 5;
+        const px = 128 + r * Math.cos(a), py = 128 + r * Math.sin(a);
+        i ? g.lineTo(px, py) : g.moveTo(px, py);
+      }
+      g.closePath(); g.lineWidth = 8; g.lineJoin = "round"; g.strokeStyle = "#14100a"; g.stroke();
+      _star(g, 128, 128, 52, 22, "#fff3d6");
+    } },
+    { id: "num24", label: "Racing number 24", draw(g){
+      g.beginPath(); g.arc(128, 128, 106, 0, 7); g.fillStyle = "#f2f2f5"; g.fill();
+      g.lineWidth = 12; g.strokeStyle = "#181820"; g.stroke();
+      g.fillStyle = "#181820"; g.font = "900 118px Arial, sans-serif";
+      g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillText("24", 128, 136);
+    } }
+  ] },
+  { id: "flames", label: "🔥 Flames", items: [
+    { id: "flameClassic", label: "Classic flame", draw(g){ _flame(g, 48, 22, 160, 216, ["#d92b1f", "#f2760a", "#ffc61a"]); } },
+    { id: "flameBlue", label: "Blue flame", draw(g){ _flame(g, 48, 22, 160, 216, ["#1447c8", "#1e90e8", "#bfeaff"]); } },
+    { id: "flameBall", label: "Fireball", draw(g){
+      _flame(g, 84, 6, 88, 108, ["#d92b1f", "#f2760a", "#ffc61a"]);
+      g.beginPath(); g.arc(128, 168, 66, 0, 7);
+      const gr = g.createRadialGradient(108, 146, 8, 128, 168, 68);
+      gr.addColorStop(0, "#ffd23e"); gr.addColorStop(0.55, "#f2760a"); gr.addColorStop(1, "#c22418");
+      g.fillStyle = gr; g.fill();
+    } },
+    { id: "flameStrip", label: "Flame strip", draw(g){
+      _flame(g, 8, 74, 74, 128, ["#d92b1f", "#f2760a", "#ffc61a"]);
+      _flame(g, 66, 54, 92, 156, ["#d92b1f", "#f2760a", "#ffc61a"]);
+      _flame(g, 140, 74, 74, 128, ["#d92b1f", "#f2760a", "#ffc61a"]);
+      _flame(g, 196, 92, 52, 96, ["#d92b1f", "#f2760a", "#ffc61a"]);
+    } },
+    { id: "flameTwin", label: "Twin flames", draw(g){
+      _flame(g, 26, 60, 92, 160, ["#d92b1f", "#f2760a", "#ffc61a"]);
+      _flame(g, 138, 60, 92, 160, ["#1447c8", "#1e90e8", "#bfeaff"]);
+    } }
+  ] },
+  { id: "tribal", label: "🌀 Tribal", items: [
+    { id: "tribalBlade", label: "Tribal blade", draw(g){
+      g.fillStyle = "#101014";
+      g.beginPath();
+      g.moveTo(128, 14);
+      g.bezierCurveTo(168, 74, 226, 96, 238, 168);
+      g.bezierCurveTo(204, 138, 178, 140, 160, 178);
+      g.bezierCurveTo(168, 148, 148, 128, 128, 128);
+      g.bezierCurveTo(108, 128, 88, 148, 96, 178);
+      g.bezierCurveTo(78, 140, 52, 138, 18, 168);
+      g.bezierCurveTo(30, 96, 88, 74, 128, 14);
+      g.closePath(); g.fill();
+      g.beginPath();
+      g.moveTo(128, 150);
+      g.bezierCurveTo(140, 190, 138, 216, 128, 242);
+      g.bezierCurveTo(118, 216, 116, 190, 128, 150);
+      g.closePath(); g.fill();
+    } },
+    { id: "tribalSwirl", label: "Tribal swirl", draw(g){
+      g.strokeStyle = "#101014"; g.lineCap = "round";
+      for (const [r, lw, a0, a1] of [[86, 21, 0.4, 4.6], [58, 17, 2.4, 6.6], [32, 13, 4.2, 8.4]]){
+        g.beginPath(); g.lineWidth = lw;
+        g.arc(128, 128, r, a0, a1);
+        g.stroke();
+      }
+      g.beginPath(); g.arc(128, 128, 9, 0, 7); g.fillStyle = "#101014"; g.fill();
+      g.beginPath();
+      g.moveTo(216, 96); g.lineTo(244, 128); g.lineTo(212, 152);
+      g.quadraticCurveTo(226, 124, 216, 96);
+      g.closePath(); g.fill();
+    } },
+    { id: "tribalSun", label: "Tribal sun", draw(g){
+      g.fillStyle = "#101014";
+      for (let i = 0; i < 8; i++){
+        g.save();
+        g.translate(128, 128); g.rotate(i * Math.PI / 4);
+        g.beginPath();
+        g.moveTo(0, -118); g.quadraticCurveTo(15, -76, 0, -56);
+        g.quadraticCurveTo(-15, -76, 0, -118);
+        g.closePath(); g.fill();
+        g.restore();
+      }
+      g.beginPath(); g.arc(128, 128, 47, 0, 7); g.fill();
+      g.beginPath(); g.arc(128, 128, 30, 0, 7); g.fillStyle = "#ffb02e"; g.fill();
+      g.beginPath(); g.arc(128, 128, 17, 0, 7); g.fillStyle = "#101014"; g.fill();
+    } },
+    { id: "tribalBand", label: "Tribal band", draw(g){
+      g.fillStyle = "#101014";
+      g.beginPath();
+      g.moveTo(10, 128);
+      g.bezierCurveTo(60, 84, 96, 148, 128, 104);
+      g.bezierCurveTo(160, 148, 196, 84, 246, 128);
+      g.bezierCurveTo(196, 162, 160, 106, 128, 152);
+      g.bezierCurveTo(96, 106, 60, 162, 10, 128);
+      g.closePath(); g.fill();
+      [[52, 96], [204, 96], [52, 160], [204, 160]].forEach(([x, y]) => {
+        g.beginPath(); g.arc(x, y, 10, 0, 7); g.fill();
+      });
+    } },
+    { id: "tribalWing", label: "Tribal wing", draw(g){
+      g.fillStyle = "#ffb02e";
+      g.beginPath();
+      g.moveTo(22, 190);
+      g.bezierCurveTo(30, 110, 96, 52, 196, 34);
+      g.bezierCurveTo(150, 74, 128, 96, 118, 128);
+      g.bezierCurveTo(150, 108, 176, 106, 208, 116);
+      g.bezierCurveTo(160, 140, 126, 138, 104, 160);
+      g.bezierCurveTo(130, 162, 148, 172, 158, 190);
+      g.bezierCurveTo(104, 196, 58, 198, 22, 190);
+      g.closePath(); g.fill();
+    } }
+  ] }
+];
+function stickerItem(id){
+  for (const p of STICKER_PACKS) for (const it of p.items) if (it.id === id) return it;
+  return null;
+}
+function stickerDataURL(id){
+  if (_stickerCache[id]) return _stickerCache[id];
+  const it = stickerItem(id);
+  if (!it) return null;
+  const c = document.createElement("canvas");
+  c.width = 256; c.height = 256;
+  const g = c.getContext("2d");
+  try { it.draw(g); } catch(e){ return null; }
+  const url = c.toDataURL("image/png");
+  _stickerCache[id] = url;
+  return url;
+}
+function placeSticker(id){
+  const url = stickerDataURL(id);
+  if (!url) return;
+  const img = new Image();
+  img.onload = () => addImageObject(img);
+  img.src = url;
+}
+
 /* ---------------- options bar ---------------- */
 function renderOptbar(){
   const bar = $("#optbar");
@@ -3279,6 +4002,10 @@ function renderOptbar(){
       <button id="optAddImg" class="primary" type="button">Pumili ng PNG / larawan</button></div>
       <button type="button" class="infobtn" data-pop="popImgHint" aria-expanded="false" aria-label="Info tungkol sa larawan / sticker" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
       <div class="infopop" id="popImgHint">PNG na may transparent background ang pinaka-ok pang-sticker.</div>`;
+    const pack = STICKER_PACKS.find(p => p.id === stickerPack) || STICKER_PACKS[0];
+    html += `<div class="grp" style="flex:1 1 100%"><label class="lbl">Sticker packs — i-tap ang sticker para ilagay</label>
+      <div class="stk-packbtns">${STICKER_PACKS.map(p => `<button type="button" data-stkpack="${p.id}" class="${p.id === pack.id ? "on" : ""}">${p.label}</button>`).join("")}</div>
+      <div class="stk-grid">${pack.items.map(it => `<button type="button" data-sticker="${it.id}" title="${it.label}" aria-label="Ilagay ang sticker: ${it.label}"><img src="${stickerDataURL(it.id) || ""}" alt="" /></button>`).join("")}</div></div>`;
   }
   if (o && o.type === "image"){
     html += `<div class="grp"><label class="lbl">Laki ng larawan: <span id="optImgSizeVal">${Math.round(o.w)}</span>px</label>
@@ -3438,6 +4165,11 @@ function wireOptbar(){
   if (es) es.addEventListener("input", () => { state.eraserSize = +es.value; $("#optEraSizeVal").textContent = es.value; });
   const ai = $("#optAddImg");
   if (ai) ai.addEventListener("click", () => $("#fileImg").click());
+  $$("#optbar [data-stkpack]").forEach(b => b.addEventListener("click", () => {
+    stickerPack = b.dataset.stkpack;
+    renderOptbar();
+  }));
+  $$("#optbar [data-sticker]").forEach(b => b.addEventListener("click", () => placeSticker(b.dataset.sticker)));
   const isz = $("#optImgSize");
   armPropUndo(isz);
   if (isz) isz.addEventListener("input", () => { if (!o || o.type !== "image") return; const nw = +isz.value; const k = nw / Math.max(1, o.w); o.w = nw; o.h = Math.max(12, Math.round(o.h * k)); clampObjToTex(o, t); isz.value = Math.round(o.w); const lv = $("#optImgSizeVal"); if (lv) lv.textContent = Math.round(o.w); drawObjectsTo(cvObj.getContext("2d"), t); updateComposite(t); drawOverlay(); });
@@ -4937,6 +5669,17 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       menuAdmin: "Admin Panel",
       menuTc: "Timecyc Editor",
       menuCc: "Colorcycle Editor",
+      menuCheats: "Cheats",
+      cheatAuthTitle: "Enter cheat password",
+      cheatAuthLabel: "Cheat password",
+      cheatConfirm: "Confirm",
+      cheatCancel: "Cancel",
+      cheatWrong: "Mali ang cheat password — hindi nagbukas ang Cheats.",
+      cheatsTitle: "🔓 Cheats",
+      cheatWp: "Weapon Editor",
+      cheatHd: "Handling Editor",
+      cheatPd: "Ped Editor",
+      cheatsClose: "Isara",
       admOkPasscode: "Na-save ang bagong passcode.",
       admOkAdmin: "Na-save ang bagong admin password.",
       admOkReset: "Na-reset na ang passcode sa 2607.",
@@ -4992,6 +5735,17 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       menuAdmin: "Admin Panel",
       menuTc: "Timecyc Editor",
       menuCc: "Colorcycle Editor",
+      menuCheats: "Cheats",
+      cheatAuthTitle: "Enter cheat password",
+      cheatAuthLabel: "Cheat password",
+      cheatConfirm: "Confirm",
+      cheatCancel: "Cancel",
+      cheatWrong: "Wrong cheat password — the Cheats did not open.",
+      cheatsTitle: "🔓 Cheats",
+      cheatWp: "Weapon Editor",
+      cheatHd: "Handling Editor",
+      cheatPd: "Ped Editor",
+      cheatsClose: "Close",
       admOkPasscode: "New passcode saved.",
       admOkAdmin: "New admin password saved.",
       admOkReset: "Passcode reset to 2607.",
@@ -5175,8 +5929,22 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     admSetText("menuAdminLbl", s.menuAdmin);
     admSetText("menuTcLbl", s.menuTc);
     admSetText("menuCcLbl", s.menuCc);
+    admSetText("menuCheatsLbl", s.menuCheats);
+    admSetText("cheatAuthTitle", s.cheatAuthTitle);
+    admSetText("cheatAuthLabel", s.cheatAuthLabel);
+    admSetText("cheatAuthConfirm", s.cheatConfirm);
+    admSetText("cheatAuthCancel", s.cheatCancel);
+    admSetText("cheatAuthError", s.cheatWrong);
+    admSetText("cheatsTitle", s.cheatsTitle);
+    admSetText("cheatWpLbl", s.cheatWp);
+    admSetText("cheatHdLbl", s.cheatHd);
+    admSetText("cheatPdLbl", s.cheatPd);
+    admSetText("cheatsCloseBtn", s.cheatsClose);
     if (typeof window.__tcApplyLang === "function") window.__tcApplyLang(currentLang);
     if (typeof window.__ccApplyLang === "function") window.__ccApplyLang(currentLang);
+    if (typeof window.__wpApplyLang === "function") window.__wpApplyLang(currentLang);
+    if (typeof window.__hdApplyLang === "function") window.__hdApplyLang(currentLang);
+    if (typeof window.__pdApplyLang === "function") window.__pdApplyLang(currentLang);
     if (adminPanelEl && adminPanelEl.classList.contains("open")) refreshAdminPanel();
   }
   function openAdminAuth(){
@@ -5225,6 +5993,59 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   if (menuTcBtn) menuTcBtn.addEventListener("click", function(){ closeDotsMenu(); if (typeof window.__tcOpen === "function") window.__tcOpen(); });
   var menuCcBtn = document.getElementById("menuCcBtn");
   if (menuCcBtn) menuCcBtn.addEventListener("click", function(){ closeDotsMenu(); if (typeof window.__ccOpen === "function") window.__ccOpen(); });
+  /* 🔓 Cheats: tulad ng Admin Panel, may sariling password muna bago
+     makita ang listahan ng tatlong cheat editor (Weapon / Handling /
+     Ped). Fixed ang cheat password; bawat pindot sa menu entry ay
+     hihingi ulit nito, tulad ng admin auth. */
+  var CHEAT_PASS = "xssontop";
+  var cheatAuthEl = document.getElementById("cheatAuth");
+  var cheatAuthCard = document.getElementById("cheatAuthCard");
+  var cheatAuthForm = document.getElementById("cheatAuthForm");
+  var cheatAuthInput = document.getElementById("cheatAuthInput");
+  var cheatAuthError = document.getElementById("cheatAuthError");
+  var cheatsPanelEl = document.getElementById("cheatsPanel");
+  function openCheatAuth(){
+    if (!cheatAuthEl) return;
+    if (cheatAuthInput) cheatAuthInput.value = "";
+    if (cheatAuthError) cheatAuthError.classList.remove("err");
+    cheatAuthEl.classList.add("open");
+    try { cheatAuthInput.focus({ preventScroll: true }); } catch(e){ if (cheatAuthInput) cheatAuthInput.focus(); }
+  }
+  function closeCheatAuth(){ if (cheatAuthEl) cheatAuthEl.classList.remove("open"); }
+  function openCheatsPanel(){ if (cheatsPanelEl) cheatsPanelEl.classList.add("open"); }
+  function closeCheatsPanel(){ if (cheatsPanelEl) cheatsPanelEl.classList.remove("open"); }
+  var menuCheatsBtn = document.getElementById("menuCheatsBtn");
+  if (menuCheatsBtn) menuCheatsBtn.addEventListener("click", function(){ closeDotsMenu(); openCheatAuth(); });
+  var cheatAuthCancelBtn = document.getElementById("cheatAuthCancel");
+  if (cheatAuthCancelBtn) cheatAuthCancelBtn.addEventListener("click", closeCheatAuth);
+  if (cheatAuthEl) cheatAuthEl.addEventListener("click", function(e){ if (e.target === cheatAuthEl) closeCheatAuth(); });
+  if (cheatsPanelEl) cheatsPanelEl.addEventListener("click", function(e){ if (e.target === cheatsPanelEl) closeCheatsPanel(); });
+  if (cheatAuthForm) cheatAuthForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    if (cheatAuthInput && cheatAuthInput.value === CHEAT_PASS){
+      closeCheatAuth();
+      openCheatsPanel();
+    } else {
+      if (cheatAuthError){ cheatAuthError.textContent = admS().cheatWrong; cheatAuthError.classList.add("err"); }
+      if (cheatAuthInput) cheatAuthInput.select();
+      if (cheatAuthCard){
+        cheatAuthCard.classList.remove("gate-shake");
+        void cheatAuthCard.offsetWidth;
+        cheatAuthCard.classList.add("gate-shake");
+      }
+    }
+  });
+  if (cheatAuthInput) cheatAuthInput.addEventListener("input", function(){
+    if (cheatAuthError) cheatAuthError.classList.remove("err");
+  });
+  var cheatWpBtn = document.getElementById("cheatWpBtn");
+  if (cheatWpBtn) cheatWpBtn.addEventListener("click", function(){ closeCheatsPanel(); if (typeof window.__wpOpen === "function") window.__wpOpen(); });
+  var cheatHdBtn = document.getElementById("cheatHdBtn");
+  if (cheatHdBtn) cheatHdBtn.addEventListener("click", function(){ closeCheatsPanel(); if (typeof window.__hdOpen === "function") window.__hdOpen(); });
+  var cheatPdBtn = document.getElementById("cheatPdBtn");
+  if (cheatPdBtn) cheatPdBtn.addEventListener("click", function(){ closeCheatsPanel(); if (typeof window.__pdOpen === "function") window.__pdOpen(); });
+  var cheatsCloseBtn = document.getElementById("cheatsCloseBtn");
+  if (cheatsCloseBtn) cheatsCloseBtn.addEventListener("click", closeCheatsPanel);
   document.addEventListener("click", function(e){
     if (!dotsMenuEl || dotsMenuEl.classList.contains("hidden")) return;
     if (e.target && e.target.closest && (e.target.closest("#dotsMenu") || e.target.closest("#btnAdminDots"))) return;
@@ -5257,6 +6078,8 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     closeDotsMenu();
     if (adminAuthEl && adminAuthEl.classList.contains("open")) closeAdminAuth();
     else if (adminPanelEl && adminPanelEl.classList.contains("open")) closeAdminPanel();
+    else if (cheatAuthEl && cheatAuthEl.classList.contains("open")) closeCheatAuth();
+    else if (cheatsPanelEl && cheatsPanelEl.classList.contains("open")) closeCheatsPanel();
   });
 
   var admPasscodeForm = document.getElementById("admPasscodeForm");
@@ -5415,6 +6238,9 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       allWeatherWord: "LAHAT ng weather",
       allTimeWord: "LAHAT ng oras",
       batchBanner: function(w, t, n){ return "Ina-edit: " + w + " · " + t + " — " + n + " rows ang maaapektuhan ng edit mo"; },
+      presetsLbl: "Presets — isang tap, buong look",
+      presetNames: { golden: "🌅 Golden Hour", foggy: "🌫️ Foggy Night", sunset: "🌇 Sunset Vibes", rainy: "🌧️ Rainy Mood" },
+      presetApplied: function(n){ return "Preset na in-apply: " + n; },
       times: ["Hatinggabi", "5AM", "6AM", "7AM", "Tanghali", "7PM", "8PM", "10PM"],
       colors: { skytop: "Sky Top", skybot: "Sky Bottom", suncore: "Sun Core", suncorona: "Sun Corona", amb: "Ambient", ambobj: "Ambient Object", dir: "Directional Light", lowcloud: "Low Clouds", botcloud: "Bottom Clouds", water: "Water" },
       sliders: { sunSz: "Sun Size", sprSz: "Sprite Size", sprBght: "Sprite Brightness", shdw: "Shadow", farClp: "Far Clip", fogSt: "Fog Start", log: "Light on Ground" },
@@ -5446,6 +6272,9 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       allWeatherWord: "ALL weathers",
       allTimeWord: "ALL times",
       batchBanner: function(w, t, n){ return "Editing: " + w + " · " + t + " — " + n + " rows will be changed by your edit"; },
+      presetsLbl: "Presets — one tap, full look",
+      presetNames: { golden: "🌅 Golden Hour", foggy: "🌫️ Foggy Night", sunset: "🌇 Sunset Vibes", rainy: "🌧️ Rainy Mood" },
+      presetApplied: function(n){ return "Preset applied: " + n; },
       times: ["Midnight", "5AM", "6AM", "7AM", "Midday", "7PM", "8PM", "10PM"],
       colors: { skytop: "Sky Top", skybot: "Sky Bottom", suncore: "Sun Core", suncorona: "Sun Corona", amb: "Ambient", ambobj: "Ambient Object", dir: "Directional Light", lowcloud: "Low Clouds", botcloud: "Bottom Clouds", water: "Water" },
       sliders: { sunSz: "Sun Size", sprSz: "Sprite Size", sprBght: "Sprite Brightness", shdw: "Shadow", farClp: "Far Clip", fogSt: "Fog Start", log: "Light on Ground" },
@@ -5944,6 +6773,66 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     syncBatchBanner();
   }
 
+  /* ---------------- one-tap presets ----------------
+     Buong look (lahat ng kulay + mahahalagang sliders) sa isang tap.
+     Sumusunod sa kasalukuyang scope: ang napiling weather/oras, o
+     lahat pag naka-batch — beginEdit/commitEdit ang gamit, kaya
+     iisang Undo entry lang ang buong preset. Ang preview ay
+     nag-a-update agad (drawPreview pagkatapos). */
+  var TC_PRESETS = [
+    { id: "golden",
+      colors: { skytop: [255,138,58], skybot: [255,196,110], suncore: [255,224,168], suncorona: [255,150,48], amb: [122,96,78], ambobj: [112,90,72], dir: [255,202,138], lowcloud: [255,182,120], botcloud: [255,170,108], water: [66,88,110] },
+      sliders: { sunSz: 2.2, sprBght: 0.9, farClp: 1500, fogSt: 600, log: 1.0 } },
+    { id: "foggy",
+      colors: { skytop: [16,19,27], skybot: [42,46,54], suncore: [118,124,134], suncorona: [88,94,104], amb: [54,57,65], ambobj: [49,52,59], dir: [108,114,124], lowcloud: [61,65,73], botcloud: [53,57,65], water: [29,37,47] },
+      sliders: { sunSz: 1.2, sprBght: 0.25, farClp: 220, fogSt: 5, log: 0.7, shdw: 0 } },
+    { id: "sunset",
+      colors: { skytop: [104,58,158], skybot: [255,110,140], suncore: [255,190,120], suncorona: [255,92,132], amb: [106,80,106], ambobj: [97,74,97], dir: [240,150,160], lowcloud: [202,120,170], botcloud: [172,100,160], water: [60,60,100] },
+      sliders: { sunSz: 2.4, sprBght: 0.85, farClp: 1300, fogSt: 500, log: 0.95 } },
+    { id: "rainy",
+      colors: { skytop: [52,58,66], skybot: [88,94,102], suncore: [150,155,160], suncorona: [110,115,120], amb: [80,84,90], ambobj: [74,78,84], dir: [150,155,160], lowcloud: [96,102,110], botcloud: [84,90,98], water: [45,58,70] },
+      sliders: { sunSz: 1.0, sprSz: 2.6, sprBght: 0.4, farClp: 600, fogSt: 60, log: 0.8, shdw: 2 } }
+  ];
+  var lastTcPreset = "";
+  function buildTcPresets(){
+    var box = $("tcPresets"); if (!box) return;
+    var lb = $("tcPresetsLbl"); if (lb) lb.textContent = S().presetsLbl;
+    box.innerHTML = "";
+    TC_PRESETS.forEach(function(p){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = (S().presetNames && S().presetNames[p.id]) || p.id;
+      b.addEventListener("click", function(){ applyTcPreset(p); });
+      box.appendChild(b);
+    });
+    syncTcPresetInfo();
+  }
+  function syncTcPresetInfo(){
+    var info = $("tcPresetInfo"); if (!info) return;
+    info.textContent = lastTcPreset && S().presetApplied ? S().presetApplied(lastTcPreset) : "";
+  }
+  function applyTcPreset(p){
+    var targets = targetRows(); if (!targets.length) return;
+    beginEdit();
+    targets.forEach(function(t){
+      COLOR_FIELDS.forEach(function(f){
+        var c = p.colors[f.k]; if (!c) return;
+        setTok(t.obj, f.i, c[0], true);
+        setTok(t.obj, f.i + 1, c[1], true);
+        setTok(t.obj, f.i + 2, c[2], true);
+      });
+      SLIDERS.forEach(function(f){
+        if (!(f.k in p.sliders)) return;
+        setTok(t.obj, f.i, p.sliders[f.k], f.step >= 1);
+      });
+    });
+    commitEdit();
+    lastTcPreset = (S().presetNames && S().presetNames[p.id]) || p.id;
+    syncControls();
+    syncTcPresetInfo();
+    drawPreview();
+  }
+
   /* ---------------- 3D scene preview (Three.js) ----------------
      Totoong 3D scene tulad ng DFF 3D Preview: sky dome (gradient ng
      SkyTop → SkyBot), araw na may SunCore/SunCorona at laki mula sa
@@ -6268,8 +7157,10 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     curSec = 0; curRow = 0;
     selAllW = false; selAllT = false; editBase = null;
     undoStack = [];
+    lastTcPreset = "";
     buildChips();
     syncControls();
+    syncTcPresetInfo();
     drawPreview();
   }
   function loadDefault(){
@@ -6292,6 +7183,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     var cl = $("tcCloseBtn"); if (cl) cl.textContent = s.close;
     buildChips();
     buildControls();
+    buildTcPresets();
     syncControls();
     drawPreview();
   }
@@ -7149,6 +8041,1222 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     data: function(){ return ccData; },
     batch: function(){ return { allW: selAllW, allT: selAllT, targets: targetRows().length, undo: undoStack.length }; }
   };
+})();
+</script>
+<script>
+/* =====================================================================
+   Cheat editors — Weapon (weapon.dat), Handling (handling.cfg), Ped
+   (pedstats.dat). Nasa likod sila ng 🔓 Cheats password sa ••• menu.
+   Iisang engine, tatlong config. Pareho ang pattern ng Timecyc /
+   Colorcycle: malaking upload area sa taas, status box, malaking
+   "💾 I-save at I-download" sa taas at baba, built-in default sample
+   na totoong SA data, per-entry reset + Undo, batch mode ("Lahat ng
+   ...") na may banner ng sakop at iisang Undo para sa buong batch,
+   at structure-preserving: ang hindi in-edit na linya ay isinusulat
+   pabalik nang byte-identical (comments/headers kasama), ang in-edit
+   lang ang binubuo ulit mula sa tokens. Eksaktong filename ang
+   download (weapon.dat / handling.cfg / pedstats.dat, octet-stream).
+   ===================================================================== */
+(function(){
+  "use strict";
+
+  function isNumTok(x){ return /^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(x); }
+  function splitLines(text){
+    var eol = text.indexOf("\r\n") >= 0 ? "\r\n" : "\n";
+    return { lines: String(text).split(/\r\n|\r|\n/), eol: eol };
+  }
+  function buildText(data){
+    var out = data.lines.slice();
+    data.entries.forEach(function(e){ if (e.dirty) out[e.lineIdx] = e.tokens.join(" "); });
+    return out.join(data.eol);
+  }
+  /* Float format na tugma sa style ng mga file: laging may decimal
+     point (30.0, 1.0), hanggang 2 decimal places (0.75, 1.25). */
+  function fmtFloat(v){
+    var n = Math.round(v * 100) / 100;
+    if (n === 0) n = 0;
+    var s = String(n);
+    if (s.indexOf(".") < 0 && s.indexOf("e") < 0) s += ".0";
+    return s;
+  }
+
+  /* ---------------- parsers (format na-verify sa gtamods.com) ----------------
+     weapon.dat: gun entries ay mga linyang nagsisimula sa "$".
+     Token indices (kasama ang "$" bilang token 0):
+       1 pangalan · 3/4 range · 9 ammo clip (K) · 10 damage (L) ·
+       16 accuracy (R) · 17 move speed (S). Ang "#$ ..." ay comment. */
+  function wpParse(text){
+    var sp = splitLines(text);
+    var entries = [];
+    for (var i = 0; i < sp.lines.length; i++){
+      var t = sp.lines[i].replace(/^\s+|\s+$/g, "");
+      if (t.charAt(0) !== "$") continue;
+      var toks = t.split(/\s+/).filter(function(x){ return x !== ""; });
+      if (toks.length < 18) continue;
+      if (!isNumTok(toks[3]) || !isNumTok(toks[4]) || !isNumTok(toks[9]) ||
+          !isNumTok(toks[10]) || !isNumTok(toks[16]) || !isNumTok(toks[17])) continue;
+      entries.push({ name: toks[1], lineIdx: i, tokens: toks.slice(), orig: toks.slice(), dirty: false });
+    }
+    return { lines: sp.lines, eol: sp.eol, entries: entries };
+  }
+  /* handling.cfg: standard data lines lang ang entries (hindi ang
+     ";" comments, "%" boat, "!" bike, "$" flying lines). Token
+     indices: 0 ID · 1 mass (B) · 8 traction multiplier (J) ·
+     12 top speed fMaxVelocity (N) · 13 acceleration
+     fEngineAcceleration (O) · 15 drive type (F/R/4) ·
+     16 engine type (P/D/E) · 17 brake deceleration (S) ·
+     20 steering lock (V). Ang drive/engine letters ang pinaka-
+     maaasahang tanda ng standard line. */
+  function hdParse(text){
+    var sp = splitLines(text);
+    var entries = [];
+    for (var i = 0; i < sp.lines.length; i++){
+      var t = sp.lines[i].replace(/^\s+|\s+$/g, "");
+      if (!t) continue;
+      var c0 = t.charAt(0);
+      if (c0 === ";" || c0 === "%" || c0 === "!" || c0 === "$" || c0 === "#") continue;
+      var toks = t.split(/\s+/).filter(function(x){ return x !== ""; });
+      if (toks.length < 30) continue;
+      if (!/^[A-Za-z0-9_]+$/.test(toks[0])) continue;
+      if (toks[15] !== "F" && toks[15] !== "R" && toks[15] !== "4") continue;
+      if (toks[16] !== "P" && toks[16] !== "D" && toks[16] !== "E") continue;
+      if (!isNumTok(toks[1]) || !isNumTok(toks[8]) || !isNumTok(toks[12]) ||
+          !isNumTok(toks[13]) || !isNumTok(toks[17]) || !isNumTok(toks[20])) continue;
+      entries.push({ name: toks[0], lineIdx: i, tokens: toks.slice(), orig: toks.slice(), dirty: false });
+    }
+    return { lines: sp.lines, eol: sp.eol, entries: entries };
+  }
+  /* pedstats.dat: entries ay STAT_* lines, 11 tokens:
+     0 pangalan · 1 flee distance (B) · 3 fear (D) · 5 lawfulness
+     (F) · 7 attack strength (H) · 8 defend weakness (I) ·
+     9 shooting rate (J). WALANG run-speed field sa file na ito. */
+  function pdParse(text){
+    var sp = splitLines(text);
+    var entries = [];
+    for (var i = 0; i < sp.lines.length; i++){
+      var t = sp.lines[i].replace(/^\s+|\s+$/g, "");
+      if (!t || t.charAt(0) === "#") continue;
+      var toks = t.split(/\s+/).filter(function(x){ return x !== ""; });
+      if (toks.length < 11) continue;
+      if (!/^STAT_/.test(toks[0])) continue;
+      var ok = true;
+      for (var j = 1; j <= 10; j++){ if (!isNumTok(toks[j])){ ok = false; break; } }
+      if (!ok) continue;
+      entries.push({ name: toks[0], lineIdx: i, tokens: toks.slice(), orig: toks.slice(), dirty: false });
+    }
+    return { lines: sp.lines, eol: sp.eol, entries: entries };
+  }
+
+  /* ---------------- built-in default samples (totoong SA data) ---------------- */
+  function wpDefaultText(){
+    var out = [
+      "# weapon.dat - XSS TXD Weapon Editor default sample (totoong GTA SA default gun data).",
+      "# A: weapon name   B: fire type   C,D: target range, weapon range   E,F: model ids   I: weapon slot",
+      "# J: anim group   K: ammo clip   L: damage   M,N,O: fire offset   P: skill level   Q: required stat",
+      "# R: accuracy   S: move speed   T,U,V at W,X,Y: anim loops   Z: breakout time   a: flags",
+      "#",
+      "# Gun Weapons (gamit ang $ identifier)",
+      "$ GRENADE PROJECTILE 30.0 40.0 342 -1 8 grenade 1 75 0.0 0.0 0.0 1 0 1.0 1.0 0 99 6 0 99 8 99 100 0.25 -1.0 800.0 1.0",
+      "$ TEARGAS PROJECTILE 30.0 40.0 343 -1 8 grenade 1 75 0.0 0.0 0.0 1 0 1.0 1.0 0 99 6 0 99 10 99 100 0.25 -1.0 800.0 1.0",
+      "$ MOLOTOV PROJECTILE 30.0 40.0 344 -1 8 grenade 1 75 0.0 0.0 0.0 1 0 1.0 1.0 0 99 6 0 99 8 99 100 0.25 -1.0 2000.0 5.0",
+      "$ ROCKET PROJECTILE 30.0 40.0 345 -1 8 null 1 75 0.0 0.0 0.0 1 0 1.0 1.0 0 99 6 0 99 10 99 100 0.25 -1.0 800.0 1.0",
+      "$ ROCKET_HS PROJECTILE 30.0 40.0 345 -1 8 null 1 75 0.0 0.0 0.0 1 0 1.0 1.0 0 99 6 0 99 10 99 100 0.25 -1.0 800.0 1.0",
+      "$ FREEFALL_BOMB PROJECTILE 30.0 40.0 345 -1 8 null 1 75 0.0 0.0 0.0 1 0 1.0 1.0 0 99 6 0 99 10 99 100 0.25 -1.0 800.0 1.0",
+      "$ PISTOL INSTANT_HIT 30.0 35.0 346 -1 2 colt_cop 12 32 0.25 0.05 0.09 0 0 1.0 1.0 6 15 6 6 15 6 99 7031",
+      "$ PISTOL INSTANT_HIT 30.0 35.0 346 -1 2 colt_cop 12 32 0.25 0.05 0.09 1 40 1.0 1.0 6 15 6 6 15 6 99 7031",
+      "$ PISTOL INSTANT_HIT 30.0 35.0 346 -1 2 colt_cop 12 32 0.25 0.05 0.09 2 999 1.0 1.0 6 15 6 6 15 6 99 7031",
+      "$ PISTOL INSTANT_HIT 30.0 35.0 346 -1 2 colt_cop 12 32 0.25 0.05 0.09 3 5000 1.0 1.0 6 15 6 6 15 6 99 7031",
+      "$ PISTOL_SILENCED INSTANT_HIT 25.0 30.0 347 -1 2 silenced 17 35 0.40 0.05 0.15 0 0 1.0 1.0 6 20 6 6 20 6 40 7001",
+      "$ PISTOL_SILENCED INSTANT_HIT 30.0 35.0 347 -1 2 silenced 17 35 0.40 0.05 0.15 1 500 1.25 1.2 6 18 6 6 18 6 40 7011",
+      "$ PISTOL_SILENCED INSTANT_HIT 35.0 35.0 347 -1 2 silenced 17 35 0.40 0.05 0.15 2 999 1.5 1.5 6 17 6 6 17 6 40 7031",
+      "$ DESERT_EAGLE INSTANT_HIT 25.0 30.0 348 -1 2 pythonbad 6 65 0.41 0.03 0.12 0 0 0.75 1.0 7 36 8 6 30 7 40 7001",
+      "$ DESERT_EAGLE INSTANT_HIT 30.0 35.0 348 -1 2 python 6 130 0.41 0.03 0.12 1 200 1.0 1.2 6 30 7 6 28 7 40 7011",
+      "$ DESERT_EAGLE INSTANT_HIT 35.0 35.0 348 -1 2 python 6 130 0.41 0.03 0.12 2 999 1.25 1.5 6 28 7 6 28 7 40 7031",
+      "$ SHOTGUN INSTANT_HIT 30.0 40.0 349 -1 3 shotgunbad 1 7 0.82 -0.02 0.23 0 0 1.0 1.0 6 40 7 6 40 7 28 2001",
+      "$ SHOTGUN INSTANT_HIT 35.0 40.0 349 -1 3 shotgun 1 7 0.82 -0.02 0.25 1 200 1.2 1.1 6 38 7 6 40 7 20 2011",
+      "$ SHOTGUN INSTANT_HIT 40.0 40.0 349 -1 3 shotgun 1 7 0.82 -0.02 0.25 2 999 1.4 1.3 6 38 7 6 40 7 25 2031",
+      "$ SAWNOFF INSTANT_HIT 25.0 30.0 350 -1 3 sawnoff 2 6 0.56 0.0 0.15 0 0 0.7 1.0 6 15 6 6 15 6 30 3033",
+      "$ SAWNOFF INSTANT_HIT 30.0 35.0 350 -1 3 sawnoff 2 6 0.56 0.0 0.15 1 200 0.8 1.1 6 15 6 6 15 6 30 3033",
+      "$ SAWNOFF INSTANT_HIT 30.0 35.0 350 -1 3 sawnoff 4 6 0.56 0.0 0.15 2 999 0.8 1.1 6 15 6 6 15 6 30 3033",
+      "$ SPAS12 INSTANT_HIT 35.0 40.0 351 -1 3 buddy 7 10 0.75 -0.06 0.22 0 0 1.4 1.0 6 18 7 6 18 7 35 7001",
+      "$ SPAS12 INSTANT_HIT 40.0 40.0 351 -1 3 buddy 7 10 0.75 -0.06 0.22 1 200 1.8 1.0 6 16 7 6 16 7 35 7011",
+      "$ SPAS12 INSTANT_HIT 40.0 40.0 351 -1 3 buddy 7 10 0.75 -0.06 0.22 2 999 2.0 1.2 6 16 7 6 16 7 35 7031",
+      "$ MICRO_UZI INSTANT_HIT 25.0 30.0 352 -1 4 colt45 50 20 0.25 0.0 0.11 0 0 0.75 1.0 6 10 6 6 10 6 99 3013",
+      "$ MICRO_UZI INSTANT_HIT 30.0 35.0 352 -1 4 colt45 50 20 0.25 0.0 0.11 1 50 1.05 1.0 6 10 6 6 10 6 99 3033",
+      "$ MICRO_UZI INSTANT_HIT 35.0 35.0 352 -1 4 colt45pro 100 20 0.25 0.0 0.11 2 999 1.1 1.0 6 10 6 6 10 6 99 3833",
+      "$ TEC9 INSTANT_HIT 20.0 35.0 372 -1 4 colt_cop 25 15 0.25 0.05 0.09 0 0 1.0 1.0 6 10 6 6 11 7 99 7031",
+      "$ TEC9 INSTANT_HIT 25.0 30.0 372 -1 4 colt_cop 31 20 0.45 -0.05 0.11 1 50 1.4 1.0 6 10 6 6 11 7 99 7031",
+      "$ TEC9 INSTANT_HIT 35.0 35.0 372 -1 4 colt_cop 32 22 0.45 -0.05 0.11 2 999 1.6 1.0 6 10 6 6 11 7 99 7031",
+      "$ MP5 INSTANT_HIT 35.0 40.0 353 -1 4 uzibad 31 23 0.51 -0.01 0.20 0 0 0.75 1.1 6 9 7 6 9 6 30 7001",
+      "$ MP5 INSTANT_HIT 40.0 45.0 353 -1 4 uzi 31 23 0.51 -0.01 0.20 1 250 1.0 1.3 6 9 7 6 9 6 30 7011",
+      "$ MP5 INSTANT_HIT 45.0 45.0 353 -1 4 uzi 31 23 0.51 -0.01 0.20 2 999 1.2 1.5 6 9 7 6 9 6 30 7031",
+      "$ AK47 INSTANT_HIT 40.0 70.0 355 -1 5 riflebad 31 26 0.78 -0.06 0.13 0 0 0.40 0.9 6 10 7 6 10 7 99 7001",
+      "$ AK47 INSTANT_HIT 45.0 70.0 355 -1 5 rifle 31 26 0.78 -0.06 0.13 1 200 0.50 1.0 6 10 7 6 10 7 99 7011",
+      "$ AK47 INSTANT_HIT 50.0 70.0 355 -1 5 rifle 31 26 0.78 -0.06 0.13 2 999 0.60 1.1 6 10 7 6 10 7 99 7031",
+      "$ M4 INSTANT_HIT 40.0 90.0 356 -1 5 riflebad 50 26 0.74 -0.04 0.13 0 0 0.45 0.9 6 10 7 6 10 7 99 7001",
+      "$ M4 INSTANT_HIT 45.0 90.0 356 -1 5 rifle 50 26 0.74 -0.04 0.13 1 200 0.65 1.0 6 10 7 6 10 7 99 7011",
+      "$ M4 INSTANT_HIT 50.0 90.0 356 -1 5 rifle 50 26 0.74 -0.04 0.13 2 999 0.80 1.1 6 10 7 6 10 7 99 7031",
+      "$ COUNTRYRIFLE INSTANT_HIT 55.0 100.0 357 -1 6 sniper 1 72 0.7 -0.05 0.2 1 300 1.0 1.2 6 17 7 6 17 7 99 A008",
+      "$ SNIPERRIFLE INSTANT_HIT 50.0 100.0 358 -1 6 sniper 1 120 0.7 -0.05 0.2 1 300 1.0 1.0 6 17 7 6 17 7 99 A014",
+      "$ RLAUNCHER PROJECTILE 50.0 55.0 359 -1 7 rocket 1 75 0.42 0.0 0.05 1 0 1.0 1.0 11 19 12 14 99 15 99 48214",
+      "$ RLAUNCHER_HS PROJECTILE 50.0 55.0 360 -1 7 rocket 1 75 0.42 0.0 0.05 1 0 1.0 1.0 11 19 12 14 99 15 99 48214",
+      "$ FTHROWER AREA_EFFECT 4.0 5.1 361 -1 7 flame 500 25 0.98 0.0 0.40 1 0 1.0 1.0 11 12 11 11 12 11 35 30238 0.5 0.0075 1000.0 2.0",
+      "$ MINIGUN INSTANT_HIT 65.0 75.0 362 -1 7 flame 500 130 1.15 0.0 0.40 1 0 1.0 1.0 11 12 11 11 12 11 35 238",
+      "$ SATCHEL_CHARGE PROJECTILE 30.0 40.0 363 364 8 grenade 1 75 0.0 0.0 0.0 1 0 1.0 1.0 0 99 6 0 99 9 99 100 0.25 -1.0 800.0 1.0",
+      "$ DETONATOR USE 25.0 25.0 364 -1 12 null 1 0 0.0 0.0 0.13 1 0 1.0 1.0 0 10 3 0 10 3 99 0",
+      "$ SPRAYCAN AREA_EFFECT 4.0 6.1 365 -1 9 spraycan 500 1 0.20 0.0 -0.1 1 0 1.0 1.0 12 58 13 11 58 13 99 0431 0.05 0.5 1000.0 0.01",
+      "$ EXTINGUISHER AREA_EFFECT 10.0 10.1 366 -1 9 flame 500 1 0.45 0.10 0.15 1 0 1.0 1.0 11 12 11 11 12 11 35 0038 0.1 0.5 1000.0 0.01",
+      "$ CAMERA CAMERA 70.0 100.0 367 -1 9 rifle 36 0 0.0 -0.0 -0.0 1 0 1.0 1.0 10 99 11 14 99 15 0 4",
+      "$ NIGHTVISION USE 70.0 100.0 368 -1 11 goggles 0 0 0.0 -0.0 -0.0 1 0 1.0 1.0 10 99 11 14 99 15 0 0",
+      "$ INFRARED USE 70.0 100.0 369 -1 11 goggles 0 0 0.0 -0.0 -0.0 1 0 1.0 1.0 10 99 11 14 99 15 0 0",
+      "ENDWEAPONDATA"
+    ];
+    return out.join("\r\n") + "\r\n";
+  }
+  function hdDefaultText(){
+    var out = [
+      "; handling.cfg - XSS TXD Handling Editor default (kumpletong totoong GTA SA default data - 210 sasakyan).",
+      "; A: vehicle ID   B: mass   C: turn mass   D: drag mult   E/F/G: center of mass X/Y/Z   H: % submerged",
+      "; I: traction multiplier   J: traction loss   K: traction bias   L: gears   M: top speed (fMaxVelocity)",
+      "; N: acceleration (fEngineAcceleration)   O: engine inertia   P: drive type (F/R/4)",
+      "; Q: engine type (P=Petrol, D=Diesel, E=Electric)   R: brake deceleration   S: brake bias   T: ABS",
+      "; U: steering lock   V: suspension force   W: suspension damping   X: suspension high-speed damping",
+      "; Y: suspension upper limit   Z: suspension lower limit   a: suspension bias   b: suspension anti-dive",
+      "; c: seat offset   d: collision damage mult   e: monetary value   f: model flags (hex)",
+      "; g: handling flags (hex)   h: front light (0=long 1=small 2=big 3=tall)   i: rear light   j: anim group",
+      "LANDSTAL 1700.0 5008.3 2.5 0.0 0.0 -0.3 85 0.75 0.85 0.5 5 160.0 25.0 20.0 4 D 6.2 0.60 0 35.0 2.4 0.08 0.0 0.28 -0.14 0.5 0.25 0.27 0.23 25000 20 500002 0 1 0",
+      "BRAVURA 1300.0 2200.0 1.7 0.0 0.3 0.0 70 0.65 0.80 0.52 5 160.0 15.0 10.0 F P 8.0 0.80 0 30.0 1.3 0.08 0.0 0.31 -0.15 0.57 0.0 0.26 0.50 9000 1 1 0 0 0",
+      "BUFFALO 1500.0 4000.0 2.0 0.0 0.0 -0.1 85 0.7 0.9 0.5 5 200.0 28.0 5.0 R P 11.0 0.45 0 30.0 1.2 0.12 0.0 0.28 -0.24 0.5 0.4 0.25 0.50 35000 2800 10200000 1 1 0",
+      "LINERUN 3800.0 19953.2 5.0 0.0 0.0 -0.2 90 0.95 0.65 0.4 5 120.0 25.0 30.0 R D 8.0 0.30 0 25.0 1.6 0.06 0.0 0.40 -0.20 0.5 0.0 0.65 0.25 35000 6000 200 0 1 2",
+      "PEREN 1200.0 3000.0 2.5 0.0 0.1 0.0 70 0.70 0.90 0.48 5 150.0 18.0 20.0 F P 4.0 0.80 0 30.0 1.4 0.1 0.0 0.37 -0.17 0.5 0.0 0.2 0.60 10000 20 0 1 1 0",
+      "SENTINEL 1600.0 4000.0 2.2 0.0 0.0 -0.2 75 0.65 0.75 0.5 5 165.0 24.0 10.0 R P 10.0 0.5 0 27.0 1.0 0.08 0.0 0.30 -0.20 0.5 0.3 0.2 0.56 35000 0 400000 0 1 0",
+      "DUMPER 20000.0 200000.0 4.0 0.0 0.5 -0.4 90 0.78 0.8 0.55 4 110.0 25.0 30.0 R D 3.17 0.40 0 30.0 0.8 0.06 0.0 0.20 -0.30 0.55 0.0 0.45 0.20 5000 c008 1340201 0 1 20",
+      "FIRETRUK 6500.0 36670.8 3.0 0.0 0.0 0.0 90 0.55 0.8 0.5 5 170.0 27.0 10.0 R D 10.0 0.45 0 27.0 1.2 0.08 0.0 0.47 -0.17 0.5 0.0 0.2 0.26 15000 4098 0 0 1 2",
+      "TRASH 5500.0 33187.9 5.0 0.0 0.0 -0.2 90 0.60 0.9 0.5 4 110.0 20.0 30.0 R D 3.5 0.40 0 30.0 1.0 0.06 0.0 0.45 -0.25 0.55 0.3 0.45 0.20 5000 4008 200 0 1 0",
+      "STRETCH 2200.0 10000.0 1.8 0.0 0.0 0.0 75 0.60 0.8 0.5 5 180.0 18.0 25.0 R P 10.0 0.40 0 30.0 1.1 0.07 0.0 0.35 -0.20 0.5 0.0 0.2 0.72 40000 282000 10400001 1 1 0",
+      "MANANA 1000.0 1400.0 2.8 0.0 0.2 0.0 70 0.80 0.8 0.5 3 160.0 19.0 15.0 F P 8.0 0.80 0 30.0 1.2 0.10 5.0 0.31 -0.15 0.5 0.2 0.26 0.50 9000 0 0 0 0 0",
+      "INFERNUS 1400.0 2725.3 1.5 0.0 0.0 -0.25 70 0.70 0.8 0.50 5 240.0 30.0 10.0 4 P 11.0 0.51 0 30.0 1.2 0.19 0.0 0.25 -0.10 0.5 0.4 0.37 0.72 95000 40002004 C04000 1 1 1",
+      "VOODOO 1800.0 4411.5 2.0 0.0 -0.1 -0.2 70 0.95 0.80 0.45 5 160.0 23.0 5.0 R P 6.5 0.50 0 30.0 1.0 0.08 0.0 0.20 -0.25 0.5 0.6 0.26 0.41 30000 0 2410008 1 1 0",
+      "PONY 2600.0 8666.7 3.0 0.0 0.0 -0.25 80 0.55 0.90 0.50 5 160.0 15.0 25.0 R D 6.0 0.80 0 30.0 2.6 0.07 0.0 0.35 -0.15 0.25 0.0 0.2 0.50 20000 4001 1 0 3 13",
+      "MULE 3500.0 14000.0 4.0 0.0 0.0 0.1 80 0.55 0.85 0.46 5 140.0 18.0 20.0 R D 4.5 0.60 0 30.0 2.0 0.07 5.0 0.30 -0.15 0.5 0.0 0.46 0.53 22000 4088 0 0 3 0",
+      "CHEETAH 1200.0 3000.0 2.0 0.0 -0.2 -0.2 70 0.80 0.9 0.50 5 230.0 30.0 10.0 R P 11.1 0.48 0 35.0 0.8 0.20 0.0 0.10 -0.15 0.5 0.6 0.40 0.54 105000 c0002004 208000 0 0 1",
+      "AMBULAN 2600.0 10202.8 2.5 0.0 0.0 -0.1 90 0.75 0.80 0.47 5 155.0 24.0 10.0 4 D 7.0 0.55 0 35.0 1.0 0.07 0.0 0.40 -0.20 0.5 0.0 0.58 0.33 10000 4001 4 0 1 13",
+      "MOONBEAM 2000.0 5848.3 2.8 0.0 0.2 -0.1 85 0.60 0.80 0.50 5 150.0 15.0 15.0 R D 5.5 0.6 0 30.0 1.4 0.1 0.0 0.35 -0.15 0.55 0.0 0.2 0.75 16000 20 0 1 3 0",
+      "ESPERANT 1800.0 4350.0 2.0 0.0 0.0 0.0 70 0.55 0.88 0.52 5 160.0 18.0 5.0 R P 4.0 0.60 0 28.0 1.0 0.05 1.0 0.35 -0.18 0.5 0.0 0.36 0.54 19000 40000000 10000000 0 3 0",
+      "TAXI 1450.0 4056.4 2.2 0.0 0.3 -0.25 75 0.80 0.75 0.45 5 180.0 19.0 10.0 F P 9.1 0.60 0 35.0 1.4 0.1 0.0 0.25 -0.15 0.54 0.0 0.2 0.51 20000 0 200000 0 1 0",
+      "WASHING 1850.0 5000.0 2.2 0.0 0.0 -0.1 75 0.75 0.65 0.52 5 180.0 21.0 10.0 R P 7.5 0.65 0 30.0 1.0 0.20 0.0 0.27 -0.20 0.5 0.35 0.24 0.60 18000 0 10400000 1 1 0",
+      "BOBCAT 1700.0 4000.0 2.5 0.0 0.05 -0.2 75 0.65 0.85 0.57 5 165.0 20.0 15.0 4 D 8.5 0.5 0 35.0 1.5 0.10 5.0 0.35 -0.18 0.4 0.0 0.26 0.20 26000 40 104004 0 1 0",
+      "MRWHOOP 1700.0 4108.3 3.5 0.0 0.0 0.0 85 0.75 0.75 0.5 5 145.0 14.0 50.0 R D 4.17 0.80 0 35.0 1.2 0.1 0.0 0.35 -0.15 0.5 0.0 0.24 0.77 29000 88 2 0 1 0",
+      "BFINJECT 1200.0 2000.0 4.0 0.0 -0.1 -0.1 80 0.75 0.85 0.5 4 170.0 30.0 10.0 R P 6.0 0.50 0 35.0 1.0 0.07 5.0 0.20 -0.15 0.45 0.0 0.38 0.40 15000 201904 308200 1 2 25",
+      "PREMIER 1600.0 3921.3 1.8 0.0 -0.4 0.0 75 0.75 0.85 0.52 5 200.0 22.0 10.0 R P 10.0 0.53 0 35.0 1.3 0.12 0.0 0.28 -0.12 0.38 0.0 0.2 0.24 25000 40000000 10200008 0 1 0",
+      "ENFORCER 4000.0 17333.3 1.8 0.0 0.1 0.0 85 0.55 0.8 0.48 5 170.0 20.0 20.0 R D 5.4 0.45 0 27.0 1.4 0.1 0.0 0.40 -0.25 0.5 0.0 0.32 0.16 40000 4011 0 0 1 13",
+      "SECURICA 7000.0 30916.7 1.5 0.0 0.0 0.0 90 0.50 0.7 0.46 5 170.0 15.0 30.0 R D 8.4 0.45 0 27.0 1.0 0.06 0.0 0.35 -0.15 0.5 0.0 0.27 0.35 40000 4001 4 1 1 13",
+      "BANSHEE 1400.0 3000.0 2.0 0.0 0.0 -0.20 70 0.75 0.89 0.50 5 200.0 33.0 10.0 R P 8.0 0.52 0 34.0 1.6 0.10 5.0 0.30 -0.15 0.5 0.3 0.15 0.49 45000 2004 200000 1 1 1",
+      "BUS 5500.0 33187.9 2.0 0.0 0.5 0.0 90 0.75 0.85 0.40 4 130.0 14.0 50.0 R D 4.17 0.40 0 30.0 1.2 0.07 0.0 0.45 -0.25 0.45 0.0 0.2 0.75 15000 4002 0 1 1 16",
+      "RHINO 25000.0 250000.0 5.0 0.0 0.0 0.0 90 2.50 0.8 0.5 4 80.0 40.0 150.0 4 D 5.0 0.50 0 35.0 0.4 0.02 0.0 0.35 -0.10 0.5 0.0 0.22 0.09 110000 40008008 308840 0 1 24",
+      "BARRACKS 10500.0 61407.5 4.0 0.0 0.0 0.0 90 0.65 0.7 0.47 5 180.0 20.0 25.0 4 D 4.00 0.40 0 27.0 1.2 0.05 0.0 0.47 -0.17 0.5 0.0 0.62 0.26 10000 200809 100000 0 1 2",
+      "HOTKNIFE 1400.0 3400.0 2.5 0.0 0.3 -0.3 75 0.75 0.8 0.5 5 200.0 28.0 5.0 R P 11.0 0.45 0 30.0 0.8 0.08 0.0 0.28 -0.20 0.4 0.3 0.20 0.60 35000 40006800 8000 1 1 0",
+      "ARTICT1 3800.0 30000.0 2.0 0.0 0.0 -0.5 90 0.45 0.75 0.5 5 120.0 18.0 5.0 R D 8.0 0.30 0 25.0 1.5 0.05 0.0 0.30 -0.15 0.5 0.0 0.65 0.25 35000 20002000 0000 0 1 0",
+      "PREVION 1400.0 3000.0 2.0 0.0 0.3 -0.1 70 0.70 0.80 0.45 4 160.0 18.0 7.0 F P 8.0 0.65 0 35.0 1.1 0.08 2.0 0.31 -0.18 0.55 0.3 0.21 0.50 9000 0 0 0 0 0",
+      "COACH 9500.0 57324.6 1.8 0.0 0.0 0.0 90 0.65 0.85 0.35 5 160.0 18.0 10.0 R D 5.7 0.35 0 30.0 1.5 0.04 0.0 0.45 -0.25 0.5 0.0 0.45 0.48 20000 2 200000 0 1 15",
+      "CABBIE 1750.0 4351.7 2.9 0.0 0.1 -0.15 75 0.75 0.85 0.51 4 160.0 24.0 6.0 R P 7.0 0.44 0 40.0 0.7 0.06 2.0 0.25 -0.30 0.5 0.5 0.2 0.40 10000 0 0 1 1 0",
+      "STALLION 1600.0 3921.3 2.0 0.0 0.0 -0.15 70 0.80 0.75 0.55 4 160.0 23.0 5.0 R P 8.17 0.52 0 35.0 1.2 0.1 0.0 0.30 -0.2 0.5 0.0 0.3 0.64 19000 2800 4 1 1 0",
+      "RUMPO 2000.0 4901.7 2.4 0.0 0.4 -0.1 85 0.6 0.75 0.52 5 160.0 18.0 15.0 F P 5.5 0.45 0 30.0 1.4 0.05 0.0 0.43 -0.11 0.5 0.0 0.2 0.60 26000 1 0 0 1 13",
+      "RCBANDIT 100.0 24.1 6.0 0.0 0.05 -0.1 70 0.80 0.90 0.49 1 75.0 35.0 5.0 4 E 5.5 0.50 0 25.0 1.6 0.1 0.0 0.28 -0.08 0.5 0.0 0.2 0.05 500 440000 0 0 1 0",
+      "ROMERO 2500.0 5960.4 2.0 0.0 -0.8 0.2 70 0.75 0.80 0.50 5 150.0 16.0 15.0 R P 4.0 0.80 0 30.0 1.0 0.1 0.0 0.35 -0.15 0.4 0.0 0.2 1.25 10000 40000020 0 0 1 0",
+      "PACKER 8000.0 48273.3 2.0 0.0 0.0 0.0 90 0.65 0.85 0.35 5 150.0 13.0 5.0 R D 5.7 0.35 0 30.0 1.5 0.04 0.0 0.45 -0.25 0.5 0.0 0.56 0.40 20000 4000 440000 0 1 2",
+      "MONSTER 5000.0 20000.0 3.0 0.0 0.0 -0.35 80 0.65 0.85 0.55 5 110.0 45.0 25.0 4 P 7.0 0.45 0 35.0 1.5 0.07 0.0 0.45 -0.30 0.5 0.3 0.44 0.35 40000 28 1300045 0 1 20",
+      "ADMIRAL 1650.0 3851.4 2.0 0.0 0.0 -0.05 75 0.65 0.90 0.51 5 165.0 22.0 8.0 F P 8.5 0.52 0 30.0 1.0 0.15 0.0 0.27 -0.19 0.5 0.55 0.2 0.56 35000 0 400000 0 1 0",
+      "TRAM 1900.0 4795.9 1.0 0.0 -0.3 0.0 85 0.97 0.77 0.51 5 150.0 25.0 5.0 R P 8.5 0.45 0 30.0 1.3 0.08 0.0 0.0 -1.00 0.4 0.5 0.2 0.50 26000 1 400000 0 1 13",
+      "AIRTRAIN 25500.0 139272.5 1.0 0.0 0.0 0.0 85 0.58 0.7 0.46 5 140.0 24.0 5.0 4 D 10.00 0.45 0 27.0 1.2 0.05 0.0 0.47 -0.17 0.5 0.0 0.2 1.00 10000 0 0 0 1 0",
+      "ARTICT2 3800.0 30000.0 2.0 0.0 0.0 -0.5 90 0.45 0.75 0.5 5 120.0 18.0 5.0 R D 8.0 0.30 0 25.0 1.5 0.05 0.0 0.30 -0.15 0.5 0.0 0.65 0.25 35000 20002000 0000 0 1 0",
+      "TURISMO 1400.0 3000.0 2.0 0.0 -0.3 -0.2 70 0.75 0.85 0.45 5 240.0 30.0 10.0 4 P 11.0 0.51 0 30.0 1.2 0.13 0.0 0.15 -0.20 0.5 0.4 0.17 0.72 95000 40002004 C08401 1 1 1",
+      "FLATBED 8500.0 48804.2 2.5 0.0 0.0 0.3 90 0.70 0.7 0.46 5 140.0 25.0 80.0 R D 10.00 0.45 0 27.0 1.2 0.05 0.0 0.47 -0.17 0.5 0.0 0.62 0.43 10000 801 0 0 1 2",
+      "YANKEE 4500.0 18003.7 3.0 0.0 0.0 0.0 80 0.55 0.70 0.48 5 160.0 14.0 40.0 R D 4.5 0.80 0 30.0 1.8 0.12 0.0 0.30 -0.25 0.5 0.0 0.35 0.45 22000 4088 0 0 1 0",
+      "GOLFCART 1000.0 1354.2 4.0 0.0 0.0 -0.1 70 0.55 0.85 0.5 3 160.0 15.0 30.0 4 E 13.0 0.50 0 30.0 1.0 0.09 0.0 0.28 -0.13 0.5 0.0 0.26 0.50 9000 1100 8804 1 1 0",
+      "SOLAIR 2000.0 5500.0 2.0 0.0 0.0 0.0 75 0.75 0.80 0.52 4 165.0 20.0 10.0 R P 5.0 0.60 0 30.0 1.2 0.1 0.0 0.27 -0.17 0.5 0.2 0.24 0.48 18000 20 0 1 1 0",
+      "TOPFUN 1900.0 6333.3 2.0 0.0 0.0 -0.2 80 0.85 0.70 0.46 5 160.0 15.0 25.0 R D 6.0 0.80 0 30.0 1.5 0.07 2.0 0.35 -0.15 0.4 0.0 0.2 0.43 20000 1 1 0 3 13",
+      "GLENDALE 1600.0 4000.0 2.5 0.0 0.0 0.05 75 0.60 0.84 0.52 5 160.0 22.0 15.0 R P 6.2 0.55 0 30.0 0.8 0.07 0.0 0.35 -0.22 0.5 0.5 0.23 0.40 20000 0 10800002 1 1 0",
+      "OCEANIC 1900.0 4529.9 2.0 0.0 0.0 0.0 75 0.67 0.75 0.52 5 160.0 16.0 5.0 R P 5.0 0.55 0 30.0 1.0 0.1 0.0 0.35 -0.17 0.5 0.5 0.23 0.45 20000 0 10800000 2 1 0",
+      "PATRIOT 2500.0 7968.7 2.5 0.0 0.0 0.0 80 0.70 0.85 0.5 5 170.0 25.0 20.0 4 P 8.0 0.50 0 30.0 1.5 0.08 4.0 0.35 -0.35 0.5 0.0 0.28 0.25 40000 8 300000 0 1 0",
+      "HERMES 1950.0 4712.5 2.0 0.0 0.3 0.0 70 0.70 0.75 0.51 5 160.0 18.0 15.0 F P 3.5 0.60 0 28.0 1.0 0.05 0.0 0.35 -0.20 0.58 0.0 0.25 0.42 19000 40002000 1 1 3 0",
+      "SABRE 1700.0 4000.0 2.0 0.0 0.1 0.0 70 0.70 0.80 0.53 4 160.0 24.0 10.0 R P 8.0 0.52 0 35.0 1.3 0.08 5.0 0.30 -0.20 0.5 0.25 0.25 0.52 19000 0 10000006 1 1 0",
+      "ZR350 1400.0 2979.7 2.0 0.0 0.2 -0.1 70 0.80 0.80 0.51 5 200.0 28.0 10.0 R P 11.1 0.52 0 30.0 1.2 0.10 0.0 0.31 -0.15 0.5 0.3 0.24 0.60 45000 0 C00000 1 1 0",
+      "WALTON 1850.0 3534.0 2.5 0.0 0.0 0.0 75 0.70 0.70 0.5 4 150.0 14.0 25.0 4 D 6.5 0.5 0 35.0 1.6 0.12 0.0 0.35 -0.18 0.4 0.0 0.26 0.19 26000 40 10000006 1 1 0",
+      "REGINA 1500.0 3800.0 2.0 0.0 0.2 0.0 75 0.65 0.85 0.52 4 165.0 16.0 25.0 F P 5.0 0.60 0 30.0 1.0 0.1 0.0 0.27 -0.17 0.5 0.2 0.24 0.48 18000 20 1 1 1 0",
+      "COMET 1400.0 2200.0 2.2 0.0 0.1 -0.2 75 0.70 0.9 0.5 5 200.0 30.0 10.0 4 P 11.0 0.45 0 30.0 1.4 0.14 3.0 0.28 -0.15 0.5 0.3 0.25 0.60 35000 40000800 0 1 1 19",
+      "BURRITO 1900.0 5000.0 2.5 0.0 0.0 -0.2 85 0.60 0.87 0.51 5 150.0 25.0 20.0 R P 8.5 0.45 0 30.0 1.3 0.07 2.0 0.40 -0.25 0.4 0.5 0.2 0.50 26000 1 400000 0 1 13",
+      "CAMPER 1900.0 4000.0 2.6 0.0 -0.5 -0.4 85 0.60 0.80 0.46 5 120.0 16.0 20.0 R P 8.5 0.45 0 30.0 1.1 0.08 0.0 0.35 -0.10 0.4 0.5 0.2 0.50 26000 4000c000 400000 0 1 0",
+      "BAGGAGE 1000.0 1354.2 5.0 0.0 0.4 -0.2 70 1.00 0.85 0.5 3 160.0 20.0 30.0 R E 5.0 0.50 0 30.0 2.0 0.09 0.0 0.25 -0.10 0.5 0.0 0.26 0.50 9000 3300 4 1 1 0",
+      "DOZER 10000.0 35000.0 20.0 0.0 -0.5 -0.5 90 0.85 0.8 0.60 5 100.0 35.0 150.0 4 D 5.0 0.40 0 45.0 1.4 0.15 0.0 0.25 -0.20 0.35 0.0 0.45 0.20 5000 308 340220 0 1 17",
+      "RANCHER 2500.0 7604.2 2.5 0.0 0.0 -0.35 80 0.70 0.85 0.54 5 170.0 20.0 5.0 4 P 7.0 0.45 0 35.0 0.8 0.08 0.0 0.45 -0.25 0.45 0.3 0.44 0.35 40000 4020 100004 0 1 0",
+      "FBIRANCH 3500.0 11156.2 2.2 0.0 0.0 -0.2 80 0.80 0.80 0.52 5 170.0 22.0 5.0 4 P 8.5 0.50 0 30.0 0.7 0.15 0.0 0.34 -0.20 0.5 0.5 0.44 0.30 40000 4020 500000 0 1 0",
+      "VIRGO 1700.0 3435.4 2.0 0.0 0.0 -0.1 70 0.70 0.86 0.5 4 160.0 18.0 15.0 R P 7.0 0.50 0 32.0 0.8 0.10 0.0 0.31 -0.15 0.5 0.5 0.26 0.85 9000 40000000 10000000 0 0 0",
+      "GREENWOO 1600.0 4000.0 2.5 0.0 0.0 0.0 70 0.70 0.8 0.52 4 160.0 20.0 20.0 R P 5.4 0.60 0 30.0 1.1 0.12 5.0 0.32 -0.20 0.5 0.0 0.22 0.54 19000 0 10000001 0 3 0",
+      "HOTRING 1600.0 4500.0 1.4 0.0 0.2 -0.4 70 0.85 0.80 0.48 5 220.0 26.0 5.0 R P 10.0 0.52 0 30.0 1.5 0.10 10.0 0.29 -0.16 0.6 0.4 0.20 0.56 45000 40002004 C00000 1 1 0",
+      "SANDKING 2000.0 4000.0 2.2 0.0 0.0 -0.6 80 0.75 0.85 0.5 5 170.0 28.0 10.0 4 P 8.0 0.50 0 30.0 0.8 0.08 0.0 0.35 -0.31 0.5 0.0 0.38 0.35 40000 0 318800 0 1 22",
+      "BLISTAC 1000.0 2141.7 2.4 0.0 0.0 -0.10 50 0.85 0.85 0.5 5 200.0 26.0 5.0 F P 11.0 0.45 0 30.0 1.4 0.1 0.0 0.28 -0.12 0.5 0.0 0.25 0.50 35000 c0000000 C00000 1 1 0",
+      "BOXVILLE 5500.0 23489.6 3.0 0.0 0.0 0.0 80 0.82 0.70 0.46 5 140.0 14.0 25.0 R D 4.5 0.60 0 30.0 0.9 0.08 0.0 0.25 -0.25 0.35 0.6 0.26 0.40 22000 4009 201 0 3 13",
+      "BENSON 3500.0 13865.8 2.3 0.0 0.0 -0.2 80 0.75 0.70 0.46 5 140.0 14.0 20.0 R D 4.5 0.60 0 30.0 1.2 0.20 0.0 0.35 -0.15 0.45 0.0 0.46 0.53 22000 4088 1 1 3 0",
+      "MESA 1300.0 1900.0 3.0 0.0 0.2 -0.3 85 0.70 0.80 0.50 5 160.0 24.0 15.0 4 D 8.0 0.50 0 35.0 1.2 0.08 0.0 0.32 -0.20 0.35 0.4 0.18 0.30 25000 200840 0 0 1 0",
+      "BLOODRA 2100.0 5146.7 2.0 0.0 0.0 0.0 75 0.75 0.70 0.52 5 160.0 24.0 5.0 R P 6.2 0.55 0 35.0 1.0 0.06 3.0 0.35 -0.24 0.5 0.0 0.28 0.30 500 100 10800200 1 1 25",
+      "BLOODRB 1600.0 3866.7 2.0 0.0 0.0 0.0 75 0.80 0.70 0.52 5 160.0 26.0 5.0 R P 6.2 0.55 0 35.0 1.0 0.06 0.0 0.35 -0.17 0.5 0.0 0.28 0.30 500 0 800200 1 1 0",
+      "SUPERGT 1400.0 2800.0 2.0 0.0 -0.2 -0.24 70 0.75 0.86 0.48 5 230.0 26.0 5.0 R P 8.0 0.52 0 30.0 1.0 0.20 0.0 0.25 -0.10 0.5 0.3 0.40 0.54 105000 40002004 208000 0 0 1",
+      "ELEGANT 2200.0 5000.0 1.8 0.0 0.1 -0.1 75 0.70 0.80 0.46 5 165.0 20.0 10.0 R P 6.0 0.55 0 30.0 1.0 0.10 0.0 0.35 -0.15 0.5 0.3 0.2 0.30 35000 40000000 10400000 0 1 0",
+      "JOURNEY 3500.0 13865.8 3.0 0.0 0.0 0.0 80 0.62 0.70 0.46 5 140.0 14.0 25.0 R D 4.5 0.60 0 30.0 1.5 0.11 0.0 0.30 -0.15 0.5 0.0 0.46 0.53 22000 88 1 0 3 0",
+      "PETROL 3800.0 20000.0 2.0 0.0 0.0 -0.2 90 0.85 0.75 0.4 5 120.0 25.0 20.0 R D 8.0 0.30 0 35.0 1.0 0.10 0.0 0.25 -0.20 0.5 0.0 0.35 0.25 35000 20206008 1000001 0 1 2",
+      "RDTRAIN 5000.0 28000.0 2.0 0.0 0.5 -0.4 90 0.95 0.65 0.4 5 120.0 25.0 20.0 R D 8.0 0.30 0 25.0 0.7 0.10 0.0 0.20 -0.17 0.5 0.0 0.65 0.25 35000 20200008 200 0 1 2",
+      "NEBULA 1400.0 4000.0 2.0 0.0 0.3 -0.1 75 0.65 0.80 0.50 5 165.0 20.0 10.0 F P 8.0 0.55 0 30.0 1.4 0.10 0.0 0.27 -0.10 0.58 0.3 0.2 0.56 35000 0 400000 0 1 0",
+      "MAJESTIC 1400.0 3267.8 2.2 0.0 0.1 -0.1 75 0.75 0.80 0.52 5 165.0 22.0 10.0 R P 7.0 0.55 0 30.0 1.3 0.13 0.0 0.27 -0.15 0.5 0.3 0.2 0.56 35000 400000 10400000 0 1 0",
+      "BUCCANEE 1700.0 4500.0 2.2 0.0 0.3 0.0 70 0.60 0.86 0.54 4 160.0 24.0 15.0 R P 5.0 0.52 0 35.0 0.8 0.08 0.0 0.20 -0.20 0.54 0.4 0.3 0.52 19000 40400004 4 1 1 1",
+      "CEMENT 5500.0 33187.9 2.0 0.0 0.0 0.0 90 0.58 0.8 0.5 4 110.0 20.0 20.0 R D 3.17 0.40 0 30.0 1.4 0.06 0.0 0.45 -0.25 0.55 0.0 0.45 0.20 5000 404008 40200 0 1 0",
+      "TOWTRUCK 3500.0 12000.0 2.5 0.0 0.3 -0.25 80 0.85 0.70 0.46 5 160.0 25.0 30.0 R D 6.0 0.80 0 45.0 1.6 0.07 0.0 0.35 -0.15 0.25 0.0 0.2 0.50 20000 240001 1148200 0 3 13",
+      "FORTUNE 1700.0 4166.4 2.0 0.0 0.0 -0.2 70 0.70 0.84 0.53 4 160.0 20.0 10.0 R P 8.17 0.52 0 35.0 1.2 0.15 0.0 0.30 -0.10 0.5 0.25 0.3 0.52 19000 40000000 4 1 1 0",
+      "CADRONA 1200.0 2000.0 2.2 0.0 0.15 -0.1 70 0.70 0.86 0.5 4 160.0 20.0 5.0 R P 8.0 0.60 0 30.0 1.4 0.12 0.0 0.30 -0.08 0.5 0.0 0.26 0.50 9000 40000000 2 0 0 0",
+      "FBITRUCK 4000.0 10000.0 2.0 0.0 0.0 -0.2 85 0.65 0.85 0.54 5 170.0 25.0 25.0 4 D 6.0 0.40 0 30.0 0.8 0.1 0.0 0.30 -0.15 0.5 0.0 0.32 0.16 40000 4001 0 0 1 13",
+      "WILLARD 1800.0 4350.0 2.0 0.0 0.0 0.0 70 0.70 0.8 0.52 4 160.0 18.0 15.0 R P 5.4 0.60 0 30.0 1.1 0.15 0.0 0.32 -0.14 0.5 0.0 0.26 0.54 19000 40000000 0 0 3 0",
+      "FORKLIFT 1000.0 1354.2 2.0 0.0 -0.2 -0.35 70 0.80 0.85 0.5 3 60.0 20.0 15.0 F E 6.0 0.50 0 30.0 2.0 0.14 0.0 0.25 -0.20 0.5 0.0 0.26 0.50 9000 1300 1040024 1 1 0",
+      "TRACTOR 2000.0 5000.0 3.0 0.0 0.0 -0.2 70 0.90 0.85 0.5 4 70.0 20.0 90.0 R D 15.0 0.20 0 50.0 2.0 0.12 0.0 0.25 -0.05 0.5 0.0 0.26 0.50 9000 201310 1340005 1 1 28",
+      "COMBINE 8500.0 48804.2 5.0 0.0 0.3 -0.2 90 0.88 0.7 0.46 5 140.0 25.0 80.0 4 D 10.00 0.45 0 27.0 1.2 0.10 0.0 0.47 -0.11 0.5 0.0 1.20 0.43 10000 12c008 20 0 1 20",
+      "FELTZER 1600.0 4500.0 2.5 0.0 0.0 -0.15 75 0.65 0.9 0.5 5 200.0 28.0 25.0 R P 7.0 0.52 0 30.0 1.1 0.09 0.0 0.30 -0.10 0.5 0.3 0.25 0.60 35000 40002800 0 1 1 19",
+      "REMINGTN 1800.0 4000.0 2.0 0.0 -0.4 -0.2 70 0.75 0.80 0.56 5 160.0 23.0 5.0 R P 6.50 0.50 0 30.0 0.5 0.10 0.0 0.00 -0.20 0.4 0.6 0.21 0.41 30000 40002004 2410000 1 1 1",
+      "SLAMVAN 1950.0 4712.5 4.0 0.0 0.1 0.0 70 0.65 0.90 0.50 5 160.0 40.0 10.0 R P 10.0 0.50 0 28.0 1.6 0.12 0.0 0.35 -0.14 0.5 0.3 0.36 0.42 19000 40002000 2010000 1 3 0",
+      "BLADE 1500.0 2500.0 2.0 0.0 -0.2 0.1 70 0.75 0.84 0.53 4 160.0 24.0 5.0 R P 8.17 0.52 0 35.0 1.0 0.10 0.0 0.30 -0.15 0.44 0.25 0.3 0.52 19000 40202000 12010000 1 1 0",
+      "FREIGHT 5500.0 65000.0 3.0 0.0 0.0 0.0 90 0.58 0.8 0.5 4 110.0 20.0 20.0 R D 3.17 0.40 0 30.0 1.4 0.06 0.0 0.45 0.0 0.55 0.0 0.45 0.20 5000 8 200 0 1 2",
+      "STREAK 5500.0 65000.0 3.0 0.0 0.0 0.0 90 0.58 0.8 0.5 4 110.0 20.0 20.0 R D 3.17 0.40 0 30.0 1.4 0.06 0.0 0.45 -0.10 0.55 0.0 0.65 0.20 5000 8 200 0 1 2",
+      "VINCENT 1800.0 3000.0 2.0 0.0 0.3 0.0 70 0.70 0.8 0.5 4 160.0 18.0 20.0 F P 5.4 0.60 0 30.0 1.0 0.09 0.0 0.32 -0.16 0.56 0.0 0.26 0.54 19000 0 2 0 3 0",
+      "BULLET 1200.0 2500.0 1.8 0.0 -0.15 -0.2 70 0.75 0.90 0.48 5 230.0 30.0 10.0 R P 8.0 0.58 0 30.0 1.0 0.13 5.0 0.25 -0.10 0.45 0.3 0.15 0.54 105000 c0002004 204000 0 0 1",
+      "CLOVER 1600.0 3000.0 2.2 0.0 0.0 0.0 70 0.65 0.80 0.52 4 160.0 24.0 10.0 R P 8.0 0.5 0 35.0 1.0 0.10 0.0 0.30 -0.10 0.5 0.25 0.25 0.52 19000 40280000 10008004 1 1 0",
+      "SADLER 1700.0 4500.0 2.7 0.0 0.0 -0.05 75 0.65 0.70 0.5 5 165.0 25.0 20.0 4 D 8.5 0.5 0 35.0 0.8 0.08 3.0 0.25 -0.15 0.4 0.4 0.26 0.20 26000 200040 104004 0 1 0",
+      "RANGER 1700.0 4108.3 2.5 0.0 0.0 0.0 85 0.85 0.85 0.51 5 160.0 20.0 5.0 4 D 6.2 0.60 0 35.0 1.7 0.08 0.0 0.25 -0.15 0.5 0.25 0.27 0.23 25000 20 700000 0 1 0",
+      "HUSTLER 1700.0 4000.0 2.5 0.0 0.0 -0.05 75 0.75 0.75 0.52 5 160.0 22.0 10.0 R P 8.0 0.50 0 30.0 0.45 0.1 0.0 0.10 -0.15 0.5 0.5 0.18 0.45 20000 0 800000 2 1 0",
+      "INTRUDER 1800.0 4350.0 2.0 0.0 0.0 0.0 70 0.70 0.8 0.49 5 160.0 18.0 25.0 R P 5.4 0.60 0 30.0 1.0 0.09 0.0 0.32 -0.15 0.54 0.0 0.26 0.54 19000 0 2 0 3 0",
+      "PRIMO 1600.0 3300.0 2.2 0.0 0.0 0.0 70 0.70 0.8 0.54 4 160.0 18.0 7.0 R P 5.4 0.60 0 30.0 1.1 0.14 0.0 0.32 -0.14 0.5 0.0 0.26 0.54 19000 0 0 0 3 0",
+      "TAMPA 1700.0 4166.4 2.5 0.0 0.15 0.0 70 0.60 0.85 0.52 4 160.0 24.0 10.0 R P 8.17 0.52 0 35.0 0.7 0.08 3.0 0.30 -0.16 0.5 0.50 0.3 0.52 19000 40000004 4 1 1 1",
+      "SUNRISE 1600.0 3550.0 2.0 0.0 0.3 0.0 70 0.70 0.8 0.52 5 160.0 17.0 5.0 F P 5.4 0.60 0 30.0 1.0 0.09 0.0 0.30 -0.12 0.55 0.0 0.26 0.54 19000 40000000 1 0 3 0",
+      "MERIT 1800.0 4500.0 2.2 0.0 0.2 -0.10 75 0.65 0.8 0.49 5 165.0 22.0 10.0 R P 9.0 0.55 0 30.0 1.1 0.15 0.0 0.27 -0.08 0.54 0.3 0.2 0.56 35000 40000000 400001 0 1 0",
+      "UTILITY 2600.0 8666.7 3.0 0.0 0.0 0.0 80 0.85 0.70 0.46 5 160.0 18.0 10.0 R D 6.0 0.80 0 30.0 1.8 0.07 0.0 0.35 -0.18 0.25 0.0 0.2 0.50 20000 1 0 0 3 13",
+      "YOSEMITE 3000.0 6000.0 3.0 0.0 0.35 0.0 80 0.60 0.80 0.4 5 170.0 25.0 15.0 R P 8.5 0.30 0 30.0 1.0 0.12 0.0 0.24 -0.20 0.5 0.5 0.44 0.30 40000 20200020 504400 0 1 0",
+      "WINDSOR 1500.0 3500.0 3.0 0.0 0.05 -0.2 75 0.55 0.85 0.5 5 180.0 30.0 10.0 R P 8.0 0.45 0 30.0 0.65 0.07 0.0 0.15 -0.10 0.5 0.3 0.25 0.60 35000 40282804 0 1 1 1",
+      "MTRUCK_A 5000.0 20000.0 3.0 0.0 0.0 -0.35 80 0.65 0.85 0.55 5 110.0 45.0 25.0 4 P 7.0 0.45 0 35.0 1.5 0.07 0.0 0.45 -0.30 0.5 0.3 0.44 0.35 40000 28 1300045 0 1 20",
+      "MTRUCK_B 5000.0 20000.0 3.0 0.0 0.0 -0.35 80 0.65 0.85 0.55 5 110.0 45.0 25.0 4 P 7.0 0.45 0 35.0 1.5 0.07 0.0 0.45 -0.30 0.5 0.3 0.44 0.35 40000 28 1300045 0 1 20",
+      "URANUS 1400.0 2998.3 2.0 0.0 0.1 -0.3 75 0.80 0.85 0.47 5 200.0 20.0 5.0 R P 8.0 0.45 0 30.0 1.3 0.15 0.0 0.28 -0.10 0.5 0.3 0.25 0.60 35000 c0002800 4000001 1 1 0",
+      "JESTER 1500.0 3600.0 2.2 0.0 0.0 -0.05 75 0.85 0.8 0.5 5 200.0 28.0 10.0 F P 10.0 0.45 0 30.0 1.1 0.10 0.0 0.28 -0.15 0.5 0.3 0.25 0.60 35000 c0002804 4000000 1 1 1",
+      "SULTAN 1400.0 3400.0 2.4 0.0 0.1 -0.1 75 0.80 0.8 0.5 5 200.0 28.0 5.0 4 P 10.0 0.5 0 30.0 1.2 0.15 0.0 0.28 -0.20 0.5 0.3 0.25 0.60 35000 2800 4000002 1 1 0",
+      "STRATUM 1800.0 4500.0 2.1 0.0 0.1 -0.1 75 0.60 0.85 0.5 5 200.0 20.0 10.0 R P 7.0 0.5 0 30.0 1.0 0.15 0.0 0.28 -0.16 0.5 0.3 0.25 0.60 35000 2800 4000000 1 1 0",
+      "ELEGY 1500.0 3500.0 2.2 0.0 0.3 -0.15 75 0.65 0.9 0.5 5 200.0 28.0 5.0 R P 8.0 0.5 0 35.0 1.0 0.20 0.0 0.28 -0.10 0.5 0.3 0.25 0.60 35000 40002804 4000001 1 1 1",
+      "RCTIGER 100.0 24.1 5.0 0.0 0.0 -0.1 70 0.70 0.9 0.49 1 75.0 35.0 15.0 4 E 5.0 0.50 0 45.0 1.6 0.1 0.0 0.28 -0.14 0.5 0.0 0.2 0.05 500 0 40 0 1 0",
+      "FLASH 1400.0 2998.3 2.2 0.0 0.2 -0.1 75 0.75 0.9 0.5 5 200.0 24.0 10.0 F P 8.0 0.55 0 30.0 1.4 0.15 0.0 0.28 -0.10 0.5 0.3 0.25 0.60 35000 2804 4000001 1 1 1",
+      "TAHOMA 1800.0 4000.0 2.3 0.0 -0.3 0.0 75 0.75 0.85 0.52 5 160.0 24.0 10.0 R P 7.0 0.50 0 35.0 1.0 0.08 0.0 0.28 -0.20 0.45 0.3 0.25 0.60 35000 0 12010000 1 1 0",
+      "SAVANNA 1500.0 2500.0 2.0 0.0 -0.6 0.1 70 0.70 0.84 0.55 4 160.0 24.0 5.0 R P 8.17 0.52 0 35.0 1.0 0.10 0.0 0.30 -0.15 0.3 0.25 0.3 0.52 19000 200000 2010000 1 1 0",
+      "BANDITO 1000.0 2500.3 4.0 0.0 0.0 -0.3 80 0.70 0.88 0.55 4 170.0 35.0 5.0 R P 6.1 0.55 0 35.0 1.0 0.10 5.0 0.25 -0.20 0.35 0.0 0.60 0.40 15000 40001b04 308400 1 2 1",
+      "FREIFLAT 5500.0 33187.9 1.0 0.0 0.0 0.0 90 0.58 0.8 0.5 4 110.0 20.0 20.0 R D 3.17 0.40 0 30.0 1.4 0.06 0.0 0.45 0.0 0.55 0.0 0.45 0.20 5000 8 200 0 1 0",
+      "CSTREAK 5500.0 33187.9 1.0 0.0 0.0 0.0 90 0.58 0.8 0.5 4 110.0 20.0 20.0 R D 3.17 0.40 0 30.0 1.4 0.06 0.0 0.45 -0.10 0.55 0.0 0.65 0.20 5000 8 200 0 1 21",
+      "KART 300.0 150.0 5.0 0.0 0.0 -0.15 110 0.90 0.85 0.48 4 90.0 18.0 5.0 R P 15.0 0.20 0 35.0 1.5 0.20 0.0 0.25 -0.04 0.5 0.0 0.38 0.40 15000 40001b00 308201 1 2 18",
+      "MOWER 800.0 500.0 5.0 0.0 0.0 -0.3 80 0.70 0.80 0.48 3 60.0 12.0 30.0 R P 6.1 0.55 0 35.0 1.0 0.15 0.0 0.15 -0.05 0.5 0.0 0.38 0.40 15000 40001b00 1308001 1 2 28",
+      "DUNE 10000.0 50000.0 2.0 0.0 0.0 -0.6 80 0.65 0.85 0.5 5 110.0 35.0 25.0 4 P 7.0 0.45 0 35.0 0.8 0.10 0.0 0.40 -0.40 0.5 0.3 0.29 0.35 40000 6028 1300005 0 1 2",
+      "SWEEPER 800.0 632.7 5.0 0.0 0.0 -0.3 80 0.70 0.80 0.46 3 60.0 12.0 30.0 R P 6.1 0.55 0 35.0 1.6 0.15 0.0 0.34 -0.10 0.5 0.0 0.30 0.40 15000 40005a00 1308201 1 2 0",
+      "BROADWAY 1700.0 4166.4 2.0 0.0 0.1 0.1 70 0.65 0.75 0.46 4 160.0 20.0 10.0 R P 6.0 0.55 0 25.0 0.8 0.07 0.0 0.30 -0.14 0.5 0.25 0.3 0.52 19000 220000 2012100 1 1 0",
+      "TORNADO 1700.0 4166.4 2.0 0.0 -0.1 0.1 70 0.75 0.75 0.52 4 160.0 20.0 10.0 R P 6.0 0.55 0 35.0 0.8 0.08 0.0 0.30 -0.15 0.5 0.25 0.3 0.52 19000 400220000 2010000 1 1 0",
+      "DFT30 5500.0 33187.9 2.0 0.0 0.0 -0.2 90 0.65 0.8 0.40 5 110.0 20.0 20.0 R D 3.5 0.40 0 30.0 1.4 0.06 0.0 0.45 -0.25 0.55 0.0 0.45 0.20 5000 4008 200 0 1 2",
+      "HUNTLEY 2500.0 6000.0 2.5 0.0 0.0 -0.20 80 0.62 0.89 0.5 5 160.0 25.0 25.0 4 P 7.0 0.45 0 35.0 1.0 0.05 0.0 0.45 -0.21 0.45 0.3 0.44 0.35 40000 20 4404 0 1 0",
+      "STAFFORD 2200.0 6000.0 2.5 0.0 0.0 0.0 75 0.65 0.92 0.5 5 165.0 24.0 15.0 R P 5.0 0.55 0 30.0 1.1 0.1 0.0 0.27 -0.22 0.5 0.3 0.2 0.56 35000 0 400000 0 1 0",
+      "NEWSVAN 1900.0 6333.3 2.0 0.0 0.0 -0.15 80 0.85 0.70 0.46 5 160.0 15.0 15.0 R D 6.0 0.80 0 30.0 1.3 0.07 0.0 0.35 -0.15 0.45 0.0 0.2 0.43 20000 4001 2 0 3 13",
+      "TUG 800.0 632.7 5.0 0.0 0.0 -0.1 80 0.85 0.80 0.46 4 170.0 15.0 30.0 R P 6.1 0.55 0 35.0 1.2 0.15 0.0 0.34 -0.10 0.5 0.0 0.38 0.40 15000 1a00 308200 1 2 0",
+      "PETROTR 3800.0 30000.0 2.0 0.0 0.0 -0.5 90 0.45 0.75 0.5 5 120.0 18.0 5.0 R D 8.0 0.30 0 25.0 1.5 0.05 0.0 0.30 -0.15 0.5 0.0 0.65 0.25 35000 20002000 0000 0 1 0",
+      "EMPEROR 1800.0 4000.0 2.2 0.0 0.2 0.15 75 0.65 0.80 0.52 5 165.0 21.0 20.0 R P 8.0 0.45 0 30.0 0.9 0.13 3.0 0.30 -0.10 0.5 0.3 0.2 0.56 35000 40000000 400000 0 1 0",
+      "FLOAT 5500.0 33187.9 2.0 0.0 0.0 0.0 90 0.58 0.8 0.5 4 110.0 20.0 20.0 R D 3.17 0.40 0 30.0 1.4 0.06 0.0 0.45 -0.25 0.55 0.0 0.45 0.20 5000 8 200 0 1 0",
+      "EUROS 1400.0 2998.3 2.2 0.0 0.1 -0.1 75 0.70 0.8 0.5 5 200.0 24.0 5.0 4 P 8.0 0.55 0 30.0 1.2 0.15 0.0 0.30 -0.10 0.5 0.3 0.25 0.60 35000 40002804 0 1 1 0",
+      "HOTDOG 5500.0 23489.6 3.0 0.0 0.0 0.3 80 0.72 0.70 0.46 5 140.0 14.0 25.0 R D 4.5 0.60 0 30.0 0.6 0.08 0.0 0.30 -0.24 0.4 0.6 0.36 0.40 22000 40000009 201 0 3 13",
+      "CLUB 1400.0 3000.0 2.8 0.0 0.0 0.0 80 0.75 0.90 0.49 5 200.0 30.0 10.0 F P 11.0 0.45 0 30.0 1.7 0.1 0.0 0.28 -0.12 0.5 0.0 0.25 0.50 35000 2000 C00000 1 1 0",
+      "ARTICT3 3800.0 30000.0 2.0 0.0 0.0 -0.5 90 0.45 0.75 0.5 5 120.0 18.0 5.0 R D 8.0 0.30 0 25.0 1.5 0.05 0.0 0.30 -0.15 0.5 0.0 0.65 0.25 35000 20002000 0000 0 1 0",
+      "RCCAM 100.0 50.0 20.0 0.0 0.05 -0.2 70 0.60 0.90 0.49 1 60.0 50.0 10.0 4 E 5.5 0.50 0 25.0 3.0 0.3 0.0 0.15 -0.15 0.5 0.0 0.2 0.05 500 0 1000000 0 1 0",
+      "POLICE_LA 1600.0 4500.0 2.0 0.0 0.3 -0.1 75 0.75 0.85 0.50 5 200.0 25.0 10.0 R P 10.0 0.53 0 35.0 1.0 0.12 0.0 0.28 -0.12 0.55 0.0 0.2 0.24 25000 40000000 10200008 0 1 0",
+      "POLICE_SF 1600.0 4500.0 2.0 0.0 0.3 -0.15 75 0.75 0.85 0.52 5 200.0 25.0 10.0 R P 10.0 0.53 0 35.0 1.1 0.12 0.0 0.28 -0.17 0.55 0.0 0.2 0.24 25000 40000000 10200008 0 1 0",
+      "POLICE_VG 1600.0 4500.0 2.0 0.0 0.3 -0.1 75 0.75 0.85 0.52 5 200.0 25.0 10.0 R P 10.0 0.53 0 35.0 0.9 0.08 0.0 0.28 -0.17 0.55 0.0 0.2 0.24 25000 40000000 10200008 0 1 0",
+      "POLRANGER 2500.0 5500.0 3.0 0.0 0.0 -0.2 85 0.65 0.85 0.55 5 160.0 30.0 15.0 4 D 6.2 0.60 0 35.0 0.7 0.06 1.0 0.30 -0.25 0.5 0.25 0.27 0.23 25000 284020 308800 0 1 0",
+      "PICADOR 1600.0 3800.0 2.7 0.0 0.2 0.0 75 0.65 0.70 0.52 5 165.0 25.0 20.0 R D 8.5 0.5 0 35.0 0.8 0.08 2.0 0.25 -0.15 0.4 0.4 0.26 0.20 26000 40200040 104004 0 1 0",
+      "SWATVAN 5000.0 10000.0 2.5 0.0 0.0 -0.1 85 0.65 0.7 0.46 5 110.0 24.0 25.0 4 D 6.4 0.45 0 27.0 0.7 0.08 1.0 0.30 -0.18 0.5 0.0 0.32 0.06 40000 880010 1000000 0 1 13",
+      "ALPHA 1500.0 3400.0 2.0 0.0 0.1 -0.2 85 0.7 0.8 0.5 5 200.0 23.0 5.0 R P 7.0 0.55 0 30.0 1.2 0.12 0.0 0.30 -0.15 0.5 0.4 0.25 0.50 35000 40002800 200000 1 1 0",
+      "PHOENIX 1500.0 4000.0 2.2 0.0 0.3 -0.15 85 0.7 0.9 0.52 5 200.0 26.0 5.0 R P 6.0 0.55 0 30.0 0.8 0.08 0.0 0.28 -0.24 0.59 0.4 0.25 0.50 35000 2800 200000 1 1 0",
+      "BAGBOXA 1000.0 1354.2 5.0 0.0 0.4 -0.2 70 1.00 0.85 0.5 3 160.0 20.0 30.0 R E 5.0 0.50 0 30.0 2.0 0.09 0.0 0.25 -0.10 0.5 0.0 0.26 0.50 9000 3100 4 1 1 0",
+      "BAGBOXB 1000.0 1354.2 5.0 0.0 0.4 -0.2 70 1.00 0.85 0.5 3 160.0 20.0 30.0 R E 5.0 0.50 0 30.0 2.0 0.09 0.0 0.25 -0.10 0.5 0.0 0.26 0.50 9000 3100 4 1 1 0",
+      "STAIRS 1000.0 2500.0 5.0 0.0 0.4 -0.2 70 1.00 0.85 0.5 3 160.0 20.0 30.0 R E 5.0 0.50 0 30.0 2.0 0.09 0.0 0.25 -0.10 0.5 0.0 0.26 0.50 9000 3100 4 1 1 0",
+      "BOXBURG 5500.0 23489.6 3.0 0.0 0.0 0.0 80 0.82 0.70 0.46 5 140.0 14.0 25.0 R D 4.5 0.60 0 30.0 0.9 0.08 0.0 0.25 -0.25 0.35 0.6 0.36 0.40 22000 4009 201 0 3 13",
+      "FARM_TR1 400.0 400.0 5.0 0.0 -0.4 0.0 70 0.60 0.85 0.5 3 160.0 20.0 30.0 R E 5.0 0.50 0 30.0 1.0 0.10 0.0 0.25 -0.10 0.5 0.0 0.26 0.50 9000 3100 4 1 1 0",
+      "UTIL_TR1 1000.0 1354.2 5.0 0.0 0.0 0.0 70 1.00 0.85 0.5 3 160.0 20.0 30.0 R E 5.0 0.50 0 30.0 2.0 0.09 0.0 0.25 -0.10 0.5 0.0 0.26 0.50 9000 3100 4 1 1 0",
+      "ROLLER 1000.0 1354.2 4.0 0.0 0.0 -0.1 70 0.55 0.85 0.5 3 160.0 15.0 30.0 4 E 13.0 0.50 0 30.0 1.0 0.09 0.0 0.28 -0.13 0.5 0.0 0.26 0.50 9000 1100 8804 1 1 0",
+      "BIKE 500.0 161.7 4.0 0.0 0.05 -0.09 103 1.6 0.9 0.48 5 190.0 50.0 5.0 R P 15.0 0.50 0 35.0 0.85 0.15 0.0 0.15 -0.16 0.5 0.0 0.0 0.15 10000 1002000 0 1 1 4",
+      "MOPED 350.0 119.6 5.0 0.0 0.05 -0.1 103 1.8 0.9 0.48 3 190.0 30.0 5.0 R P 14.0 0.50 0 35.0 1.0 0.15 0.0 0.12 -0.17 0.5 0.0 0.0 0.11 10000 1000000 0 1 1 5",
+      "DIRTBIKE 500.0 195.0 5.0 0.0 0.05 -0.09 103 1.6 0.9 0.48 5 190.0 50.0 5.0 R P 14.0 0.50 0 35.0 0.85 0.15 0.0 0.15 -0.16 0.5 0.0 0.0 0.15 10000 1000000 0 1 1 7",
+      "FCR900 500.0 200.0 4.0 0.0 0.05 -0.09 103 1.5 0.9 0.48 5 190.0 50.0 5.0 R P 15.0 0.50 0 35.0 0.85 0.15 0.0 0.15 -0.16 0.5 0.0 0.0 0.11 10000 1000000 0 1 1 4",
+      "NRG500 400.0 200.0 4.0 0.0 0.08 -0.09 103 1.8 0.9 0.48 5 190.0 60.0 5.0 R P 15.0 0.50 0 35.0 0.85 0.15 0.0 0.15 -0.16 0.5 0.0 0.0 0.15 10000 1002000 2 1 1 4",
+      "HPV1000 500.0 240.0 4.5 0.0 0.05 -0.09 103 1.5 0.9 0.46 5 190.0 50.0 5.0 R P 15.0 0.50 0 35.0 0.85 0.15 0.0 0.15 -0.16 0.5 0.0 0.0 0.15 10000 1002000 0 1 1 4",
+      "BF400 500.0 200.0 4.5 0.0 0.05 -0.09 103 1.4 0.9 0.48 5 190.0 50.0 5.0 R P 15.0 0.50 0 35.0 0.85 0.15 0.0 0.15 -0.20 0.5 0.0 0.0 0.15 10000 1000000 0 1 1 4",
+      "WAYFARER 800.0 600.0 4.0 0.0 0.1 0.0 103 1.4 0.85 0.48 4 190.0 40.0 5.0 R P 10.0 0.55 0 35.0 0.65 0.20 0.0 0.09 -0.11 0.55 0.0 0.0 0.24 10000 41002000 0 1 1 8",
+      "QUADBIKE 400.0 300.0 5.0 0.0 0.05 -0.20 70 0.7 0.9 0.49 4 160.0 25.0 5.0 4 P 8.0 0.50 0 35.0 0.8 0.10 0.0 0.15 -0.15 0.5 0.0 0.2 0.50 9000 281300 205 1 1 12",
+      "BMX 100.0 39.0 7.0 0.0 0.05 -0.09 103 1.6 0.9 0.48 5 120.0 18.0 5.0 R P 19.0 0.50 0 35.0 0.80 0.15 0.0 0.20 -0.10 0.5 0.0 0.0 0.15 10000 41000000 0 1 1 9",
+      "CHOPPERB 100.0 39.0 6.0 0.0 0.05 -0.09 103 1.6 0.9 0.48 5 120.0 18.0 5.0 R P 19.0 0.50 0 35.0 0.85 0.15 0.0 0.20 -0.10 0.5 0.0 0.0 0.15 10000 41000000 0 1 1 11",
+      "MTB 100.0 60.0 5.0 0.0 0.05 -0.09 103 1.6 0.9 0.48 4 140.0 25.0 15.0 R P 19.0 0.50 0 35.0 0.85 0.15 0.0 0.20 -0.10 0.5 0.0 0.0 0.15 10000 41000000 2 1 1 10",
+      "FREEWAY 800.0 403.3 4.0 0.0 0.1 0.0 103 1.2 0.82 0.51 4 190.0 40.0 5.0 R P 10.0 0.55 0 35.0 0.65 0.20 0.0 0.09 -0.11 0.55 0.0 0.0 0.24 10000 1002000 0 1 1 6",
+      "PREDATOR 2200.0 29333.3 1.0 0.0 0.0 0.0 14 2.30 15.0 0.58 5 190.0 1.7 5.0 R P 0.05 0.01 0 24.0 1.0 3.0 0.0 0.10 0.1 0.0 0.0 0.2 0.33 40000 8000000 0 0 1 0",
+      "SPEEDER 2200.0 20210.7 1.0 0.0 0.0 0.0 22 2.5 15.0 0.65 5 190.0 2.5 5.0 R P 0.04 0.01 0 20.0 1.3 3.0 0.0 0.10 0.5 2.0 0.0 0.7 0.39 30000 8000400 0 0 1 0",
+      "REEFER 5000.0 25520.8 1.0 0.0 0.0 0.0 15 -1.50 15.0 0.45 5 190.0 0.7 5.0 R P 0.02 0.02 0 25.0 1.0 3.0 0.0 0.10 0.1 0.0 0.0 0.2 0.38 25000 8000000 0 0 1 0",
+      "RIO 3000.0 17312.5 1.0 0.0 0.0 0.0 15 -4.00 25.0 0.50 5 190.0 0.5 5.0 R P 0.02 0.00 0 20.0 1.0 3.0 0.0 15.00 0.1 0.0 0.0 0.2 0.23 70000 8000000 0 0 1 0",
+      "SQUALO 2200.0 29333.3 1.0 0.0 0.0 0.0 42 3.00 15.0 0.65 5 190.0 3.0 5.0 R P 0.02 0.00 0 24.0 0.45 5.0 0.0 0.10 0.05 0.0 0.0 0.2 0.33 60000 8000400 0 0 1 0",
+      "TROPIC 2200.0 29333.3 1.0 0.0 0.0 0.0 10 2.20 12.0 0.45 5 190.0 1.4 5.0 R P 0.05 0.01 0 24.0 1.8 3.0 0.0 0.10 0.1 0.0 0.0 0.2 0.33 73000 8000400 0 0 1 0",
+      "COASTGRD 1200.0 6525.0 1.0 0.0 -0.3 0.0 14 2.00 4.2 0.70 5 190.0 1.6 5.0 R P 0.05 0.01 0 24.0 1.0 3.0 0.0 3.20 0.1 2.5 0.0 0.2 0.18 10000 8000000 0 0 1 0",
+      "DINGHY 800.0 1483.3 1.0 0.0 0.0 0.0 16 3.50 3.5 1.00 5 190.0 1.2 5.0 R P 0.07 0.01 0 30.0 1.0 4.5 0.0 3.50 0.1 0.7 0.0 0.2 0.12 5000 8000000 0 0 1 0",
+      "MARQUIS 5000.0 155520.8 1.0 0.0 0.0 0.0 10 -3.50 25.0 0.40 5 190.0 0.5 5.0 R P 0.04 0.03 0 38.0 1.0 3.0 0.0 0.10 0.0 1.0 0.0 0.2 0.38 99000 8000000 0 0 1 0",
+      "CUPBOAT 3000.0 40000.0 1.0 0.0 0.0 0.0 35 2.00 15.0 0.50 5 190.0 3.0 5.0 R P 0.02 0.00 0 24.0 0.75 4.0 0.0 0.10 0.3 1.5 0.0 0.2 0.45 48000 8000400 0 0 1 0",
+      "LAUNCH 2200.0 20210.7 1.0 0.0 -1.0 0.0 22 1.5 15.0 0.65 5 190.0 1.5 5.0 R P 0.03 0.01 0 24.0 1.0 3.0 0.0 0.10 0.5 2.0 0.0 0.7 0.39 30000 8000400 0 0 1 0",
+      "SEAPLANE 5000.0 27083.3 12.0 0.0 0.0 0.0 9 0.83 45.0 0.5 1 200.0 1.7 5.0 4 P 0.01 0.05 0 24.0 1.5 0.75 0.0 0.10 0.0 2.0 0.0 1.0 0.05 10000 4000400 0 0 1 0",
+      "VORTEX 1900.0 4795.9 20.0 0.0 0.0 0.2 85 0.05 1.0 0.5 5 150.0 2.0 5.0 R P 1.0 0.50 0 30.0 0.5 0.05 0.0 0.33 -0.25 0.5 0.02 0.65 0.50 26000 301 400040 0 1 23",
+      "RUSTLER 5000.0 27083.3 10.0 0.0 0.0 0.0 75 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 1.5 0.45 0 45.0 2.0 0.15 0.0 0.50 -0.20 0.5 0.0 0.30 0.75 45000 4008108 400020 0 1 14",
+      "BEAGLE 10000.0 80000.0 14.0 0.0 0.0 0.0 75 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 1.5 0.45 0 45.0 2.0 0.15 0.0 1.00 -0.10 0.35 0.0 0.30 0.75 45000 24000008 400000 0 1 13",
+      "CROPDUST 5000.0 27083.3 15.0 0.0 0.0 0.0 75 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 1.5 0.45 0 45.0 2.0 0.15 0.0 0.55 -0.05 0.5 0.0 0.30 0.75 45000 4008000 400020 0 1 14",
+      "STUNT 5000.0 20000.0 14.0 0.0 0.0 0.0 75 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 1.5 0.45 0 45.0 2.0 0.15 0.0 0.50 -0.10 0.9 0.0 0.30 0.75 45000 4008100 400020 0 1 14",
+      "SHAMAL 15000.0 81250.0 8.0 0.0 0.0 0.0 75 0.55 0.8 0.7 1 200.0 16.0 5.0 4 P 1.5 0.15 0 45.0 4.0 0.15 0.0 1.00 -0.00 0.3 0.0 0.30 0.75 45000 400c108 400000 0 1 26",
+      "HYDRA 9000.0 48750.0 20.0 0.0 0.0 0.0 75 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 1.5 0.45 0 45.0 1.0 0.15 0.0 0.50 -0.20 0.8 0.0 0.60 0.75 45000 4008100 400000 0 1 27",
+      "NEVADA 25000.0 438750.0 10.0 0.0 0.0 0.0 75 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 1.0 0.45 0 45.0 1.0 0.10 0.0 0.40 -0.30 0.5 0.0 0.30 0.75 45000 400c108 400020 0 1 29",
+      "AT400 60000.0 9000000.0 4.0 0.0 0.0 0.0 75 1.5 0.9 0.85 1 200.0 16.0 5.0 4 P 1.0 0.45 0 45.0 1.5 0.15 0.0 0.50 -0.20 0.3 0.0 0.70 0.75 45000 2400c008 400000 0 1 15",
+      "ANDROM 40000.0 3000000.0 4.0 0.0 0.0 0.0 75 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 1.0 0.45 0 45.0 2.0 0.15 0.0 0.50 -0.20 0.5 0.0 0.30 0.75 45000 24114108 440000 0 1 0",
+      "DODO 5000.0 27083.3 12.0 0.0 0.3 0.0 75 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 1.5 0.45 0 45.0 1.5 0.15 0.0 0.50 -0.05 0.2 0.0 0.50 0.75 45000 4000000 400000 0 1 13",
+      "SPARROW 2500.0 6041.7 0.2 0.0 0.0 -0.1 75 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 5.0 0.45 0 30.0 2.0 0.1 0.0 0.50 -0.20 0.5 0.0 0.30 0.50 25000 2004000 400000 0 1 0",
+      "SEASPAR 3000.0 7250.0 0.1 0.0 0.0 -0.1 5 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 5.0 0.45 0 30.0 2.0 0.1 0.0 0.50 -0.20 0.5 0.0 0.30 0.60 28000 2004000 400000 0 1 0",
+      "MAVERICK 5000.0 29270.8 0.2 0.0 0.0 -0.1 75 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 5.0 0.45 0 30.0 2.0 0.15 0.0 0.50 -0.20 0.5 0.0 0.30 0.75 45000 2004000 400000 0 1 0",
+      "COASTMAV 3500.0 8458.3 0.2 0.0 0.0 -0.1 75 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 5.0 0.45 0 30.0 2.0 0.1 0.0 0.50 -0.20 0.5 0.0 0.30 0.65 50000 2004000 400000 0 1 0",
+      "POLMAV 4500.0 26343.7 0.2 0.0 0.0 -0.1 75 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 5.0 0.45 0 30.0 2.0 0.1 0.0 0.50 -0.20 0.5 0.0 0.30 0.65 52000 2004000 400000 0 1 0",
+      "HUNTER 10000.0 150000.0 0.2 0.0 0.0 0.0 75 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 5.0 0.45 0 30.0 1.0 0.05 0.0 0.20 -0.15 0.85 0.0 0.40 0.50 99000 200c000 400000 0 1 14",
+      "LEVIATHN 15000.0 200000.0 0.1 0.0 0.0 0.0 30 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 5.0 0.45 0 30.0 1.0 0.05 0.0 0.50 -0.20 0.9 0.0 0.30 0.50 25000 2004000 400000 0 1 0",
+      "CARGOBOB 20000.0 48333.3 0.2 0.0 0.0 -0.1 75 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 5.0 0.45 0 30.0 0.6 0.05 0.0 0.50 -0.10 0.3 0.0 0.30 0.50 25000 22004000 400000 0 1 0",
+      "RAINDANC 10000.0 96666.7 0.05 0.0 0.0 -1.0 75 0.65 0.9 0.5 1 200.0 16.0 5.0 4 P 5.0 0.45 0 30.0 1.5 0.1 0.0 0.20 -0.15 0.5 0.0 0.70 0.50 99000 2004000 400000 0 1 0",
+      "RCBARON 100.0 50.0 120.0 0.0 0.0 0.0 99 0.20 0.9 0.5 1 75.0 1.0 5.0 F P 0.5 0.50 0 45.0 0.6 0.1 0.0 0.25 -0.00 0.8 0.0 0.2 0.08 300 4000000 20 0 1 0",
+      "RCGOBLIN 100.0 24.1 0.2 0.0 0.0 -0.1 70 1.10 0.75 0.50 1 75.0 35.0 5.0 4 P 5.5 0.50 0 25.0 1.6 0.1 0.0 0.28 -0.08 0.5 0.0 0.2 0.05 800 2000000 0 0 1 0",
+      "RCRAIDER 100.0 24.1 0.2 0.0 0.0 -0.1 70 1.10 0.75 0.50 1 75.0 35.0 5.0 4 P 5.5 0.50 0 25.0 1.6 0.1 0.0 0.28 -0.08 0.5 0.0 0.2 0.10 500 2000000 0 0 1 0",
+      ";the end"
+    ];
+    return out.join("\r\n") + "\r\n";
+  }
+  function pdDefaultText(){
+    var out = [
+      "# pedstats.dat - XSS TXD Ped Editor default sample (totoong GTA SA default data).",
+      "# A: PedStat type name   B: Flee distance   C: Heading change rate   D: Fear (0-100)   E: Temper (0-100)",
+      "# F: Lawfullness (0-100)   G: Sexiness (0-100)   H: Attack strength   I: Defend weakness   J: Shooting Rate (0-100)",
+      "# K: Default Decision Maker -> 0: group member, 1: cop, 2: rand_norm 3: rand_tough 4: rand_weak",
+      "STAT_PLAYER 0.0 9.0 50 50 50 50 3.0 0.4 40 2",
+      "STAT_COP 20.0 7.5 10 30 100 50 1.0 1.0 40 1",
+      "STAT_MEDIC 20.0 7.5 70 30 60 40 0.8 1.4 40 2",
+      "STAT_FIREMAN 20.0 7.5 10 20 60 80 1.2 0.8 40 5",
+      "STAT_GANG1 17.0 7.5 20 65 10 40 1.0 1.0 45 3",
+      "STAT_GANG2 17.0 7.5 20 65 10 40 1.0 1.0 45 3",
+      "STAT_GANG3 17.0 7.5 20 65 10 40 1.0 1.0 45 3",
+      "STAT_GANG4 17.0 7.5 20 65 10 40 1.0 1.0 45 3",
+      "STAT_GANG5 17.0 7.5 20 65 10 40 1.0 1.0 45 3",
+      "STAT_GANG6 17.0 7.5 20 65 10 40 1.0 1.0 45 3",
+      "STAT_GANG7 17.0 7.5 20 65 10 40 1.0 1.0 45 3",
+      "STAT_GANG8 17.0 7.5 20 65 10 40 1.0 1.0 45 3",
+      "STAT_GANG9 17.0 7.5 20 65 10 40 1.0 1.0 45 3",
+      "STAT_GANG10 17.0 7.5 20 65 10 40 1.0 1.0 45 3",
+      "STAT_STREET_GUY 17.0 7.5 45 30 30 60 1.0 1.0 40 2",
+      "STAT_SUIT_GUY 17.0 7.5 35 60 60 30 0.8 1.2 40 2",
+      "STAT_SENSIBLE_GUY 17.0 7.5 65 30 70 20 0.7 1.1 40 4",
+      "STAT_GEEK_GUY 17.0 7.5 56 10 40 5 0.5 1.7 40 4",
+      "STAT_OLD_GUY 17.0 7.5 40 10 40 5 0.4 2.5 40 2",
+      "STAT_TOUGH_GUY 17.0 7.5 30 70 50 60 1.1 1.5 55 3",
+      "STAT_STREET_GIRL 17.0 7.5 45 30 30 60 0.9 1.0 40 2",
+      "STAT_SUIT_GIRL 17.0 7.5 30 60 60 30 0.6 1.6 40 2",
+      "STAT_SENSIBLE_GIRL 17.0 7.5 65 30 70 20 0.5 1.1 40 4",
+      "STAT_GEEK_GIRL 17.0 7.5 80 10 40 5 0.4 1.9 40 4",
+      "STAT_OLD_GIRL 17.0 7.5 80 10 40 5 0.3 3.0 40 2",
+      "STAT_TOUGH_GIRL 17.0 7.5 30 70 50 60 1.1 1.5 50 3",
+      "STAT_TRAMP_MALE 17.0 7.5 60 50 20 10 0.9 1.6 35 3",
+      "STAT_TRAMP_FEMALE 17.0 7.5 30 30 20 10 0.9 1.6 40 3",
+      "STAT_TOURIST 17.0 7.5 100 20 70 30 0.8 1.8 40 2",
+      "STAT_PROSTITUTE 17.0 7.5 40 20 40 100 0.7 1.0 40 3",
+      "STAT_CRIMINAL 17.0 7.5 30 55 10 60 1.2 1.3 60 3",
+      "STAT_BUSKER 17.0 7.5 49 20 40 90 1.0 1.0 40 3",
+      "STAT_TAXIDRIVER 17.0 7.5 16 80 30 30 0.8 1.5 40 3",
+      "STAT_PSYCHO 17.0 7.5 0 100 0 50 1.0 1.0 40 3",
+      "STAT_STEWARD 17.0 7.5 40 30 70 20 0.7 1.1 40 4",
+      "STAT_SPORTSFAN 17.0 7.5 40 50 70 20 0.7 1.1 40 3",
+      "STAT_SHOPPER 17.0 7.5 30 75 50 40 1.5 1.5 40 4",
+      "STAT_OLDSHOPPER 17.0 7.5 45 65 70 20 1.0 2.5 40 4",
+      "STAT_BEACH_GUY 17.0 7.5 52 60 60 30 0.8 1.2 40 2",
+      "STAT_BEACH_GIRL 17.0 7.5 59 30 30 60 0.9 1.0 40 2",
+      "STAT_SKATER 20.0 6.0 40 40 60 80 0.7 1.0 40 4",
+      "STAT_STD_MISSION 20.0 15.0 50 50 50 50 1.0 1.0 40 3",
+      "STAT_COWARD 17.0 7.5 65 30 70 20 0.7 1.1 40 4"
+    ];
+    return out.join("\r\n") + "\r\n";
+  }
+
+  /* ---------------- generic editor engine ---------------- */
+  function createDatEditor(cfg){
+    var lang = "tl";
+    try {
+      var savedLang = localStorage.getItem("mavs_txd_lang");
+      if (savedLang === "en" || savedLang === "tl") lang = savedLang;
+    } catch(e){}
+    function S(){ return cfg.str[lang]; }
+    function el(suffix){ return document.getElementById(cfg.p + suffix); }
+
+    var data = null;
+    var cur = 0;
+    var selAll = false;
+    var undoStack = [];
+    var editBase = null;
+    var ctrls = [];
+
+    var panelEl = el("Panel"), entrySel = el("EntrySel"), fieldsEl = el("Fields");
+
+    function curEntry(){
+      if (!data || !data.entries.length) return null;
+      return data.entries[Math.min(cur, data.entries.length - 1)] || null;
+    }
+    function entryAt(idx){ return data ? (data.entries[idx] || null) : null; }
+    function tok(e, i){ var v = parseFloat(e.tokens[i]); return isNaN(v) ? 0 : v; }
+    function fmtVal(f, v){ return f.int ? String(Math.round(v)) : fmtFloat(v); }
+    function setVal(e, f, v){ e.tokens[f.i] = fmtVal(f, v); e.dirty = true; }
+    function editedCount(){
+      var n = 0;
+      if (data) data.entries.forEach(function(e){ if (e.dirty) n++; });
+      return n;
+    }
+    function targetEntries(){
+      var out = [];
+      if (!data) return out;
+      data.entries.forEach(function(e, idx){
+        if (selAll || idx === cur) out.push({ idx: idx, obj: e });
+      });
+      return out;
+    }
+    function beginEdit(){
+      if (editBase) return;
+      editBase = targetEntries().map(function(t){
+        return { idx: t.idx, tokens: t.obj.tokens.slice(),
+          dirty: t.obj.tokens.join(" ") !== t.obj.orig.join(" ") };
+      });
+    }
+    function commitEdit(){
+      if (editBase){
+        var changed = false;
+        for (var i = 0; i < editBase.length; i++){
+          var e = entryAt(editBase[i].idx);
+          if (e && e.tokens.join(" ") !== editBase[i].tokens.join(" ")){ changed = true; break; }
+        }
+        if (changed) undoStack.push({ batch: editBase });
+        editBase = null;
+      }
+      syncUndoBtn();
+    }
+    function syncUndoBtn(){
+      var u = el("UndoBtn"); if (u) u.disabled = !undoStack.length;
+      var rs = el("ResetBtn");
+      if (rs){
+        var targets = targetEntries();
+        rs.disabled = !targets.length || targets.every(function(t){
+          return t.obj.tokens.join(" ") === t.obj.orig.join(" ");
+        });
+      }
+    }
+    function syncBanner(){
+      var b = el("BatchBanner"); if (!b) return;
+      if (!selAll || !data || !data.entries.length){
+        b.classList.add("hidden"); b.textContent = ""; return;
+      }
+      b.textContent = S().batchBanner(S().allWord, data.entries.length);
+      b.classList.remove("hidden");
+    }
+    function syncInfo(){
+      var info = el("FileInfo"), nameEl = el("LoadedName");
+      if (!data || !data.entries.length){
+        if (nameEl) nameEl.textContent = "";
+        if (info) info.textContent = S().empty;
+        return;
+      }
+      if (nameEl){
+        if (data.isDefault){
+          nameEl.textContent = S().defaultLoaded;
+        } else {
+          nameEl.textContent = "";
+          nameEl.appendChild(document.createTextNode(S().loadedPrefix));
+          var b = document.createElement("b");
+          b.textContent = data.name;
+          nameEl.appendChild(b);
+        }
+      }
+      if (info) info.textContent = S().counts(data.entries.length, editedCount());
+    }
+    function entryLabel(e){
+      if (cfg.labelFn) return cfg.labelFn(e, data ? data.entries : []);
+      return e.name;
+    }
+    function syncFieldVals(){
+      var e = curEntry();
+      ctrls.forEach(function(c){
+        var f = c.f;
+        if (f.type === "text"){
+          /* Text field (hal. hex flags): hilaw na token ang halaga,
+             walang numeric formatting o clamping. */
+          if (!e){ c.input.disabled = true; c.input.value = ""; return; }
+          c.input.disabled = false;
+          if (document.activeElement !== c.input) c.input.value = e.tokens[f.i];
+          return;
+        }
+        if (f.type === "select"){
+          if (!e){ c.sel.disabled = true; return; }
+          c.sel.disabled = false;
+          var v = e.tokens[f.i];
+          var ok = false;
+          f.options.forEach(function(o){ if (o.v === v) ok = true; });
+          c.sel.value = ok ? v : f.options[0].v;
+          return;
+        }
+        if (!e){ c.range.disabled = true; c.num.disabled = true; c.num.value = ""; return; }
+        c.range.disabled = false; c.num.disabled = false;
+        var val = tok(e, f.i);
+        c.range.value = Math.max(f.min, Math.min(f.max, val));
+        c.num.value = e.tokens[f.i];
+      });
+    }
+    function syncControls(){
+      var e = curEntry();
+      if (entrySel){
+        entrySel.innerHTML = "";
+        var oAll = document.createElement("option");
+        oAll.value = "__all__"; oAll.textContent = S().allOpt;
+        entrySel.appendChild(oAll);
+        if (data) data.entries.forEach(function(en, i){
+          var o = document.createElement("option");
+          o.value = i; o.textContent = entryLabel(en);
+          entrySel.appendChild(o);
+        });
+        entrySel.value = selAll ? "__all__" : String(Math.min(cur, Math.max(0, (data ? data.entries.length : 1) - 1)));
+        entrySel.disabled = !e;
+      }
+      syncFieldVals();
+      var dl = el("DownloadBtn"); if (dl) dl.disabled = !e;
+      var dlTop = el("DownloadTopBtn"); if (dlTop) dlTop.disabled = !e;
+      editBase = null;
+      syncUndoBtn();
+      syncInfo();
+      syncBanner();
+    }
+    function buildControls(){
+      if (!fieldsEl) return;
+      fieldsEl.innerHTML = "";
+      /* Optional collapsible groups (f.group): ang field ay mapupunta
+         sa isang <details> section na may pangalan mula sa
+         S().groups. Ang walang group ay diretso sa fieldsEl tulad ng
+         dati — kaya hindi nagbabago ang Weapon / Ped panels. */
+      var groupBoxes = {};
+      function parentFor(f){
+        if (!f.group) return fieldsEl;
+        if (groupBoxes[f.group]) return groupBoxes[f.group];
+        var det = document.createElement("details");
+        det.className = "de-group";
+        var sum = document.createElement("summary");
+        sum.textContent = (S().groups && S().groups[f.group]) || f.group;
+        det.appendChild(sum);
+        var body = document.createElement("div");
+        body.className = "de-group-body";
+        det.appendChild(body);
+        fieldsEl.appendChild(det);
+        groupBoxes[f.group] = body;
+        return body;
+      }
+      ctrls = cfg.fields.map(function(f){
+        var row = document.createElement("div");
+        row.className = "de-row";
+        var lbl = document.createElement("span");
+        lbl.className = "de-lbl";
+        lbl.textContent = S().fields[f.k];
+        row.appendChild(lbl);
+        if (f.type === "text"){
+          var tin = document.createElement("input");
+          tin.type = "text";
+          tin.autocapitalize = "off";
+          tin.autocomplete = "off";
+          tin.spellcheck = false;
+          tin.setAttribute("aria-label", S().fields[f.k]);
+          tin.addEventListener("change", function(){
+            var targets = targetEntries(); if (!targets.length) return;
+            var e0 = curEntry(); if (!e0) return;
+            var v = tin.value.replace(/\s+/g, "");
+            if (!v){ tin.value = e0.tokens[f.i]; return; }
+            beginEdit();
+            targets.forEach(function(t){ t.obj.tokens[f.i] = v; t.obj.dirty = true; });
+            commitEdit();
+            syncFieldVals();
+            syncInfo();
+          });
+          row.appendChild(tin);
+          parentFor(f).appendChild(row);
+          return { f: f, input: tin, lbl: lbl };
+        }
+        if (f.type === "select"){
+          var sel = document.createElement("select");
+          sel.setAttribute("aria-label", S().fields[f.k]);
+          f.options.forEach(function(o){
+            var op = document.createElement("option");
+            op.value = o.v; op.textContent = o.t;
+            sel.appendChild(op);
+          });
+          sel.addEventListener("change", function(){
+            var targets = targetEntries(); if (!targets.length) return;
+            beginEdit();
+            targets.forEach(function(t){ t.obj.tokens[f.i] = sel.value; t.obj.dirty = true; });
+            commitEdit();
+            syncInfo();
+          });
+          row.appendChild(sel);
+          parentFor(f).appendChild(row);
+          return { f: f, sel: sel, lbl: lbl };
+        }
+        var range = document.createElement("input");
+        range.type = "range";
+        range.min = f.min; range.max = f.max; range.step = f.step;
+        range.setAttribute("aria-label", S().fields[f.k]);
+        var num = document.createElement("input");
+        num.type = "number";
+        num.min = f.min; num.max = f.max; num.step = f.step;
+        num.setAttribute("aria-label", S().fields[f.k]);
+        range.addEventListener("input", function(){
+          var targets = targetEntries(); if (!targets.length) return;
+          beginEdit();
+          var v = parseFloat(range.value);
+          targets.forEach(function(t){ setVal(t.obj, f, v); });
+          var e = curEntry();
+          num.value = e ? e.tokens[f.i] : "";
+          syncInfo();
+          syncUndoBtn();
+        });
+        range.addEventListener("change", commitEdit);
+        num.addEventListener("change", function(){
+          var targets = targetEntries(); if (!targets.length) return;
+          var e = curEntry(); if (!e) return;
+          var v = parseFloat(num.value);
+          if (isNaN(v)){ num.value = e.tokens[f.i]; return; }
+          if (v < f.min) v = f.min; if (v > f.max) v = f.max;
+          beginEdit();
+          targets.forEach(function(t){ setVal(t.obj, f, v); });
+          commitEdit();
+          syncFieldVals();
+          syncInfo();
+        });
+        row.appendChild(range); row.appendChild(num);
+        parentFor(f).appendChild(row);
+        return { f: f, range: range, num: num, lbl: lbl };
+      });
+    }
+    /* ---------------- one-tap presets (optional, cfg.presets) ----------------
+       Ginagamit ng Handling Editor: isang tap ay nag-a-apply ng buong
+       set ng values sa target entries — ang napiling entry, o LAHAT
+       pag naka-batch (selAll). beginEdit/commitEdit ang gamit, kaya
+       iisang Undo entry lang ang buong preset, tulad ng ibang batch
+       edits. Ang ibang editors (Weapon/Ped) ay walang cfg.presets at
+       walang Presets element — hindi sila apektado. */
+    var lastPreset = "";
+    function buildPresets(){
+      var box = el("Presets"); if (!box || !cfg.presets) return;
+      var lb = el("PresetsLbl"); if (lb && S().presetsLbl) lb.textContent = S().presetsLbl;
+      box.innerHTML = "";
+      cfg.presets.forEach(function(p){
+        var b = document.createElement("button");
+        b.type = "button";
+        b.textContent = (S().presetNames && S().presetNames[p.id]) || p.id;
+        b.addEventListener("click", function(){ applyPreset(p); });
+        box.appendChild(b);
+      });
+      syncPresetInfo();
+    }
+    function syncPresetInfo(){
+      var info = el("PresetInfo"); if (!info) return;
+      info.textContent = lastPreset && S().presetApplied ? S().presetApplied(lastPreset) : "";
+    }
+    function applyPreset(p){
+      var targets = targetEntries(); if (!targets.length) return;
+      beginEdit();
+      targets.forEach(function(t){
+        cfg.fields.forEach(function(f){
+          if (!(f.k in p.values)) return;
+          var v = p.values[f.k];
+          if (f.type === "select"){ t.obj.tokens[f.i] = String(v); t.obj.dirty = true; }
+          else if (f.type !== "text") setVal(t.obj, f, parseFloat(v));
+        });
+      });
+      commitEdit();
+      lastPreset = (S().presetNames && S().presetNames[p.id]) || p.id;
+      syncControls();
+      syncPresetInfo();
+    }
+    function setData(d, name){
+      data = d;
+      data.name = name;
+      cur = 0; selAll = false; editBase = null;
+      undoStack = [];
+      lastPreset = "";
+      syncControls();
+      syncPresetInfo();
+    }
+    function loadDefault(){
+      var d = cfg.parse(cfg.defaultText());
+      d.isDefault = true;
+      setData(d, S().defName);
+    }
+    function applyStrings(){
+      var s = S();
+      var u = el("UploadBtn"); if (u) u.textContent = s.upload;
+      var us = el("UploadSub"); if (us) us.textContent = s.uploadSub;
+      var d = el("DefaultBtn"); if (d) d.textContent = s.useDefault;
+      var lb = el("EntryLbl"); if (lb) lb.textContent = s.entryLbl;
+      var rs = el("ResetBtn"); if (rs) rs.textContent = s.reset;
+      var un = el("UndoBtn"); if (un) un.textContent = s.undo;
+      var dl = el("DownloadBtn"); if (dl) dl.textContent = s.saveDownload;
+      var dlTop = el("DownloadTopBtn"); if (dlTop) dlTop.textContent = s.saveDownload;
+      var cl = el("CloseBtn"); if (cl) cl.textContent = s.close;
+      var nt = el("Note"); if (nt && s.note) nt.textContent = s.note;
+      buildControls();
+      buildPresets();
+      syncControls();
+    }
+    function open(){
+      if (!panelEl) return;
+      if (!data) loadDefault();
+      panelEl.classList.add("open");
+      syncControls();
+    }
+    function close(){ if (panelEl) panelEl.classList.remove("open"); }
+
+    /* ---------------- wiring ---------------- */
+    buildControls();
+    applyStrings();
+
+    if (entrySel) entrySel.addEventListener("change", function(){
+      if (entrySel.value === "__all__") selAll = true;
+      else { selAll = false; cur = parseInt(entrySel.value, 10) || 0; }
+      syncControls();
+    });
+    var upBtn = el("UploadBtn"), fileInp = el("File");
+    if (upBtn && fileInp) upBtn.addEventListener("click", function(){ fileInp.click(); });
+    if (fileInp) fileInp.addEventListener("change", function(){
+      var f = fileInp.files && fileInp.files[0];
+      fileInp.value = "";
+      if (!f) return;
+      /* Walang accept filter ang input (para hindi ma-grey out sa
+         iOS picker), kaya dito vine-verify ang extension. Kung mali,
+         error sa status box at hindi gagalawin ang naka-load. */
+      if (!cfg.extRe.test(f.name || "")){
+        var nm = el("LoadedName"), inf = el("FileInfo");
+        if (nm) nm.textContent = S().notFile;
+        if (inf) inf.textContent = "";
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(){
+        var d = cfg.parse(String(reader.result || ""));
+        d.isDefault = false;
+        if (!d.entries.length){
+          data = d; cur = 0; selAll = false; editBase = null; undoStack = [];
+          syncControls();
+          return;
+        }
+        setData(d, f.name || cfg.fileName);
+      };
+      reader.readAsText(f);
+    });
+    var defBtn = el("DefaultBtn");
+    if (defBtn) defBtn.addEventListener("click", loadDefault);
+    var resetBtn = el("ResetBtn");
+    if (resetBtn) resetBtn.addEventListener("click", function(){
+      var targets = targetEntries(); if (!targets.length) return;
+      var snap = [], anyDiff = false;
+      targets.forEach(function(t){
+        if (t.obj.tokens.join(" ") !== t.obj.orig.join(" ")) anyDiff = true;
+        snap.push({ idx: t.idx, tokens: t.obj.tokens.slice(), dirty: t.obj.dirty });
+      });
+      if (!anyDiff) return;
+      undoStack.push({ batch: snap });
+      targets.forEach(function(t){ t.obj.tokens = t.obj.orig.slice(); t.obj.dirty = false; });
+      editBase = null;
+      syncControls();
+    });
+    var undoBtn = el("UndoBtn");
+    if (undoBtn) undoBtn.addEventListener("click", function(){
+      var e = undoStack.pop(); if (!e || !data) return;
+      editBase = null;
+      if (e.batch){
+        e.batch.forEach(function(b){
+          var en = entryAt(b.idx);
+          if (en){ en.tokens = b.tokens.slice(); en.dirty = b.dirty; }
+        });
+      }
+      syncControls();
+    });
+    function saveDownload(){
+      if (!data || !data.entries.length) return;
+      var text = buildText(data);
+      /* application/octet-stream + eksaktong filename: walang .txt
+         na idinadagdag ang browser / iOS Safari. */
+      var blob = new Blob([text], { type: "application/octet-stream" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = cfg.fileName;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function(){
+        try { URL.revokeObjectURL(a.href); } catch(e){}
+        if (a.parentNode) a.parentNode.removeChild(a);
+      }, 400);
+    }
+    var dlBtn = el("DownloadBtn");
+    if (dlBtn) dlBtn.addEventListener("click", saveDownload);
+    var dlTopBtn = el("DownloadTopBtn");
+    if (dlTopBtn) dlTopBtn.addEventListener("click", saveDownload);
+    var closeBtn = el("CloseBtn");
+    if (closeBtn) closeBtn.addEventListener("click", close);
+    if (panelEl) panelEl.addEventListener("click", function(e){ if (e.target === panelEl) close(); });
+    document.addEventListener("keydown", function(e){
+      if (e.key === "Escape" && panelEl && panelEl.classList.contains("open")) close();
+    });
+
+    return {
+      open: open,
+      applyLang: function(l){
+        lang = (l === "en") ? "en" : "tl";
+        if (data && data.isDefault) data.name = S().defName;
+        applyStrings();
+      },
+      debug: {
+        parse: cfg.parse,
+        build: buildText,
+        defaultText: cfg.defaultText,
+        data: function(){ return data; },
+        batch: function(){ return { all: selAll, targets: targetEntries().length, undo: undoStack.length }; }
+      }
+    };
+  }
+
+  /* ---------------- Weapon Editor config ---------------- */
+  var wpEd = createDatEditor({
+    p: "wp",
+    fileName: "weapon.dat",
+    extRe: /\.dat$/i,
+    parse: wpParse,
+    defaultText: wpDefaultText,
+    /* Display label lang ito — ang totoong entry name at values sa
+       file ay hindi nagagalaw. Magkapangalan ang entries bawat skill
+       level (PISTOL ×4): friendly name + pangalan ng skill mula sa
+       skill level token (index 14): 0 Poor · 1 Gangster · 2 Hitman ·
+       3 Pulis. Ang pangalang wala sa listahan ay ipinapakita pa rin
+       nang hilaw, may skill label pag may kapangalan. */
+    labelFn: function(e, entries){
+      var friendly = {
+        PISTOL: "Pistol (Colt45)",
+        PISTOL_SILENCED: "Silenced Pistol (9mm)",
+        DESERT_EAGLE: "Desert Eagle",
+        SHOTGUN: "Shotgun",
+        SAWNOFF: "Sawn-Off Shotgun",
+        SPAS12: "Combat Shotgun (SPAS-12)",
+        MICRO_UZI: "Micro SMG (Uzi)",
+        TEC9: "Tec-9",
+        MP5: "MP5",
+        AK47: "AK-47",
+        M4: "M4",
+        RIFLE: "Country Rifle",
+        COUNTRYRIFLE: "Country Rifle",
+        SNIPER: "Sniper Rifle",
+        SNIPERRIFLE: "Sniper Rifle",
+        ROCKET: "Rocket Launcher (RPG)",
+        RLAUNCHER: "Rocket Launcher (RPG)",
+        HEATSEEKER: "Heat-Seeking RPG",
+        RLAUNCHER_HS: "Heat-Seeking RPG",
+        FLAMETHROWER: "Flamethrower",
+        FTHROWER: "Flamethrower",
+        MINIGUN: "Minigun",
+        GRENADE: "Grenade",
+        TEARGAS: "Tear Gas",
+        MOLOTOV: "Molotov",
+        SATCHEL: "Satchel Charges",
+        SATCHEL_CHARGE: "Satchel Charges",
+        SPRAYCAN: "Spray Can",
+        FIREEXTINGUISHER: "Fire Extinguisher",
+        EXTINGUISHER: "Fire Extinguisher",
+        CAMERA: "Camera"
+      };
+      var skills = { "0": "Poor", "1": "Gangster", "2": "Hitman", "3": "Pulis" };
+      var base = friendly[e.name] || e.name;
+      var n = 0;
+      entries.forEach(function(x){ if (x.name === e.name) n++; });
+      if (n <= 1) return base;
+      var sk = skills[e.tokens[14]];
+      return base + " — " + (sk || ("Lvl " + e.tokens[14]));
+    },
+    fields: [
+      { k: "damage", i: 10, int: true, min: 0, max: 999, step: 1 },
+      { k: "range", i: 4, min: 1, max: 1000, step: 1 },
+      { k: "clip", i: 9, int: true, min: 0, max: 999, step: 1 },
+      { k: "accuracy", i: 16, min: 0, max: 3, step: 0.05 },
+      { k: "moveSpeed", i: 17, min: 0, max: 3, step: 0.05 }
+    ],
+    str: {
+      tl: {
+        upload: "📤 I-upload ang weapon.dat",
+        uploadSub: "I-tap ito at piliin ang weapon.dat mo — yun mismo ang ie-edit mo.",
+        saveDownload: "💾 I-save at I-download",
+        loadedPrefix: "Naka-load: ",
+        defaultLoaded: "Default sample ang naka-load — mag-upload ng sarili mong weapon.dat para i-edit ang file mo",
+        counts: function(n, ed){ return n + " baril" + (ed ? " · " + ed + " na-edit" : ""); },
+        useDefault: "Gamitin ang default",
+        entryLbl: "Baril",
+        allOpt: "🔫 Lahat ng baril",
+        allWord: "LAHAT ng baril",
+        batchBanner: function(w, n){ return "Ina-edit: " + w + " — " + n + " rows ang maaapektuhan ng edit mo"; },
+        fields: { damage: "Damage", range: "Range", clip: "Ammo per clip", accuracy: "Accuracy", moveSpeed: "Move speed" },
+        reset: "Ibalik sa original",
+        undo: "Undo",
+        close: "Isara",
+        defName: "Default (built-in sample)",
+        empty: "Walang na-parse na gun entries (mga linyang nagsisimula sa $) sa file na ito — subukan ang totoong weapon.dat o ang default.",
+        notFile: "Hindi .dat file ang napili mo — piliin ang weapon.dat file. Walang nabago sa naka-load na file.",
+        note: "Bakit 3x ang bawat baril? Skill levels yan: Poor → Gangster → Hitman. Habang tumataas ang skill ni CJ sa baril, mas magandang entry ang ginagamit ng laro."
+      },
+      en: {
+        upload: "📤 Upload weapon.dat",
+        uploadSub: "Tap here and pick your weapon.dat — that exact file is what you will edit.",
+        saveDownload: "💾 Save & Download",
+        loadedPrefix: "Loaded: ",
+        defaultLoaded: "Default sample loaded — upload your own weapon.dat to edit your file",
+        counts: function(n, ed){ return n + " weapons" + (ed ? " · " + ed + " edited" : ""); },
+        useDefault: "Use default",
+        entryLbl: "Weapon",
+        allOpt: "🔫 All weapons",
+        allWord: "ALL weapons",
+        batchBanner: function(w, n){ return "Editing: " + w + " — " + n + " rows will be changed by your edit"; },
+        fields: { damage: "Damage", range: "Range", clip: "Ammo per clip", accuracy: "Accuracy", moveSpeed: "Move speed" },
+        reset: "Reset this entry",
+        undo: "Undo",
+        close: "Close",
+        defName: "Default (built-in sample)",
+        empty: "No gun entries (lines starting with $) could be parsed from this file — try a real weapon.dat or the default.",
+        notFile: "That is not a .dat file — please pick your weapon.dat file. Your loaded file was not changed.",
+        note: "Why does each weapon appear 3 times? Those are skill levels: Poor → Gangster → Hitman. As CJ's skill with a weapon rises, the game uses the better entry."
+      }
+    }
+  });
+
+  /* ---------------- Handling Editor config ----------------
+     Buong-buo: LAHAT ng 35 standard-data fields ng handling.cfg ay
+     mae-edit. Ang 7 pangunahing controls ay nasa itaas; ang iba ay
+     nasa collapsible groups (gBody / gEngine / gTraction / gBrakes /
+     gSusp / gOther). Token indices ay ayon sa Project Cerbera SA
+     Handling Definitions (A=0 ... aj=35). Ang "%" boat, "!" bike at
+     "$" flying lines ng in-upload na file ay hindi entries dito —
+     nananatili silang eksakto sa download (structure-preserving). */
+  var hdEd = createDatEditor({
+    p: "hd",
+    fileName: "handling.cfg",
+    extRe: /\.cfg$/i,
+    parse: hdParse,
+    defaultText: hdDefaultText,
+    /* One-tap presets: buong set ng handling values, naka-apply sa
+       napiling sasakyan o sa lahat pag naka-"Lahat ng sasakyan"
+       (iisang Undo ang buong preset). Ang values ay ayon sa field
+       keys ng editor na ito. */
+    presets: [
+      { id: "drift", values: { traction: 0.5, tracLoss: 2.0, steer: 45, accel: 32, brake: 9, suspForce: 1.1, suspDamp: 0.08 } },
+      { id: "race", values: { topSpeed: 300, accel: 45, traction: 1.1, tracLoss: 0.7, brake: 14, steer: 32, suspForce: 1.7, suspDamp: 0.22, drag: 1.0 } },
+      { id: "offroad", values: { traction: 0.85, tracLoss: 0.8, steer: 38, suspForce: 1.9, suspDamp: 0.12, suspUp: 0.42, suspLow: -0.28, brake: 9, topSpeed: 180, accel: 26, drive: "4" } },
+      { id: "realistic", values: { topSpeed: 200, accel: 24, traction: 0.72, tracLoss: 0.85, brake: 9.5, steer: 32, suspForce: 1.25, suspDamp: 0.1, drag: 2.0 } }
+    ],
+    fields: [
+      { k: "topSpeed", i: 12, min: 0, max: 400, step: 1 },
+      { k: "accel", i: 13, min: 0, max: 100, step: 0.5 },
+      { k: "mass", i: 1, min: 100, max: 100000, step: 50 },
+      { k: "traction", i: 8, min: -5, max: 5, step: 0.05 },
+      { k: "brake", i: 17, min: 0, max: 30, step: 0.1 },
+      { k: "steer", i: 20, min: 0, max: 60, step: 0.5 },
+      { k: "engine", i: 16, type: "select", options: [
+        { v: "P", t: "Petrol (P)" }, { v: "D", t: "Diesel (D)" }, { v: "E", t: "Electric (E)" }
+      ] },
+      { k: "turnMass", i: 2, group: "gBody", min: 0, max: 10000000, step: 100 },
+      { k: "drag", i: 3, group: "gBody", min: 0, max: 200, step: 0.1 },
+      { k: "comX", i: 4, group: "gBody", min: -10, max: 10, step: 0.01 },
+      { k: "comY", i: 5, group: "gBody", min: -10, max: 10, step: 0.01 },
+      { k: "comZ", i: 6, group: "gBody", min: -10, max: 10, step: 0.01 },
+      { k: "pctSub", i: 7, group: "gBody", int: true, min: 0, max: 120, step: 1 },
+      { k: "gears", i: 11, group: "gEngine", int: true, min: 1, max: 9, step: 1 },
+      { k: "inertia", i: 14, group: "gEngine", min: 0, max: 200, step: 0.5 },
+      { k: "drive", i: 15, group: "gEngine", type: "select", options: [
+        { v: "F", t: "Front (F)" }, { v: "R", t: "Rear (R)" }, { v: "4", t: "4WD (4)" }
+      ] },
+      { k: "tracLoss", i: 9, group: "gTraction", min: 0, max: 50, step: 0.05 },
+      { k: "tracBias", i: 10, group: "gTraction", min: 0, max: 1, step: 0.01 },
+      { k: "brakeBias", i: 18, group: "gBrakes", min: 0, max: 1, step: 0.01 },
+      { k: "abs", i: 19, group: "gBrakes", type: "select", options: [
+        { v: "0", t: "Off (0)" }, { v: "1", t: "On (1)" }
+      ] },
+      { k: "suspForce", i: 21, group: "gSusp", min: 0, max: 5, step: 0.05 },
+      { k: "suspDamp", i: 22, group: "gSusp", min: 0, max: 5, step: 0.01 },
+      { k: "suspHSD", i: 23, group: "gSusp", min: 0, max: 15, step: 0.1 },
+      { k: "suspUp", i: 24, group: "gSusp", min: -20, max: 20, step: 0.01 },
+      { k: "suspLow", i: 25, group: "gSusp", min: -20, max: 20, step: 0.01 },
+      { k: "suspBias", i: 26, group: "gSusp", min: 0, max: 3, step: 0.01 },
+      { k: "antiDive", i: 27, group: "gSusp", min: 0, max: 3, step: 0.01 },
+      { k: "seatOff", i: 28, group: "gOther", min: 0, max: 2, step: 0.01 },
+      { k: "colDmg", i: 29, group: "gOther", min: 0, max: 2, step: 0.01 },
+      { k: "money", i: 30, group: "gOther", int: true, min: 0, max: 1000000, step: 100 },
+      { k: "modelFlags", i: 31, group: "gOther", type: "text" },
+      { k: "handlingFlags", i: 32, group: "gOther", type: "text" },
+      { k: "frontLight", i: 33, group: "gOther", type: "select", options: [
+        { v: "0", t: "0 — Long" }, { v: "1", t: "1 — Small" }, { v: "2", t: "2 — Big" }, { v: "3", t: "3 — Tall" }
+      ] },
+      { k: "rearLight", i: 34, group: "gOther", type: "select", options: [
+        { v: "0", t: "0 — Long" }, { v: "1", t: "1 — Small" }, { v: "2", t: "2 — Big" }, { v: "3", t: "3 — Tall" }
+      ] },
+      { k: "animGroup", i: 35, group: "gOther", int: true, min: 0, max: 40, step: 1 }
+    ],
+    str: {
+      tl: {
+        upload: "📤 I-upload ang handling.cfg",
+        uploadSub: "I-tap ito at piliin ang handling.cfg mo — yun mismo ang ie-edit mo.",
+        saveDownload: "💾 I-save at I-download",
+        loadedPrefix: "Naka-load: ",
+        defaultLoaded: "Default ang naka-load (kumpletong 210 sasakyan) — mag-upload ng sarili mong handling.cfg para i-edit ang file mo",
+        counts: function(n, ed){ return n + " sasakyan" + (ed ? " · " + ed + " na-edit" : ""); },
+        presetsLbl: "Presets — isang tap, buong setup",
+        presetNames: { drift: "🌀 Drift", race: "🏁 Race", offroad: "🏔️ Off-road", realistic: "🚗 Realistic" },
+        presetApplied: function(n){ return "Preset na in-apply: " + n; },
+        useDefault: "Gamitin ang default",
+        entryLbl: "Sasakyan",
+        allOpt: "🚗 Lahat ng sasakyan",
+        allWord: "LAHAT ng sasakyan",
+        batchBanner: function(w, n){ return "Ina-edit: " + w + " — " + n + " rows ang maaapektuhan ng edit mo"; },
+        fields: { topSpeed: "Top speed (km/h)", accel: "Acceleration", mass: "Mass (kg)", traction: "Traction (grip)", brake: "Brake deceleration", steer: "Steering lock", engine: "Engine type",
+          turnMass: "Turn mass", drag: "Drag multiplier", comX: "Center of mass X", comY: "Center of mass Y", comZ: "Center of mass Z", pctSub: "% Submerged",
+          gears: "Bilang ng gears", inertia: "Engine inertia", drive: "Drive type",
+          tracLoss: "Traction loss", tracBias: "Traction bias",
+          brakeBias: "Brake bias", abs: "ABS",
+          suspForce: "Suspension force", suspDamp: "Suspension damping", suspHSD: "Susp. high-speed damping", suspUp: "Susp. upper limit", suspLow: "Susp. lower limit", suspBias: "Suspension bias", antiDive: "Susp. anti-dive",
+          seatOff: "Seat offset", colDmg: "Collision damage ×", money: "Halaga / value ($)", modelFlags: "Model flags (hex)", handlingFlags: "Handling flags (hex)", frontLight: "Front light", rearLight: "Rear light", animGroup: "Anim group" },
+        groups: { gBody: "Bigat at Center of Mass", gEngine: "Makina at Transmission", gTraction: "Traction", gBrakes: "Preno", gSusp: "Suspension", gOther: "Iba pa" },
+        reset: "Ibalik sa original",
+        undo: "Undo",
+        close: "Isara",
+        defName: "Default (kumpleto, 210 sasakyan)",
+        empty: "Walang na-parse na sasakyan (standard handling lines) sa file na ito — subukan ang totoong handling.cfg o ang default.",
+        notFile: "Hindi .cfg file ang napili mo — piliin ang handling.cfg file. Walang nabago sa naka-load na file.",
+        note: "Buong-buo na ito: lahat ng 35 fields ng handling.cfg ay mae-edit — buksan ang mga group (Bigat, Makina, Traction, Preno, Suspension, Iba pa) para sa iba pang fields. Ang mga extra line ng bangka/motor/eroplano (% / ! / $) sa in-upload mong file ay hindi ginagalaw."
+      },
+      en: {
+        upload: "📤 Upload handling.cfg",
+        uploadSub: "Tap here and pick your handling.cfg — that exact file is what you will edit.",
+        saveDownload: "💾 Save & Download",
+        loadedPrefix: "Loaded: ",
+        defaultLoaded: "Default loaded (complete, 210 vehicles) — upload your own handling.cfg to edit your file",
+        counts: function(n, ed){ return n + " vehicles" + (ed ? " · " + ed + " edited" : ""); },
+        presetsLbl: "Presets — one tap, full setup",
+        presetNames: { drift: "🌀 Drift", race: "🏁 Race", offroad: "🏔️ Off-road", realistic: "🚗 Realistic" },
+        presetApplied: function(n){ return "Preset applied: " + n; },
+        useDefault: "Use default",
+        entryLbl: "Vehicle",
+        allOpt: "🚗 All vehicles",
+        allWord: "ALL vehicles",
+        batchBanner: function(w, n){ return "Editing: " + w + " — " + n + " rows will be changed by your edit"; },
+        fields: { topSpeed: "Top speed (km/h)", accel: "Acceleration", mass: "Mass (kg)", traction: "Traction (grip)", brake: "Brake deceleration", steer: "Steering lock", engine: "Engine type",
+          turnMass: "Turn mass", drag: "Drag multiplier", comX: "Center of mass X", comY: "Center of mass Y", comZ: "Center of mass Z", pctSub: "% Submerged",
+          gears: "Number of gears", inertia: "Engine inertia", drive: "Drive type",
+          tracLoss: "Traction loss", tracBias: "Traction bias",
+          brakeBias: "Brake bias", abs: "ABS",
+          suspForce: "Suspension force", suspDamp: "Suspension damping", suspHSD: "Susp. high-speed damping", suspUp: "Susp. upper limit", suspLow: "Susp. lower limit", suspBias: "Suspension bias", antiDive: "Susp. anti-dive",
+          seatOff: "Seat offset", colDmg: "Collision damage ×", money: "Monetary value ($)", modelFlags: "Model flags (hex)", handlingFlags: "Handling flags (hex)", frontLight: "Front light", rearLight: "Rear light", animGroup: "Anim group" },
+        groups: { gBody: "Mass & Center of Mass", gEngine: "Engine & Transmission", gTraction: "Traction", gBrakes: "Brakes", gSusp: "Suspension", gOther: "Other" },
+        reset: "Reset this entry",
+        undo: "Undo",
+        close: "Close",
+        defName: "Default (complete, 210 vehicles)",
+        empty: "No vehicles (standard handling lines) could be parsed from this file — try a real handling.cfg or the default.",
+        notFile: "That is not a .cfg file — please pick your handling.cfg file. Your loaded file was not changed.",
+        note: "This is the complete editor: all 35 handling.cfg fields can be edited — open the groups (Mass, Engine, Traction, Brakes, Suspension, Other) for the rest. Boat/bike/flying extra lines (% / ! / $) in an uploaded file are never touched."
+      }
+    }
+  });
+
+  /* ---------------- Ped Editor config ----------------
+     Ang fields ay ang totoong pedstats.dat fields lang. WALANG
+     run-speed field sa file na ito — hindi kami mag-iimbento ng
+     slider para doon; may paalala sa panel mismo. */
+  var pdEd = createDatEditor({
+    p: "pd",
+    fileName: "pedstats.dat",
+    extRe: /\.dat$/i,
+    parse: pdParse,
+    defaultText: pdDefaultText,
+    fields: [
+      { k: "flee", i: 1, min: 0, max: 100, step: 0.5 },
+      { k: "fear", i: 3, int: true, min: 0, max: 100, step: 1 },
+      { k: "attack", i: 7, min: 0, max: 5, step: 0.1 },
+      { k: "defend", i: 8, min: 0, max: 5, step: 0.1 },
+      { k: "shooting", i: 9, int: true, min: 0, max: 100, step: 1 },
+      { k: "lawful", i: 5, int: true, min: 0, max: 100, step: 1 }
+    ],
+    str: {
+      tl: {
+        upload: "📤 I-upload ang pedstats.dat",
+        uploadSub: "I-tap ito at piliin ang pedstats.dat mo — yun mismo ang ie-edit mo.",
+        saveDownload: "💾 I-save at I-download",
+        loadedPrefix: "Naka-load: ",
+        defaultLoaded: "Default sample ang naka-load — mag-upload ng sarili mong pedstats.dat para i-edit ang file mo",
+        counts: function(n, ed){ return n + " ped stats" + (ed ? " · " + ed + " na-edit" : ""); },
+        useDefault: "Gamitin ang default",
+        entryLbl: "Ped stat",
+        allOpt: "🚶 Lahat ng ped stat",
+        allWord: "LAHAT ng ped stat",
+        batchBanner: function(w, n){ return "Ina-edit: " + w + " — " + n + " rows ang maaapektuhan ng edit mo"; },
+        fields: { flee: "Flee distance", fear: "Fear", attack: "Attack strength (lakas ng suntok)", defend: "Defend weakness (damage na natatanggap)", shooting: "Shooting rate (galing bumaril)", lawful: "Lawfulness" },
+        reset: "Ibalik sa original",
+        undo: "Undo",
+        close: "Isara",
+        defName: "Default (built-in sample)",
+        empty: "Walang na-parse na STAT_* entries sa file na ito — subukan ang totoong pedstats.dat o ang default.",
+        notFile: "Hindi .dat file ang napili mo — piliin ang pedstats.dat file. Walang nabago sa naka-load na file.",
+        note: "Paalala: walang run-speed field sa pedstats.dat — ang bilis ng takbo ng isang ped ay galing sa animation group niya (animgrp.dat), hindi sa file na ito. Attack strength ang lakas ng suntok; ang Defend weakness ay multiplier ng damage na natatanggap ng ped — mas mataas ang value, mas madali siyang mamatay."
+      },
+      en: {
+        upload: "📤 Upload pedstats.dat",
+        uploadSub: "Tap here and pick your pedstats.dat — that exact file is what you will edit.",
+        saveDownload: "💾 Save & Download",
+        loadedPrefix: "Loaded: ",
+        defaultLoaded: "Default sample loaded — upload your own pedstats.dat to edit your file",
+        counts: function(n, ed){ return n + " ped stats" + (ed ? " · " + ed + " edited" : ""); },
+        useDefault: "Use default",
+        entryLbl: "Ped stat",
+        allOpt: "🚶 All ped stats",
+        allWord: "ALL ped stats",
+        batchBanner: function(w, n){ return "Editing: " + w + " — " + n + " rows will be changed by your edit"; },
+        fields: { flee: "Flee distance", fear: "Fear", attack: "Attack strength (punch power)", defend: "Defend weakness (damage received)", shooting: "Shooting rate (shooting skill)", lawful: "Lawfulness" },
+        reset: "Reset this entry",
+        undo: "Undo",
+        close: "Close",
+        defName: "Default (built-in sample)",
+        empty: "No STAT_* entries could be parsed from this file — try a real pedstats.dat or the default.",
+        notFile: "That is not a .dat file — please pick your pedstats.dat file. Your loaded file was not changed.",
+        note: "Note: pedstats.dat has no run-speed field — a ped's running speed comes from its animation group (animgrp.dat), not from this file. Attack strength is punch power; Defend weakness is the multiplier of damage the ped receives — a higher value means they go down faster."
+      }
+    }
+  });
+
+  window.__wpOpen = wpEd.open;
+  window.__hdOpen = hdEd.open;
+  window.__pdOpen = pdEd.open;
+  window.__wpApplyLang = wpEd.applyLang;
+  window.__hdApplyLang = hdEd.applyLang;
+  window.__pdApplyLang = pdEd.applyLang;
+  /* Pang-verify lang: parser/writer/state na ma-check mula sa labas. */
+  window.__wpDebug = wpEd.debug;
+  window.__hdDebug = hdEd.debug;
+  window.__pdDebug = pdEd.debug;
 })();
 </script>
 <script>
