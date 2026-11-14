@@ -445,6 +445,44 @@
       .de-group summary::-webkit-details-marker{display:none;}
       .de-group summary::after{content:"▾"; margin-left:auto; color:var(--dim); font-size:15px;}
       .de-group:not([open]) summary::after{transform:rotate(-90deg);}
+      /* ---------- Animation Editor panel (BETA) ----------
+         Parehong pattern ng Timecyc/Colorcycle panels (malaking
+         upload, status box, save buttons sa taas at baba) — dagdag
+         lang dito ang anim list, slots ng palitan, ang preview
+         canvas na may play/pause at timeline, at ang compact card
+         ng "I-edit ang galaw" (bone rotation offsets). */
+      .anim-list{display:flex; flex-direction:column; gap:6px; max-height:264px; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:2px;}
+      .anim-item{display:flex; align-items:center; gap:8px; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:8px 10px; min-height:48px; cursor:pointer; text-align:left; width:100%;}
+      .anim-item.on{border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent);}
+      .anim-item .a-name{flex:1; font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;}
+      .anim-item .a-meta{font-size:11px; color:var(--dim); flex:none; font-variant-numeric:tabular-nums;}
+      .anim-item .a-dot{width:9px; height:9px; border-radius:50%; background:var(--accent); display:none; flex:none;}
+      .anim-item.edited .a-dot{display:block;}
+      .anim-slotrow{display:flex; align-items:center; gap:8px; min-height:48px;}
+      .anim-slotrow .s-lbl{width:86px; flex:none; font-size:12.5px; font-weight:700; color:var(--dim); line-height:1.25;}
+      .anim-slotrow select{flex:1; min-width:0;}
+      .anim-slotrow .s-cur{font-size:11px; color:var(--accent); flex:none; max-width:92px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+      #animCanvas{width:100%; height:212px; flex:none; display:block; border-radius:12px; border:1px solid var(--line); background:#070708;}
+      /* 3D ped preview ng Animation Editor (Three.js): totoong 3D
+         skeleton na gumagalaw ayon sa keyframes. Pag walang WebGL/
+         Three.js, ang #animCanvas (2D) ang fallback. */
+      #animGlWrap{width:100%; height:212px; flex:none; border-radius:12px; border:1px solid var(--line); background:#070708; overflow:hidden;}
+      #animGlWrap canvas{display:block; width:100%; height:100%;}
+      #animGlWrap.hidden{display:none;}
+      .anim-playrow{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+      .anim-playrow button{min-height:44px; min-width:48px; padding:0 12px; font-size:15px;}
+      .anim-playrow select{flex:none;}
+      .anim-playrow .a-time{font-size:12.5px; color:var(--dim); font-variant-numeric:tabular-nums; flex:none;}
+      .anim-timeline{display:flex; align-items:center; gap:8px;}
+      .anim-timeline input[type=range]{flex:1; min-width:0;}
+      /* I-edit ang galaw card: bone picker + X/Y/Z offset sliders.
+         Isang compact na card lang sa ilalim ng preview controls. */
+      .anim-edit-card{border:1px solid var(--line); border-radius:12px; padding:10px; background:var(--panel2); display:flex; flex-direction:column; gap:6px;}
+      .anim-rotrow{display:flex; align-items:center; gap:8px; min-height:44px;}
+      .anim-rotrow .r-lbl{width:52px; flex:none; font-size:12.5px; font-weight:700; color:var(--dim);}
+      .anim-rotrow input[type=range]{flex:1; min-width:0;}
+      .anim-rotrow .r-val{width:48px; flex:none; text-align:right; font-size:12.5px; font-variant-numeric:tabular-nums;}
+      .anim-wide{width:100%; min-height:48px;}
       @media (prefers-reduced-motion: reduce){
         .gate-spinner{animation-duration:2.4s;}
         .gate-bar-fill{animation:none; width:100%;}
@@ -845,6 +883,93 @@
         <button type="button" id="pdCloseBtn">Isara</button>
       </div>
     </div>
+    <!-- Animation Editor (BETA): bubukas mula sa ••• menu, sa ilalim
+         ng 🔓 Cheats. Walang password — visual lang ito tulad ng
+         Timecyc/Colorcycle. Tunay na GTA SA ped.ifp ang ine-edit:
+         bawat animation ay may pangalan at keyframes per bone
+         (quaternion rotation, translation, scale, time; values
+         ÷4096). Structure-preserving: ang hindi in-edit na anims ay
+         mananatiling byte-identical sa download. -->
+    <div id="animPanel" class="admin-overlay" role="dialog" aria-modal="true" aria-labelledby="animTitle">
+      <div class="admin-card tc-card">
+        <h2 class="admin-title" id="animTitle"><span class="cc-title-badge">🎬 Animation Editor <span class="beta-badge">BETA</span></span></h2>
+        <button type="button" class="tc-upload-big" id="animUploadBtn">📤 I-upload ang ped.ifp</button>
+        <p class="tc-upload-sub" id="animUploadSub">I-tap ito at piliin ang ped.ifp mo (nasa anim folder ng GTA SA) — yun mismo ang ie-edit mo.</p>
+        <!-- Walang accept filter dito nang sadya (tulad ng ibang
+             panels): para hindi ma-grey out ang .ifp sa iOS Files
+             picker. Ang .ifp check ay nasa JavaScript ng change
+             handler, may Tagalog error kung hindi .ifp ang napili. -->
+        <input type="file" id="animFile" class="hidden" />
+        <div class="tc-loaded" id="animLoadedBox" role="status">
+          <p class="tc-loaded-name" id="animLoadedName"></p>
+          <p class="tc-loaded-meta" id="animFileInfo"></p>
+        </div>
+        <button type="button" class="primary tc-save-big" id="animDownloadTopBtn">💾 I-save at I-download</button>
+        <div class="tc-toprow">
+          <button type="button" id="animDefaultBtn">Gamitin ang sample</button>
+        </div>
+        <div class="tc-sec">
+          <label class="lbl" for="animSearch" id="animSearchLbl">Hanapin ang animation</label>
+          <input type="text" id="animSearch" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="hal. WALK, RUN, JUMP…" />
+        </div>
+        <div class="tc-sec">
+          <span class="lbl" id="animListLbl">Mga animation</span>
+          <div id="animList" class="anim-list"></div>
+        </div>
+        <div class="tc-sec">
+          <span class="lbl" id="animSlotsLbl">Palitan — piliin ang tutugtog sa bawat galaw</span>
+          <div id="animSlots"></div>
+          <p class="tc-loaded-meta" id="animSlotInfo" role="status"></p>
+        </div>
+        <div id="animGlWrap" class="hidden" aria-label="3D ped preview"></div>
+        <canvas id="animCanvas" width="640" height="360"></canvas>
+        <div class="anim-playrow">
+          <button type="button" id="animPlayBtn" aria-label="Play / Pause">▶</button>
+          <span class="a-time" id="animTimeLbl">0.00s / 0.00s</span>
+        </div>
+        <div class="anim-timeline">
+          <span class="lbl" id="animTlLbl">Timeline</span>
+          <input type="range" id="animScrub" min="0" max="1" step="0.01" value="0" aria-label="Timeline" />
+        </div>
+        <!-- I-edit ang galaw: totoong bone editing, pero simple —
+             rotation OFFSET per bone (degrees, X/Y/Z) na ina-apply
+             sa LAHAT ng keyframes ng bone na iyon sa napiling
+             animation. Live sa preview; sa download, naka-bake lang
+             sa in-edit na animation. -->
+        <div class="anim-edit-card" id="animEditCard">
+          <span class="lbl" id="animEditLbl">✏️ I-edit ang galaw — i-rotate ang buto</span>
+          <p class="tc-loaded-meta" id="animEditTarget" role="status"></p>
+          <div class="anim-slotrow">
+            <span class="s-lbl" id="animBoneLbl">Buto</span>
+            <select id="animBoneSel" aria-label="Buto na ie-edit"></select>
+          </div>
+          <div class="anim-rotrow">
+            <span class="r-lbl" id="animRotXLbl">Ikot X</span>
+            <input type="range" id="animRotX" min="-180" max="180" step="1" value="0" aria-label="Ikot X" />
+            <span class="r-val" id="animRotXVal">0°</span>
+          </div>
+          <div class="anim-rotrow">
+            <span class="r-lbl" id="animRotYLbl">Ikot Y</span>
+            <input type="range" id="animRotY" min="-180" max="180" step="1" value="0" aria-label="Ikot Y" />
+            <span class="r-val" id="animRotYVal">0°</span>
+          </div>
+          <div class="anim-rotrow">
+            <span class="r-lbl" id="animRotZLbl">Ikot Z</span>
+            <input type="range" id="animRotZ" min="-180" max="180" step="1" value="0" aria-label="Ikot Z" />
+            <span class="r-val" id="animRotZVal">0°</span>
+          </div>
+          <button type="button" class="anim-wide" id="animNarutoBtn">🌀 Naruto Run</button>
+          <div class="admin-btnrow">
+            <button type="button" id="animBoneResetBtn">I-reset ang bone</button>
+            <button type="button" id="animAllResetBtn">I-reset lahat</button>
+          </div>
+          <p class="tc-loaded-meta" id="animEditInfo" role="status"></p>
+        </div>
+        <button type="button" class="primary tc-save-big" id="animDownloadBtn">💾 I-save at I-download</button>
+        <p class="admin-note" id="animNote"></p>
+        <button type="button" id="animCloseBtn">Isara</button>
+      </div>
+    </div>
     <header id="topbar">
       <div id="brand">XSS <b>TXD</b></div>
       <div class="topbtns">
@@ -864,6 +989,7 @@
         <button type="button" id="menuTcBtn" role="menuitem">🌇 <span id="menuTcLbl">Timecyc Editor</span> <span class="beta-badge">BETA</span></button>
         <button type="button" id="menuCcBtn" role="menuitem">🎨 <span id="menuCcLbl">Colorcycle Editor</span> <span class="beta-badge">BETA</span></button>
         <button type="button" id="menuCheatsBtn" role="menuitem">🔓 <span id="menuCheatsLbl">Cheats</span></button>
+        <button type="button" id="menuAnimBtn" role="menuitem">🎬 <span id="menuAnimLbl">Animation Editor</span> <span class="beta-badge">BETA</span></button>
       </div>
       <div id="fileinfo" class="infopop">Sample model ang naka-load — mag-upload ng DFF + TXD mo para mag-edit ng totoong file.</div>
       <div id="popZip" class="infopop">ZIP — i-download ang TXD at DFF nang magkasama sa iisang .zip file (kung alin ang naka-load). Isang download lang, madaling i-share o i-backup.</div>
@@ -2843,6 +2969,88 @@ function syncPoseUI(){
   bar.classList.toggle("hidden", !has);
   if (has) renderPoseButtons();
 }
+/* ---------------- Animation Editor bridge ----------------
+   Ginagamit ng 🎬 Animation Editor (BETA) ang machinery na ito:
+   binibigyan siya ng role → quaternion map mula sa parsed IFP
+   keyframes (interpolated na niya), at dito iyon ginagawang local
+   bone rotations sa HAnim hierarchy at ini-skin sa totoong ped
+   model sa 3D Preview — parehong math ng applyPedPose sa itaas.
+   Pag walang ped/skin model na naka-load, false ang balik at ang
+   sariling preview ng panel ang gagamitin ng Animation Editor. */
+window.__pedAnimHasPed = function(){
+  return !!(pedGroup && pedMeshes.length && state.model);
+};
+window.__pedAnimApply = function(roleQuats){
+  if (!pedGroup || !pedMeshes.length || !state.model || typeof THREE === "undefined") return false;
+  const model = state.model;
+  const bind = pedBindWorlds(model);
+  const roles = pedBoneRoles(model);
+  const poseByFrame = {};
+  for (const role in roleQuats){
+    const fi = roles[role];
+    if (fi == null) continue;
+    const q = roleQuats[role];
+    if (!q || q.length < 4) continue;
+    const m = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion(q[0], q[1], q[2], q[3]));
+    poseByFrame[fi] = poseByFrame[fi] ? poseByFrame[fi].multiply(m) : m;
+  }
+  const posed = model.frames.map(() => null);
+  function posedOf(i, depth){
+    if (posed[i] || depth > 64) return posed[i] || new THREE.Matrix4();
+    const f = model.frames[i];
+    let local;
+    if (f.parent >= 0 && f.parent !== i && bind[f.parent]){
+      local = bind[f.parent].clone().invert().multiply(bind[i]);
+      local = posedOf(f.parent, depth + 1).clone().multiply(local);
+    } else local = bind[i].clone();
+    if (poseByFrame[i]) local.multiply(poseByFrame[i]);
+    posed[i] = local;
+    return local;
+  }
+  model.frames.forEach((_, i) => posedOf(i, 0));
+  const boneM = {};
+  (model.hierFrames || []).forEach((fi, hi) => {
+    if (fi != null && fi >= 0 && posed[fi] && bind[fi])
+      boneM[hi] = posed[fi].clone().multiply(bind[fi].clone().invert());
+  });
+  if (model.boneRoot >= 0 && posed[model.boneRoot] && bind[model.boneRoot] && boneM[0] == null)
+    boneM[0] = posed[model.boneRoot].clone().multiply(bind[model.boneRoot].clone().invert());
+  const v = new THREE.Vector3();
+  for (const mesh of pedMeshes){
+    const sk = mesh.userData.skin, base = mesh.userData.basePos;
+    const posAttr = mesh.geometry.attributes.position;
+    const out = posAttr.array;
+    const mw = sk.maxW, idx = sk.indices, wts = sk.weights;
+    const nv = base.length / 3;
+    for (let vi = 0; vi < nv; vi++){
+      let x = 0, y = 0, z = 0, wsum = 0;
+      const bx = base[vi * 3], by = base[vi * 3 + 1], bz = base[vi * 3 + 2];
+      for (let k = 0; k < mw; k++){
+        const w = wts[vi * mw + k];
+        if (!w) continue;
+        const M = boneM[idx[vi * mw + k]];
+        if (!M) continue;
+        v.set(bx, by, bz).applyMatrix4(M);
+        x += w * v.x; y += w * v.y; z += w * v.z; wsum += w;
+      }
+      if (wsum > 1e-6){
+        out[vi * 3] = x / wsum; out[vi * 3 + 1] = y / wsum; out[vi * 3 + 2] = z / wsum;
+      } else {
+        out[vi * 3] = bx; out[vi * 3 + 1] = by; out[vi * 3 + 2] = bz;
+      }
+    }
+    posAttr.needsUpdate = true;
+    mesh.geometry.computeVertexNormals();
+  }
+  /* Ang main 3D Preview ay may tuloy-tuloy na render loop, kaya
+     makikita agad ang bagong positions sa susunod na frame. */
+  return true;
+};
+window.__pedAnimReset = function(){
+  const n = PED_POSES[0];
+  if (n) applyPedPose(n);
+  renderPoseButtons();
+};
 function applyPartVisibility(){
   if (!modelGroup) return;
   modelGroup.traverse(o => {
@@ -5670,6 +5878,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       menuTc: "Timecyc Editor",
       menuCc: "Colorcycle Editor",
       menuCheats: "Cheats",
+      menuAnim: "Animation Editor",
       cheatAuthTitle: "Enter cheat password",
       cheatAuthLabel: "Cheat password",
       cheatConfirm: "Confirm",
@@ -5736,6 +5945,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       menuTc: "Timecyc Editor",
       menuCc: "Colorcycle Editor",
       menuCheats: "Cheats",
+      menuAnim: "Animation Editor",
       cheatAuthTitle: "Enter cheat password",
       cheatAuthLabel: "Cheat password",
       cheatConfirm: "Confirm",
@@ -5930,6 +6140,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     admSetText("menuTcLbl", s.menuTc);
     admSetText("menuCcLbl", s.menuCc);
     admSetText("menuCheatsLbl", s.menuCheats);
+    admSetText("menuAnimLbl", s.menuAnim);
     admSetText("cheatAuthTitle", s.cheatAuthTitle);
     admSetText("cheatAuthLabel", s.cheatAuthLabel);
     admSetText("cheatAuthConfirm", s.cheatConfirm);
@@ -5945,6 +6156,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     if (typeof window.__wpApplyLang === "function") window.__wpApplyLang(currentLang);
     if (typeof window.__hdApplyLang === "function") window.__hdApplyLang(currentLang);
     if (typeof window.__pdApplyLang === "function") window.__pdApplyLang(currentLang);
+    if (typeof window.__animApplyLang === "function") window.__animApplyLang(currentLang);
     if (adminPanelEl && adminPanelEl.classList.contains("open")) refreshAdminPanel();
   }
   function openAdminAuth(){
@@ -6016,6 +6228,10 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   function closeCheatsPanel(){ if (cheatsPanelEl) cheatsPanelEl.classList.remove("open"); }
   var menuCheatsBtn = document.getElementById("menuCheatsBtn");
   if (menuCheatsBtn) menuCheatsBtn.addEventListener("click", function(){ closeDotsMenu(); openCheatAuth(); });
+  /* 🎬 Animation Editor: walang password — visual lang ito tulad ng
+     Timecyc/Colorcycle, kaya diretso nang bubukas ang panel. */
+  var menuAnimBtn = document.getElementById("menuAnimBtn");
+  if (menuAnimBtn) menuAnimBtn.addEventListener("click", function(){ closeDotsMenu(); if (typeof window.__animOpen === "function") window.__animOpen(); });
   var cheatAuthCancelBtn = document.getElementById("cheatAuthCancel");
   if (cheatAuthCancelBtn) cheatAuthCancelBtn.addEventListener("click", closeCheatAuth);
   if (cheatAuthEl) cheatAuthEl.addEventListener("click", function(e){ if (e.target === cheatAuthEl) closeCheatAuth(); });
@@ -9294,6 +9510,1718 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     if (e.target && e.target.closest && e.target.closest(".infopop")) return;
     closeAll();
   });
+})();
+</script>
+<script>
+/* =====================================================================
+   Animation Editor (BETA) — tunay na GTA SA ped.ifp format (IFP
+   animation package, na-verify sa GTAMods Wiki). DALAWANG format ang
+   sinusuportahan:
+
+   (1) IFP version 2, magic "ANP3" — ITO ang totoong ped.ifp ng GTA SA:
+     "ANP3" u32 size · char name[24] · u32 bilang ng animations (294)
+     Bawat animation (36-byte header + objects):
+       char name[24] · u32 numObjects · u32 frameDataSize · u32 1
+     Bawat object (36-byte header + frames):
+       char name[24] · u32 frameType (3=child, 4=root) · u32 numFrames
+       · u32 boneID
+     Bawat frame (int16 lahat): child = qx qy qz qw · time (10 bytes);
+       root = qx qy qz qw · time · tx ty tz (16 bytes).
+       Quaternion ÷4096, translation ÷1024, oras ÷60 (segundo).
+     Ang frameDataSize ay kabuuang laki ng FRAME bytes lang (hindi
+     kasama ang object headers), kaya ang paglakad sa file ay
+     per-object: 36 + numFrames × frameSize, at ang animation block
+     ay 36 + numObjects×36 + frameDataSize.
+     ANG 24-BYTE NAME FIELDS AY NULL-TERMINATED LANG: may JUNK bytes
+     pagkatapos ng null (naiwang 3ds Max path ng exporter — hal.
+     "abseil\0\0=C:=C:\3dsmax5\0="), kaya binabasa ang pangalan
+     hanggang unang null at ini-ignore ang natitira sa field. Ang
+     totoong anim names ay MIXED CASE (run_civi, sprint_civi ang
+     lowercase; WALK_civi, IDLE_stance, JUMP_* ang iba), kaya
+     case-insensitive ang paghahanap para sa slots. Ang child bone
+     names naman ay may LEADING SPACE sa file (" Pelvis" — hierarchy
+     marker ng exporter), kaya tini-trim ang bone names sa parse.
+
+   (2) IFP version 1, magic "ANPK" (chunk format, hal. built-in sample):
+     "ANPK" u32 size · "INFO" u32 4 · u32 bilang ng animations
+     Bawat animation:
+       "NAME" u32 len · pangalan (null-terminated)
+       "DGAN" u32 size
+         "INFO" u32 4 · u32 bilang ng bones/objects
+         Bawat bone:
+           "NAME" u32 len · pangalan ng bone
+           "KRTS"/"KRT0"/"KR00" u32 size — keyframe data
+             "INFO" u32 8 · u32 bilang ng frames · u32 reserved
+             Bawat frame (int16 lahat, values ÷4096):
+               KRTS: qx qy qz qw · tx ty tz · sx sy sz · time (1/60s)
+               KRT0: qx qy qz qw · tx ty tz · time
+               KR00: qx qy qz qw · time
+   Ang game ay nag-i-interpolate sa pagitan ng frames.
+
+   Structure-preserving: bawat animation ay may raw block bytes
+   (NAME+DGAN). Ang hindi in-edit na anim ay isinusulat pabalik nang
+   byte-identical; ang in-edit lang ang binubuo ulit. Ang data ng
+   bawat entry ay immutable object — ang slot swap ay nagpapalit
+   lang ng reference ng data ng slot entry, at ang bone rotation
+   offsets ng "I-edit ang galaw" ay naka-bake sa download sa
+   pamamagitan ng bagong data object ng in-edit na entry lang,
+   kaya walang ibang anim ang nagagalaw.
+   ===================================================================== */
+(function(){
+  "use strict";
+
+  var STR = {
+    tl: {
+      upload: "📤 I-upload ang ped.ifp",
+      uploadSub: "I-tap ito at piliin ang ped.ifp mo (nasa anim folder ng GTA SA) — yun mismo ang ie-edit mo.",
+      saveDownload: "💾 I-save at I-download",
+      loadedPrefix: "Naka-load: ",
+      defaultLoaded: "Built-in sample ang naka-load — mag-upload ng sarili mong ped.ifp para i-edit ang file mo",
+      counts: function(n, ed){ return n + " animations" + (ed ? " · " + ed + " na-edit" : ""); },
+      useDefault: "Gamitin ang sample",
+      searchLbl: "Hanapin ang animation",
+      searchPh: "hal. WALK, RUN, JUMP…",
+      listLbl: "Mga animation",
+      slotsLbl: "Palitan — piliin ang tutugtog sa bawat galaw",
+      slotNames: { walk: "🚶 Lakad", run: "🏃 Takbo", sprint: "💨 Sprint", jumpL: "⬆ Talon (simula)", jumpG: "🕊 Talon (lipad)", jumpD: "⬇ Talon (bagsak)", idle: "🧍 Idle (tayo lang)" },
+      slotApplied: function(slot, src){ return "Napalitan: " + slot + " → " + src + " ang tutugtog"; },
+      editLbl: "✏️ I-edit ang galaw — i-rotate ang buto",
+      editFor: function(name){ return "Ie-edit ang: " + name + " — ang ikot ay para sa buong animation na ito"; },
+      boneLbl: "Buto",
+      rotX: "Ikot X", rotY: "Ikot Y", rotZ: "Ikot Z",
+      naruto: "🌀 Naruto Run",
+      resetBone: "I-reset ang bone",
+      resetAll: "I-reset lahat",
+      editInfoNone: "Walang in-edit na buto sa animation na ito.",
+      editInfoSome: function(n){ return n + (n === 1 ? " buto ang in-edit" : " buto ang in-edit") + " sa animation na ito — makikita sa preview, naka-bake sa download."; },
+      narutoDone: "Naruto Run na! Braso nakatalikod, katawan nakayuko — sa animation na ito.",
+      noBones: "Walang butong puwedeng i-edit sa animation na ito.",
+      boneNames: { pelvis: "Balakang (Pelvis)", spine: "Spine — likod ibaba", spine1: "Spine 1 — dibdib", neck: "Leeg (Neck)", head: "Ulo (Head)", clavicleL: "Balikat kaliwa", upperarmL: "Braso kaliwa", forearmL: "Siko kaliwa", handL: "Kamay kaliwa", clavicleR: "Balikat kanan", upperarmR: "Braso kanan", forearmR: "Siko kanan", handR: "Kamay kanan", thighL: "Hita kaliwa", calfL: "Binti kaliwa", footL: "Paa kaliwa", thighR: "Hita kanan", calfR: "Binti kanan", footR: "Paa kanan" },
+      timeline: "Timeline",
+      close: "Isara",
+      defName: "Built-in sample ped.ifp",
+      empty: "Walang na-parse na animations sa file na ito — subukan ang totoong ped.ifp o ang sample.",
+      notIfp: "Hindi .ifp file ang napili mo — piliin ang ped.ifp file. Walang nabago sa naka-load na file.",
+      noSlot: "— wala sa file —",
+      sameName: "May animation nang may ganyang pangalan — pumili ng iba.",
+      bonesWord: "bones",
+      framesWord: "frames",
+      note: "Paano i-install: i-copy ang na-download na ped.ifp sa GTA San Andreas/anim folder sa PC (palitan ang original — mag-backup muna). Visual lang ito: sa SA-MP, client-side ang ped.ifp kaya ikaw lang ang makakakita ng custom galaw mo; ang ibang players ay default anims pa rin ang makikita. Ang preview ay 3D skeleton mula sa animation data ng file; pag may ped/skin model na naka-load sa 3D Preview, ang anim ay tumutugtog din sa totoong model na iyon habang nagpe-play dito — pero pagtatantya pa rin ito ng galaw, hindi eksaktong render ng game."
+    },
+    en: {
+      upload: "📤 Upload ped.ifp",
+      uploadSub: "Tap here and pick your ped.ifp (in GTA SA's anim folder) — that exact file is what you will edit.",
+      saveDownload: "💾 Save & Download",
+      loadedPrefix: "Loaded: ",
+      defaultLoaded: "Built-in sample loaded — upload your own ped.ifp to edit your file",
+      counts: function(n, ed){ return n + " animations" + (ed ? " · " + ed + " edited" : ""); },
+      useDefault: "Use sample",
+      searchLbl: "Search animations",
+      searchPh: "e.g. WALK, RUN, JUMP…",
+      listLbl: "Animations",
+      slotsLbl: "Swap — pick what plays for each move",
+      slotNames: { walk: "🚶 Walk", run: "🏃 Run", sprint: "💨 Sprint", jumpL: "⬆ Jump (launch)", jumpG: "🕊 Jump (glide)", jumpD: "⬇ Jump (land)", idle: "🧍 Idle (standing)" },
+      slotApplied: function(slot, src){ return "Swapped: " + slot + " → now plays " + src; },
+      editLbl: "✏️ Edit the move — rotate a bone",
+      editFor: function(name){ return "Editing: " + name + " — the rotation applies to this whole animation"; },
+      boneLbl: "Bone",
+      rotX: "Rotate X", rotY: "Rotate Y", rotZ: "Rotate Z",
+      naruto: "🌀 Naruto Run",
+      resetBone: "Reset bone",
+      resetAll: "Reset all",
+      editInfoNone: "No bones edited in this animation yet.",
+      editInfoSome: function(n){ return n + (n === 1 ? " bone edited" : " bones edited") + " in this animation — shown in the preview, baked into the download."; },
+      narutoDone: "Naruto Run applied! Arms swept back, body leaning forward — on this animation.",
+      noBones: "No editable bones in this animation.",
+      boneNames: { pelvis: "Pelvis (hips)", spine: "Spine — lower back", spine1: "Spine 1 — chest", neck: "Neck", head: "Head", clavicleL: "Left shoulder (clavicle)", upperarmL: "Left arm (upper)", forearmL: "Left elbow (forearm)", handL: "Left hand", clavicleR: "Right shoulder (clavicle)", upperarmR: "Right arm (upper)", forearmR: "Right elbow (forearm)", handR: "Right hand", thighL: "Left thigh", calfL: "Left shin (calf)", footL: "Left foot", thighR: "Right thigh", calfR: "Right shin (calf)", footR: "Right foot" },
+      timeline: "Timeline",
+      close: "Close",
+      defName: "Built-in sample ped.ifp",
+      empty: "No animations could be parsed from this file — try a real ped.ifp or the sample.",
+      notIfp: "That is not an .ifp file — please pick your ped.ifp file. Your loaded file was not changed.",
+      noSlot: "— not in file —",
+      sameName: "An animation with that name already exists — pick another.",
+      bonesWord: "bones",
+      framesWord: "frames",
+      note: "How to install: copy the downloaded ped.ifp into the GTA San Andreas/anim folder on PC (replace the original — back up first). This is visual only: in SA-MP, ped.ifp is client-side so only you will see your custom moves; other players still see the default anims. The preview is a 3D skeleton built from the file's animation data; if a ped/skin model is loaded in the 3D Preview, the animation also plays on that real model while it plays here — but it is still an approximation of the motion, not an exact render of the game."
+    }
+  };
+
+  var animLang = "tl";
+  try {
+    var savedLang = localStorage.getItem("mavs_txd_lang");
+    if (savedLang === "en" || savedLang === "tl") animLang = savedLang;
+  } catch(e){}
+  function S(){ return STR[animLang]; }
+  function $(id){ return document.getElementById(id); }
+  function clamp(v, a, b){ return v < a ? a : (v > b ? b : v); }
+
+  /* ---------------- IFP parse / build ---------------- */
+  function rdU32(dv, o){ return dv.getUint32(o, true); }
+  function fourcc(u8, o){ return String.fromCharCode(u8[o], u8[o + 1], u8[o + 2], u8[o + 3]); }
+  function readName(u8, dv, dataOff, size){
+    var s = "";
+    var n = Math.min(size, 256);
+    for (var i = 0; i < n; i++){
+      var c = u8[dataOff + i];
+      if (c === 0) break;
+      if (c >= 32 && c < 127) s += String.fromCharCode(c);
+    }
+    return s;
+  }
+  /* ---------------- IFP v2 (ANP3) parse / build ----------------
+     Tingnan ang header comment sa itaas para sa buong layout. Ang
+     bawat entry ay may rawName (ang 24-byte field MISMO, junk at
+     lahat — para byte-identical ang hindi nabagong pangalan) at
+     rawBlock (buong animation block); ang data.rawDgan dito ay ang
+     raw OBJECTS bytes ng animation (pangalan ng field ay minana sa
+     v1 code path). */
+  function readFixed24(u8, off){
+    var s = "";
+    for (var i = 0; i < 24 && off + i < u8.length; i++){
+      var c = u8[off + i];
+      if (c === 0) break;
+      if (c >= 32 && c < 127) s += String.fromCharCode(c);
+    }
+    return s;
+  }
+  function parseV2Objects(u8, dv, startOff, numObj, limit){
+    var bones = [];
+    var o = startOff;
+    for (var j = 0; j < numObj; j++){
+      if (o + 36 > limit) break;
+      /* Ang exporter ay naglalagay ng leading space sa child bone
+         names (hierarchy marker, hal. " Pelvis") — alisin para
+         tumugma sa pangalan ng bone sa DFF at sa bone dropdown. */
+      var bname = readFixed24(u8, o).replace(/^\s+|\s+$/g, "");
+      var ftype = rdU32(dv, o + 24);
+      var nframes = rdU32(dv, o + 28);
+      var boneId = rdU32(dv, o + 32);
+      var isRoot = (ftype === 4);
+      var per = isRoot ? 16 : 10;
+      var base = o + 36;
+      var frames = [];
+      if (base + nframes * per <= limit){
+        for (var k = 0; k < nframes; k++){
+          var fo = base + k * per;
+          function gi2(kk){ return dv.getInt16(fo + kk * 2, true) / 4096; }
+          var f = { q: [gi2(0), gi2(1), gi2(2), gi2(3)], tr: [0, 0, 0], sc: [1, 1, 1],
+                    t: dv.getInt16(fo + 8, true) / 60 };
+          if (isRoot){
+            f.tr = [dv.getInt16(fo + 10, true) / 1024,
+                    dv.getInt16(fo + 12, true) / 1024,
+                    dv.getInt16(fo + 14, true) / 1024];
+          }
+          /* Normalisahin ang quaternion (ang laro ay umaasa sa unit quat). */
+          var ql = Math.sqrt(f.q[0]*f.q[0] + f.q[1]*f.q[1] + f.q[2]*f.q[2] + f.q[3]*f.q[3]);
+          if (ql > 1e-6){ f.q = [f.q[0]/ql, f.q[1]/ql, f.q[2]/ql, f.q[3]/ql]; }
+          else f.q = [0, 0, 0, 1];
+          frames.push(f);
+        }
+      }
+      bones.push({ name: bname, type: ftype, frameInts: isRoot ? 8 : 5,
+        ok: frames.length > 0, frames: frames, boneId: boneId });
+      o = base + nframes * per;
+    }
+    return bones;
+  }
+  function ifpParseV2(u8, dv){
+    var out = { headerRaw: null, countOff: 32, entries: [], raw: u8, format: "v2" };
+    if (u8.length < 36) return out;
+    var count = rdU32(dv, 32);
+    if (count > 100000) return out;
+    out.headerRaw = u8.slice(0, 36);
+    var o = 36;
+    for (var i = 0; i < count; i++){
+      if (o + 36 > u8.length) break;
+      var name = readFixed24(u8, o);
+      var numObj = rdU32(dv, o + 24);
+      var fds = rdU32(dv, o + 28);
+      var animEnd = o + 36 + numObj * 36 + fds;
+      if (animEnd > u8.length || animEnd < o + 36) break;
+      var bones = parseV2Objects(u8, dv, o + 36, numObj, animEnd);
+      out.entries.push({
+        name: name,
+        rawName: u8.slice(o, o + 24),
+        rawBlock: u8.slice(o, animEnd),
+        data: { bones: bones, rawDgan: u8.slice(o + 36, animEnd), dirty: false }
+      });
+      o = animEnd;
+    }
+    return out;
+  }
+  /* Buuin ulit ang objects data ng isang edited na v2 animation. */
+  function buildAnimV2(data){
+    var parts = [];
+    data.bones.forEach(function(b){
+      var hdr = new Uint8Array(36);
+      var nm = String(b.name || "Bone");
+      for (var i = 0; i < 24 && i < nm.length; i++){
+        var cc = nm.charCodeAt(i);
+        hdr[i] = (cc >= 32 && cc < 127) ? cc : 0;
+      }
+      var isRoot = (b.frameInts || 5) >= 8;
+      var hdv = new DataView(hdr.buffer);
+      hdv.setUint32(24, isRoot ? 4 : 3, true);
+      hdv.setUint32(28, b.frames.length, true);
+      hdv.setUint32(32, b.boneId || 0, true);
+      parts.push(hdr);
+      var per = isRoot ? 16 : 10;
+      var fdata = new Uint8Array(b.frames.length * per);
+      var fdv = new DataView(fdata.buffer);
+      b.frames.forEach(function(f, k){
+        var fo = k * per;
+        function si(off2, v){ fdv.setInt16(fo + off2, v, true); }
+        si(0, Math.round(clamp(f.q[0], -8, 7.9998) * 4096));
+        si(2, Math.round(clamp(f.q[1], -8, 7.9998) * 4096));
+        si(4, Math.round(clamp(f.q[2], -8, 7.9998) * 4096));
+        si(6, Math.round(clamp(f.q[3], -8, 7.9998) * 4096));
+        si(8, Math.round(clamp(f.t * 60, -32768, 32767)));
+        if (isRoot){
+          si(10, Math.round(clamp(f.tr[0], -32, 31.999) * 1024));
+          si(12, Math.round(clamp(f.tr[1], -32, 31.999) * 1024));
+          si(14, Math.round(clamp(f.tr[2], -32, 31.999) * 1024));
+        }
+      });
+      parts.push(fdata);
+    });
+    return concatU8(parts);
+  }
+  /* Buuin ang buong ANP3 file. touched=false → original bytes. */
+  function ifpBuildV2(file, entries, touched){
+    if (!touched && file && file.raw) return file.raw.slice();
+    var header = file && file.headerRaw ? file.headerRaw.slice() : null;
+    if (!header){
+      header = new Uint8Array(36);
+      header.set([65, 78, 80, 51], 0); /* "ANP3" */
+      header[8] = 112; header[9] = 101; header[10] = 100; /* "ped" */
+    }
+    new DataView(header.buffer, header.byteOffset, header.byteLength).setUint32(32, entries.length, true);
+    var parts = [header];
+    entries.forEach(function(e){
+      var parsedName = (e.rawName && e.rawName.length >= 24) ? readFixed24(e.rawName, 0) : null;
+      var nameField;
+      if (parsedName === e.name) nameField = e.rawName.slice(0, 24);
+      else {
+        /* Nabago ang pangalan: bagong malinis na 24-byte field. */
+        nameField = new Uint8Array(24);
+        var nm = String(e.name || "");
+        for (var i = 0; i < 24 && i < nm.length; i++){
+          var cc = nm.charCodeAt(i);
+          nameField[i] = (cc >= 32 && cc < 127) ? cc : 0;
+        }
+      }
+      var objData = (e.data && e.data.dirty) ? buildAnimV2(e.data) : (e.data ? e.data.rawDgan : null);
+      if (!objData){
+        if (e.rawBlock && e.rawBlock.length > 36 && parsedName === e.name){ parts.push(e.rawBlock); return; }
+        objData = new Uint8Array(0);
+      }
+      var numObj = e.data ? e.data.bones.length : 0;
+      var fds = 0;
+      if (e.data) e.data.bones.forEach(function(b){ fds += b.frames.length * ((b.frameInts || 5) >= 8 ? 16 : 10); });
+      var ahdr = new Uint8Array(12);
+      var adv = new DataView(ahdr.buffer);
+      adv.setUint32(0, numObj, true);
+      adv.setUint32(4, fds, true);
+      adv.setUint32(8, 1, true);
+      parts.push(concatU8([nameField, ahdr, objData]));
+    });
+    var body = concatU8(parts);
+    /* Ayusin ang ANP3 size field (bytes 4-7) = laki pagkatapos ng 8. */
+    new DataView(body.buffer, body.byteOffset, body.byteLength).setUint32(4, body.length - 8, true);
+    return body;
+  }
+  /* Parse ng isang KR** chunk: ibinabalik ang frames + layout info.
+     frameInts: KR00=5, KRT0=8, KRTS=11 (int16 bawat frame). Pag hindi
+     tugma ang laki, hinala mula sa (size-info)/numFrames. */
+  function parseKr(u8, dv, type, dataOff, size){
+    var bone = { type: type, frames: [], frameInts: 0, ok: false };
+    if (size < 16 || fourcc(u8, dataOff) !== "INFO") return bone;
+    var infoSize = rdU32(dv, dataOff + 4);
+    if (infoSize < 4) return bone;
+    var numFrames = rdU32(dv, dataOff + 8);
+    var framesOff = dataOff + 8 + infoSize;
+    var frameBytes = size - (framesOff - dataOff);
+    if (!numFrames || frameBytes <= 0) return bone;
+    var per = Math.floor(frameBytes / numFrames);
+    var ints = per / 2;
+    if (ints !== Math.floor(ints) || ints < 5) return bone;
+    bone.frameInts = ints;
+    for (var i = 0; i < numFrames; i++){
+      var o = framesOff + i * per;
+      function gi(k){ return dv.getInt16(o + k * 2, true) / 4096; }
+      var f = { q: [gi(0), gi(1), gi(2), gi(3)], tr: [0, 0, 0], sc: [1, 1, 1], t: 0 };
+      if (ints >= 8){ f.tr = [gi(4), gi(5), gi(6)]; }
+      if (ints >= 11){ f.sc = [gi(7), gi(8), gi(9)]; f.t = dv.getInt16(o + 20, true) / 60; }
+      else if (ints >= 8){ f.t = dv.getInt16(o + 14, true) / 60; }
+      else { f.t = dv.getInt16(o + 8, true) / 60; }
+      /* Normalisahin ang quaternion (ang laro ay umaasa sa unit quat). */
+      var ql = Math.sqrt(f.q[0]*f.q[0] + f.q[1]*f.q[1] + f.q[2]*f.q[2] + f.q[3]*f.q[3]);
+      if (ql > 1e-6){ f.q = [f.q[0]/ql, f.q[1]/ql, f.q[2]/ql, f.q[3]/ql]; }
+      else f.q = [0, 0, 0, 1];
+      bone.frames.push(f);
+    }
+    bone.ok = bone.frames.length > 0;
+    return bone;
+  }
+  /* Parse ng DGAN chunk data (mula dataOff, size bytes): ibinabalik
+     ang bones. Ang raw DGAN bytes ay itinatabi ng caller. */
+  function parseDgan(u8, dv, dataOff, size){
+    var bones = [];
+    var end = dataOff + size;
+    var o = dataOff;
+    if (o + 12 <= end && fourcc(u8, o) === "INFO"){
+      o += 8 + rdU32(dv, o + 4);
+    }
+    while (o + 8 <= end){
+      var t = fourcc(u8, o), sz = rdU32(dv, o + 4);
+      if (sz < 0 || o + 8 + sz > end + 8) break;
+      if (t === "NAME"){
+        var bname = readName(u8, dv, o + 8, sz);
+        var ko = o + 8 + sz;
+        if (ko + 8 <= end){
+          var kt = fourcc(u8, ko), ksz = rdU32(dv, ko + 4);
+          if ((kt === "KRTS" || kt === "KRT0" || kt === "KR00" || kt.indexOf("KR") === 0) && ko + 8 + ksz <= end + 8){
+            var bone = parseKr(u8, dv, kt, ko + 8, ksz);
+            bone.name = bname;
+            bones.push(bone);
+            o = ko + 8 + ksz;
+            continue;
+          }
+        }
+        bones.push({ name: bname, type: "", frames: [], frameInts: 0, ok: false });
+        o += 8 + sz;
+        continue;
+      }
+      if (sz === 0) break;
+      o += 8 + sz;
+    }
+    return bones;
+  }
+  /* Parse ng buong IFP buffer. Nagbabalik ng:
+     { headerRaw, countOff, entries:[{name, rawName, rawBlock, data}],
+       raw: Uint8Array }
+     data = { bones, rawDgan, dirty:false } (immutable by convention). */
+  function ifpParse(buf){
+    var u8 = new Uint8Array(buf);
+    var dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    var out = { headerRaw: null, countOff: -1, entries: [], raw: u8 };
+    if (u8.length >= 4 && fourcc(u8, 0) === "ANP3") return ifpParseV2(u8, dv);
+    if (u8.length < 20 || fourcc(u8, 0) !== "ANPK") return out;
+    var o = 8;
+    if (o + 12 > u8.length || fourcc(u8, o) !== "INFO") return out;
+    out.countOff = o + 8;
+    var count = rdU32(dv, o + 8);
+    o += 8 + rdU32(dv, o + 4);
+    out.headerRaw = u8.slice(0, o);
+    for (var i = 0; i < count && o + 8 <= u8.length; i++){
+      if (fourcc(u8, o) !== "NAME") break;
+      var nameSize = rdU32(dv, o + 4);
+      var name = readName(u8, dv, o + 8, nameSize);
+      var blockStart = o;
+      var nameChunkEnd = o + 8 + nameSize;
+      var rawDgan = null, bones = [];
+      var dganEnd = nameChunkEnd;
+      if (nameChunkEnd + 8 <= u8.length && fourcc(u8, nameChunkEnd) === "DGAN"){
+        var dsz = rdU32(dv, nameChunkEnd + 4);
+        rawDgan = u8.slice(nameChunkEnd, nameChunkEnd + 8 + dsz);
+        bones = parseDgan(u8, dv, nameChunkEnd + 8, dsz);
+        dganEnd = nameChunkEnd + 8 + dsz;
+      }
+      out.entries.push({
+        name: name,
+        rawName: u8.slice(blockStart, nameChunkEnd),
+        rawBlock: u8.slice(blockStart, dganEnd),
+        data: { bones: bones, rawDgan: rawDgan, dirty: false }
+      });
+      o = dganEnd;
+    }
+    return out;
+  }
+  function strBytes(s){
+    var a = [];
+    for (var i = 0; i < s.length; i++) a.push(s.charCodeAt(i) & 0xff);
+    a.push(0);
+    return a;
+  }
+  function chunkBytes(tag, data){
+    var out = new Uint8Array(8 + data.length);
+    for (var i = 0; i < 4; i++) out[i] = tag.charCodeAt(i);
+    new DataView(out.buffer).setUint32(4, data.length, true);
+    out.set(data, 8);
+    return out;
+  }
+  function concatU8(parts){
+    var n = 0; parts.forEach(function(p){ n += p.length; });
+    var out = new Uint8Array(n), o = 0;
+    parts.forEach(function(p){ out.set(p, o); o += p.length; });
+    return out;
+  }
+  /* Buuin ulit ang DGAN ng isang edited na data mula sa bones niya. */
+  function buildDgan(data){
+    var boneChunks = [];
+    data.bones.forEach(function(b){
+      var nameCh = chunkBytes("NAME", new Uint8Array(strBytes(b.name || "Bone")));
+      if (!b.ok || !b.frames.length){ boneChunks.push(nameCh); return; }
+      var ints = b.frameInts >= 11 ? 11 : (b.frameInts >= 8 ? 8 : 5);
+      var type = ints >= 11 ? "KRTS" : (ints >= 8 ? "KRT0" : "KR00");
+      var info = new Uint8Array(8);
+      var idv = new DataView(info.buffer);
+      idv.setUint32(0, b.frames.length, true);
+      idv.setUint32(4, 0, true);
+      var fdata = new Uint8Array(b.frames.length * ints * 2);
+      var fdv = new DataView(fdata.buffer);
+      b.frames.forEach(function(f, i){
+        var o = i * ints * 2;
+        function si(k, v){ fdv.setInt16(o + k * 2, Math.round(clamp(v, -8, 7.999) * 4096), true); }
+        si(0, f.q[0]); si(1, f.q[1]); si(2, f.q[2]); si(3, f.q[3]);
+        if (ints >= 8){ si(4, f.tr[0]); si(5, f.tr[1]); si(6, f.tr[2]); }
+        if (ints >= 11){ si(7, f.sc[0]); si(8, f.sc[1]); si(9, f.sc[2]); fdv.setInt16(o + 20, Math.round(f.t * 60), true); }
+        else if (ints >= 8){ fdv.setInt16(o + 14, Math.round(f.t * 60), true); }
+        else { fdv.setInt16(o + 8, Math.round(f.t * 60), true); }
+      });
+      var kr = chunkBytes(type, concatU8([chunkBytes("INFO", info), fdata]));
+      boneChunks.push(concatU8([nameCh, kr]));
+    });
+    var infoN = new Uint8Array(4);
+    new DataView(infoN.buffer).setUint32(0, data.bones.length, true);
+    return chunkBytes("DGAN", concatU8([chunkBytes("INFO", infoN)].concat(boneChunks)));
+  }
+  /* Buuin ang buong file mula sa entries ng editor state.
+     touched=false at walang structural change → original bytes. */
+  function ifpBuild(file, entries, touched){
+    if (file && file.format === "v2") return ifpBuildV2(file, entries, touched);
+    if (!touched && file && file.raw) return file.raw.slice();
+    var header = file && file.headerRaw ? file.headerRaw.slice() : null;
+    if (!header){
+      var cnt = new Uint8Array(4);
+      new DataView(cnt.buffer).setUint32(0, entries.length, true);
+      header = concatU8([chunkBytes("INFO", cnt)]);
+      header = concatU8([new Uint8Array([65, 78, 80, 75, 0, 0, 0, 0]), header]);
+    }
+    if (file && file.countOff >= 0 && entries.length !== file.entries.length){
+      var rel = file.countOff;
+      if (rel + 4 <= header.length) new DataView(header.buffer, header.byteOffset, header.byteLength).setUint32(rel, entries.length, true);
+    }
+    var parts = [header];
+    entries.forEach(function(e){
+      var nameCh = e.rawName;
+      var nameNow = readName(e.rawName, new DataView(e.rawName.buffer, e.rawName.byteOffset, e.rawName.byteLength), 8, e.rawName.length - 8);
+      if (!nameCh || nameNow !== e.name) nameCh = chunkBytes("NAME", new Uint8Array(strBytes(e.name)));
+      var dgan = (e.data && e.data.dirty) ? buildDgan(e.data) : (e.data ? e.data.rawDgan : null);
+      if (dgan) parts.push(concatU8([nameCh, dgan]));
+      else if (!e.data || !e.data.dirty) parts.push(e.rawBlock);
+      else parts.push(nameCh);
+    });
+    var body = concatU8(parts);
+    /* Ayusin ang ANPK size field (bytes 4-7) = laki pagkatapos ng 8. */
+    new DataView(body.buffer, body.byteOffset, body.byteLength).setUint32(4, body.length - 8, true);
+    return body;
+  }
+  /* ---------------- quaternion / euler helpers ---------------- */
+  function qFromEuler(rx, ry, rz){
+    var hx = rx / 2, hy = ry / 2, hz = rz / 2;
+    var qx = [Math.sin(hx), 0, 0, Math.cos(hx)];
+    var qy = [0, Math.sin(hy), 0, Math.cos(hy)];
+    var qz = [0, 0, Math.sin(hz), Math.cos(hz)];
+    function mul(a, b){
+      return [
+        a[3]*b[0] + a[0]*b[3] + a[1]*b[2] - a[2]*b[1],
+        a[3]*b[1] - a[0]*b[2] + a[1]*b[3] + a[2]*b[0],
+        a[3]*b[2] + a[0]*b[1] - a[1]*b[0] + a[2]*b[3],
+        a[3]*b[3] - a[0]*b[0] - a[1]*b[1] - a[2]*b[2]
+      ];
+    }
+    return mul(qz, mul(qy, qx));
+  }
+  function qToMat(q){
+    var x = q[0], y = q[1], z = q[2], w = q[3];
+    return [
+      1 - 2*(y*y + z*z), 2*(x*y - z*w),     2*(x*z + y*w),
+      2*(x*y + z*w),     1 - 2*(x*x + z*z), 2*(y*z - x*w),
+      2*(x*z - y*w),     2*(y*z + x*w),     1 - 2*(x*x + y*y)
+    ];
+  }
+  function qNlerp(a, b, t){
+    var d = a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3];
+    var s = d < 0 ? -1 : 1;
+    var out = [0, 1, 2, 3].map(function(i){ return a[i] + (b[i]*s - a[i]) * t; });
+    var l = Math.sqrt(out[0]*out[0] + out[1]*out[1] + out[2]*out[2] + out[3]*out[3]);
+    if (l < 1e-6) return a.slice();
+    return out.map(function(v){ return v / l; });
+  }
+  function matMul(a, b){
+    var o = new Array(9);
+    for (var r = 0; r < 3; r++) for (var c = 0; c < 3; c++)
+      o[r*3 + c] = a[r*3]*b[c] + a[r*3 + 1]*b[3 + c] + a[r*3 + 2]*b[6 + c];
+    return o;
+  }
+  function matVec(m, v){
+    return [
+      m[0]*v[0] + m[1]*v[1] + m[2]*v[2],
+      m[3]*v[0] + m[4]*v[1] + m[5]*v[2],
+      m[6]*v[0] + m[7]*v[1] + m[8]*v[2]
+    ];
+  }
+  function vAdd(a, b){ return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; }
+  function vScale(a, s){ return [a[0]*s, a[1]*s, a[2]*s]; }
+
+  /* ---------------- built-in sample ped.ifp ----------------
+     Ilang sample anims sa totoong IFP layout (WALK_civi, run_civi,
+     sprint_civi, JUMP_*, IDLE_stance) para gumana ang panel kahit walang
+     in-upload na file. Ang galaw ay authored keyframes per bone.
+     Ang Root translation ay naka-author sa GTA axes tulad ng totoong
+     IFP (Z = pataas: bounce at talon ay nasa Z component).
+     Ang bawat spec Euler ay DELTA rotation sa world (GTA) axes sa
+     ibabaw ng neutral na tayo ng biped: ang aktuwal na local
+     quaternion ng sample bone = base local ng skeleton (ANIM_SKEL)
+     na iniikot ng delta na iyon (conjugation papasok sa local frame
+     ng bone) — kaparehong convention ng totoong ped.ifp, kung saan
+     ang local quat ng bawat bone ay ang buong orientation niya sa
+     hierarchy, hindi maliit na delta mula sa identity. */
+  var D2R = Math.PI / 180;
+  function smpBone(name, role, keys){
+    return { name: name, type: "KRTS", frameInts: 11, ok: true,
+      frames: keys.map(function(k){
+        return { q: smpLocalQ(role, (k[1] || 0) * D2R, (k[2] || 0) * D2R, (k[3] || 0) * D2R),
+          tr: k[4] ? k[4].slice() : [0, 0, 0], sc: [1, 1, 1], t: k[0] };
+      }) };
+  }
+  function smpAnim(name, dur, spec){
+    var bones = [];
+    ANIM_SKEL.forEach(function(sk){
+      var keys = null;
+      Object.keys(spec).forEach(function(sn){
+        if (!keys && animBoneRole({ name: sn }) === sk.role) keys = spec[sn];
+      });
+      if (!keys) keys = [[0, 0, 0, 0], [dur, 0, 0, 0]];
+      bones.push(smpBone(sk.name, sk.role, keys));
+    });
+    return { name: name, rawName: null, rawBlock: null,
+      data: { bones: bones, rawDgan: null, dirty: true } };
+  }
+  function sampleEntries(){
+    var out = [];
+    out.push(smpAnim("IDLE_stance", 2, {
+      "Spine": [[0, 1, 0, 0], [1, 2.5, 0, 0], [2, 1, 0, 0]],
+      "Head": [[0, -1, 0, 0], [1, -2, 4, 0], [2, -1, 0, 0]],
+      "L UpperArm": [[0, 2, 0, 3], [1, 3, 0, 4], [2, 2, 0, 3]],
+      "R UpperArm": [[0, 2, 0, -3], [1, 3, 0, -4], [2, 2, 0, -3]],
+      "Root": [[0, 0, 0, 0, [0, 0, 0]], [1, 0, 0, 0, [0, 0, 0.008]], [2, 0, 0, 0, [0, 0, 0]]]
+    }));
+    out.push(smpAnim("WALK_civi", 1, {
+      "L Thigh": [[0, 28, 0, 0], [0.25, 0, 0, 0], [0.5, -28, 0, 0], [0.75, 0, 0, 0], [1, 28, 0, 0]],
+      "R Thigh": [[0, -28, 0, 0], [0.25, 0, 0, 0], [0.5, 28, 0, 0], [0.75, 0, 0, 0], [1, -28, 0, 0]],
+      "L Calf": [[0, 4, 0, 0], [0.25, 26, 0, 0], [0.5, 6, 0, 0], [0.75, 2, 0, 0], [1, 4, 0, 0]],
+      "R Calf": [[0, 6, 0, 0], [0.25, 2, 0, 0], [0.5, 4, 0, 0], [0.75, 26, 0, 0], [1, 6, 0, 0]],
+      "L UpperArm": [[0, -22, 0, 4], [0.5, 22, 0, 4], [1, -22, 0, 4]],
+      "R UpperArm": [[0, 22, 0, -4], [0.5, -22, 0, -4], [1, 22, 0, -4]],
+      "L Forearm": [[0, -8, 0, 0], [0.5, -14, 0, 0], [1, -8, 0, 0]],
+      "R Forearm": [[0, -14, 0, 0], [0.5, -8, 0, 0], [1, -14, 0, 0]],
+      "Pelvis": [[0, 0, 0, 3], [0.5, 0, 0, -3], [1, 0, 0, 3]],
+      "Root": [[0, 0, 0, 0, [0, 0, 0]], [0.25, 0, 0, 0, [0, 0, 0.02]], [0.5, 0, 0, 0, [0, 0, 0]], [0.75, 0, 0, 0, [0, 0, 0.02]], [1, 0, 0, 0, [0, 0, 0]]]
+    }));
+    out.push(smpAnim("run_civi", 0.6, {
+      "L Thigh": [[0, 48, 0, 0], [0.15, 0, 0, 0], [0.3, -42, 0, 0], [0.45, 0, 0, 0], [0.6, 48, 0, 0]],
+      "R Thigh": [[0, -42, 0, 0], [0.15, 0, 0, 0], [0.3, 48, 0, 0], [0.45, 0, 0, 0], [0.6, -42, 0, 0]],
+      "L Calf": [[0, 12, 0, 0], [0.15, 55, 0, 0], [0.3, 14, 0, 0], [0.45, 8, 0, 0], [0.6, 12, 0, 0]],
+      "R Calf": [[0, 14, 0, 0], [0.15, 8, 0, 0], [0.3, 12, 0, 0], [0.45, 55, 0, 0], [0.6, 14, 0, 0]],
+      "L UpperArm": [[0, -38, 0, 6], [0.3, 38, 0, 6], [0.6, -38, 0, 6]],
+      "R UpperArm": [[0, 38, 0, -6], [0.3, -38, 0, -6], [0.6, 38, 0, -6]],
+      "L Forearm": [[0, -35, 0, 0], [0.3, -55, 0, 0], [0.6, -35, 0, 0]],
+      "R Forearm": [[0, -55, 0, 0], [0.3, -35, 0, 0], [0.6, -55, 0, 0]],
+      "Spine": [[0, 9, 0, 0], [0.6, 9, 0, 0]],
+      "Root": [[0, 0, 0, 0, [0, 0, 0]], [0.15, 0, 0, 0, [0, 0, 0.045]], [0.3, 0, 0, 0, [0, 0, 0]], [0.45, 0, 0, 0, [0, 0, 0.045]], [0.6, 0, 0, 0, [0, 0, 0]]]
+    }));
+    out.push(smpAnim("sprint_civi", 0.5, {
+      "L Thigh": [[0, 62, 0, 0], [0.125, 0, 0, 0], [0.25, -55, 0, 0], [0.375, 0, 0, 0], [0.5, 62, 0, 0]],
+      "R Thigh": [[0, -55, 0, 0], [0.125, 0, 0, 0], [0.25, 62, 0, 0], [0.375, 0, 0, 0], [0.5, -55, 0, 0]],
+      "L Calf": [[0, 16, 0, 0], [0.125, 75, 0, 0], [0.25, 18, 0, 0], [0.375, 10, 0, 0], [0.5, 16, 0, 0]],
+      "R Calf": [[0, 18, 0, 0], [0.125, 10, 0, 0], [0.25, 16, 0, 0], [0.375, 75, 0, 0], [0.5, 18, 0, 0]],
+      "L UpperArm": [[0, -52, 0, 8], [0.25, 52, 0, 8], [0.5, -52, 0, 8]],
+      "R UpperArm": [[0, 52, 0, -8], [0.25, -52, 0, -8], [0.5, 52, 0, -8]],
+      "L Forearm": [[0, -50, 0, 0], [0.25, -70, 0, 0], [0.5, -50, 0, 0]],
+      "R Forearm": [[0, -70, 0, 0], [0.25, -50, 0, 0], [0.5, -70, 0, 0]],
+      "Spine": [[0, 16, 0, 0], [0.5, 16, 0, 0]],
+      "Root": [[0, 0, 0, 0, [0, 0, 0]], [0.125, 0, 0, 0, [0, 0, 0.06]], [0.25, 0, 0, 0, [0, 0, 0]], [0.375, 0, 0, 0, [0, 0, 0.06]], [0.5, 0, 0, 0, [0, 0, 0]]]
+    }));
+    out.push(smpAnim("JUMP_launch", 0.45, {
+      "L Thigh": [[0, -55, 0, 0], [0.18, -62, 0, 0], [0.45, 12, 0, 0]],
+      "R Thigh": [[0, -55, 0, 0], [0.18, -62, 0, 0], [0.45, 12, 0, 0]],
+      "L Calf": [[0, 78, 0, 0], [0.18, 88, 0, 0], [0.45, 4, 0, 0]],
+      "R Calf": [[0, 78, 0, 0], [0.18, 88, 0, 0], [0.45, 4, 0, 0]],
+      "L UpperArm": [[0, -30, 0, 10], [0.45, -165, 0, 12]],
+      "R UpperArm": [[0, -30, 0, -10], [0.45, -165, 0, -12]],
+      "Spine": [[0, 14, 0, 0], [0.45, -6, 0, 0]],
+      "Root": [[0, 0, 0, 0, [0, 0, -0.22]], [0.18, 0, 0, 0, [0, 0, -0.26]], [0.45, 0, 0, 0, [0, 0, 0.25]]]
+    }));
+    out.push(smpAnim("JUMP_glide", 0.8, {
+      "L Thigh": [[0, 18, 0, 0], [0.8, 18, 0, 0]],
+      "R Thigh": [[0, -14, 0, 0], [0.8, -14, 0, 0]],
+      "L Calf": [[0, 10, 0, 0], [0.8, 10, 0, 0]],
+      "R Calf": [[0, 26, 0, 0], [0.8, 26, 0, 0]],
+      "L UpperArm": [[0, -20, 0, 55], [0.8, -20, 0, 55]],
+      "R UpperArm": [[0, -20, 0, -55], [0.8, -20, 0, -55]],
+      "Spine": [[0, -4, 0, 0], [0.8, -4, 0, 0]],
+      "Root": [[0, 0, 0, 0, [0, 0, 0.35]], [0.8, 0, 0, 0, [0, 0, 0.35]]]
+    }));
+    out.push(smpAnim("JUMP_land", 0.4, {
+      "L Thigh": [[0, 8, 0, 0], [0.14, -48, 0, 0], [0.4, 0, 0, 0]],
+      "R Thigh": [[0, 8, 0, 0], [0.14, -48, 0, 0], [0.4, 0, 0, 0]],
+      "L Calf": [[0, 4, 0, 0], [0.14, 70, 0, 0], [0.4, 0, 0, 0]],
+      "R Calf": [[0, 4, 0, 0], [0.14, 70, 0, 0], [0.4, 0, 0, 0]],
+      "L UpperArm": [[0, -40, 0, 14], [0.14, 18, 0, 10], [0.4, 0, 0, 0]],
+      "R UpperArm": [[0, -40, 0, -14], [0.14, 18, 0, -10], [0.4, 0, 0, 0]],
+      "Spine": [[0, 2, 0, 0], [0.14, 16, 0, 0], [0.4, 0, 0, 0]],
+      "Root": [[0, 0, 0, 0, [0, 0, 0.1]], [0.14, 0, 0, 0, [0, 0, -0.2]], [0.4, 0, 0, 0, [0, 0, 0]]]
+    }));
+    out.push(smpAnim("WALK_player", 1, {
+      "L Thigh": [[0, 24, 0, 0], [0.5, -24, 0, 0], [1, 24, 0, 0]],
+      "R Thigh": [[0, -24, 0, 0], [0.5, 24, 0, 0], [1, -24, 0, 0]],
+      "L Calf": [[0, 4, 0, 0], [0.25, 22, 0, 0], [0.5, 5, 0, 0], [0.75, 2, 0, 0], [1, 4, 0, 0]],
+      "R Calf": [[0, 5, 0, 0], [0.25, 2, 0, 0], [0.5, 4, 0, 0], [0.75, 22, 0, 0], [1, 5, 0, 0]],
+      "L UpperArm": [[0, -18, 0, 3], [0.5, 18, 0, 3], [1, -18, 0, 3]],
+      "R UpperArm": [[0, 18, 0, -3], [0.5, -18, 0, -3], [1, 18, 0, -3]],
+      "Root": [[0, 0, 0, 0, [0, 0, 0]], [0.25, 0, 0, 0, [0, 0, 0.018]], [0.5, 0, 0, 0, [0, 0, 0]], [0.75, 0, 0, 0, [0, 0, 0.018]], [1, 0, 0, 0, [0, 0, 0]]]
+    }));
+    return out;
+  }
+  function sampleFile(){
+    var entries = sampleEntries();
+    entries.forEach(function(e){
+      e.rawName = chunkBytes("NAME", new Uint8Array(strBytes(e.name)));
+      e.rawBlock = concatU8([e.rawName, buildDgan(e.data)]);
+    });
+    var bytes = ifpBuild(null, entries, true);
+    var parsed = ifpParse(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+    parsed.isDefault = true;
+    /* Ang parsed entries ang canonical (rawDgan galing sa build);
+       panatilihing dirty=false para ang untouched download ay
+       eksaktong sample bytes. */
+    parsed.entries.forEach(function(e){ e.data.dirty = false; });
+    return parsed;
+  }
+
+  /* ---------------- state ---------------- */
+  var panelEl = $("animPanel"), canvasEl = $("animCanvas");
+  var animFile = null;          /* parsed IFP ng naka-load na file */
+  var entries = [];             /* [{name, rawName, rawBlock, data}] */
+  var origEntries = [];         /* snapshot sa load, para sa edited count */
+  var selIdx = 0;
+  var playTime = 0, playing = false, rafId = null, lastTs = 0;
+  var slotMsg = "";
+  /* Bone rotation offsets ng "I-edit ang galaw": entry name ->
+     { role: [xDeg, yDeg, zDeg] }. Ang offset ay rotation sa local
+     frame ng bone (local quaternion × offset quaternion) na
+     ina-apply sa LAHAT ng keyframes ng bone na iyon — isang ayos,
+     buong animation ang nagbago. Per-animation ito at nananatili
+     kahit magpalit ng napiling animation; sa download lang ito
+     naka-bake (sa in-edit na animation lang). */
+  var boneOffsets = {};
+  var editBone = "";            /* role ng bone na ini-edit sa card */
+  var EDIT_BONE_ORDER = ["pelvis", "spine", "spine1", "neck", "head",
+    "clavicleL", "upperarmL", "forearmL", "handL",
+    "clavicleR", "upperarmR", "forearmR", "handR",
+    "thighL", "calfL", "footL", "thighR", "calfR", "footR"];
+  function offsetsOf(e){ return e ? (boneOffsets[e.name] || null) : null; }
+  function offsetsActive(e){
+    var o = offsetsOf(e);
+    return !!o && Object.keys(o).length > 0;
+  }
+  function setBoneOffset(e, role, xyz){
+    if (!e || !role) return;
+    var o = boneOffsets[e.name] || (boneOffsets[e.name] = {});
+    if (!xyz || (!xyz[0] && !xyz[1] && !xyz[2])) delete o[role];
+    else o[role] = [xyz[0] || 0, xyz[1] || 0, xyz[2] || 0];
+    if (!Object.keys(o).length) delete boneOffsets[e.name];
+  }
+
+  function snapshot(){ return entries.map(function(e){ return { name: e.name, rawName: e.rawName, rawBlock: e.rawBlock, data: e.data }; }); }
+  function curEntry(){ return entries[Math.min(selIdx, entries.length - 1)] || null; }
+  function animDuration(e){
+    var d = 0;
+    if (e && e.data) e.data.bones.forEach(function(b){ b.frames.forEach(function(f){ if (f.t > d) d = f.t; }); });
+    return d;
+  }
+  function editedCount(){
+    var n = 0;
+    entries.forEach(function(e, i){
+      var o = origEntries[i];
+      if (!o || o.name !== e.name || o.data !== e.data || offsetsActive(e)) n++;
+    });
+    if (entries.length !== origEntries.length) n = Math.max(n, 1);
+    return n;
+  }
+  function syncInfo(){
+    var info = $("animFileInfo"), nameEl = $("animLoadedName");
+    if (!animFile || !entries.length){
+      if (nameEl) nameEl.textContent = "";
+      if (info) info.textContent = S().empty;
+      return;
+    }
+    if (nameEl){
+      if (animFile.isDefault) nameEl.textContent = S().defaultLoaded;
+      else {
+        nameEl.textContent = "";
+        nameEl.appendChild(document.createTextNode(S().loadedPrefix));
+        var b = document.createElement("b");
+        b.textContent = animFile.name || "ped.ifp";
+        nameEl.appendChild(b);
+      }
+    }
+    if (info) info.textContent = S().counts(entries.length, editedCount());
+    var dl = $("animDownloadBtn"); if (dl) dl.disabled = !entries.length;
+    var dlT = $("animDownloadTopBtn"); if (dlT) dlT.disabled = !entries.length;
+  }
+  /* ---------------- anim list + search ---------------- */
+  function renderList(){
+    var box = $("animList"); if (!box) return;
+    var q = (($("animSearch") || {}).value || "").toLowerCase();
+    box.innerHTML = "";
+    entries.forEach(function(e, i){
+      if (q && e.name.toLowerCase().indexOf(q) < 0) return;
+      var nb = e.data ? e.data.bones.length : 0;
+      var nf = 0;
+      if (e.data) e.data.bones.forEach(function(b){ if (b.frames.length > nf) nf = b.frames.length; });
+      var item = document.createElement("button");
+      item.type = "button";
+      item.className = "anim-item" + (i === selIdx ? " on" : "");
+      var o = origEntries[i];
+      if (!o || o.name !== e.name || o.data !== e.data || offsetsActive(e)) item.classList.add("edited");
+      var nm = document.createElement("span"); nm.className = "a-name"; nm.textContent = e.name;
+      var meta = document.createElement("span"); meta.className = "a-meta";
+      meta.textContent = nb + " " + S().bonesWord + " · " + nf + " " + S().framesWord;
+      var dot = document.createElement("span"); dot.className = "a-dot";
+      item.appendChild(dot); item.appendChild(nm); item.appendChild(meta);
+      item.addEventListener("click", function(){ selectAnim(i); });
+      box.appendChild(item);
+    });
+  }
+  /* ---------------- swap sources (mga animation ng sariling file) ---------------- */
+  function sourceOptions(){
+    var opts = [];
+    entries.forEach(function(e, i){ opts.push({ v: "self:" + i, label: e.name }); });
+    return opts;
+  }
+  function dataForValue(v){
+    var p = String(v || "").split(":");
+    var i = parseInt(p[1], 10);
+    if (entries[i]) return { data: entries[i].data, name: entries[i].name };
+    return null;
+  }
+  /* ---------------- slots (Palitan) ---------------- */
+  var SLOTS = [
+    { id: "walk", names: ["WALK_civi", "WALK_player"], kw: ["WALK"] },
+    { id: "run", names: ["RUN_civi", "run_civi", "RUN_player", "run_player"], kw: ["RUN"] },
+    { id: "sprint", names: ["SPRINT_civi", "sprint_civi", "SPRINT"], kw: ["SPRINT"] },
+    { id: "jumpL", names: ["JUMP_launch"], kw: ["JUMP", "LAUNCH"] },
+    { id: "jumpG", names: ["JUMP_glide"], kw: ["JUMP", "GLIDE"] },
+    { id: "jumpD", names: ["JUMP_land"], kw: ["JUMP", "LAND"] },
+    { id: "idle", names: ["IDLE_stance", "IDLE_taxi", "IDLE"], kw: ["IDLE"] }
+  ];
+  function slotTarget(slot){
+    var i, e;
+    for (i = 0; i < entries.length; i++){
+      if (slot.names.some(function(n){ return entries[i].name.toLowerCase() === n.toLowerCase(); })) return i;
+    }
+    for (i = 0; i < entries.length; i++){
+      e = entries[i].name.toUpperCase();
+      if (slot.kw.every(function(k){ return e.indexOf(k) >= 0; })) return i;
+    }
+    return -1;
+  }
+  /* Aling source ang kasalukuyang tutugtog sa entry (data identity). */
+  function sourceNameOf(entry){
+    if (!entry) return "";
+    for (var i = 0; i < entries.length; i++) if (entries[i].data === entry.data) return entries[i].name;
+    return entry.name;
+  }
+  function buildSlots(){
+    var box = $("animSlots"); if (!box) return;
+    box.innerHTML = "";
+    SLOTS.forEach(function(slot){
+      var ti = slotTarget(slot);
+      var row = document.createElement("div");
+      row.className = "anim-slotrow";
+      var lbl = document.createElement("span");
+      lbl.className = "s-lbl";
+      lbl.textContent = S().slotNames[slot.id];
+      row.appendChild(lbl);
+      if (ti < 0){
+        var none = document.createElement("span");
+        none.className = "s-cur";
+        none.textContent = S().noSlot;
+        none.style.maxWidth = "none";
+        row.appendChild(none);
+        box.appendChild(row);
+        return;
+      }
+      var sel = document.createElement("select");
+      sel.setAttribute("aria-label", S().slotNames[slot.id]);
+      sourceOptions().forEach(function(o){
+        var op = document.createElement("option");
+        op.value = o.v; op.textContent = o.label;
+        sel.appendChild(op);
+      });
+      sel.value = "self:" + ti;
+      var cur = document.createElement("span");
+      cur.className = "s-cur";
+      cur.textContent = "→ " + sourceNameOf(entries[ti]);
+      sel.addEventListener("change", function(){
+        var src = dataForValue(sel.value);
+        if (!src) return;
+        if (entries[ti].data !== src.data){
+          entries[ti] = { name: entries[ti].name, rawName: entries[ti].rawName, rawBlock: entries[ti].rawBlock, data: src.data };
+          slotMsg = S().slotApplied(S().slotNames[slot.id], src.name);
+        }
+        buildSlots(); renderList(); syncInfo(); drawPreview();
+        var si = $("animSlotInfo"); if (si) si.textContent = slotMsg;
+      });
+      row.appendChild(sel);
+      row.appendChild(cur);
+      box.appendChild(row);
+    });
+    var si = $("animSlotInfo"); if (si) si.textContent = slotMsg;
+  }
+  /* ---------------- I-edit ang galaw (bone rotation offsets) ----------------
+     Compact card: pumili ng buto, i-rotate sa X/Y/Z sliders. Ang
+     offset ay para sa buong animation (lahat ng keyframes ng bone),
+     live sa preview, at naka-bake lang sa download. */
+  /* Naruto Run preset: magkabilang braso nakatalikod sa likod
+     (balikat + braso + kaunting siko), spine nakayuko pasulong.
+     Ang mga numero ay galing sa pose harness laban sa sample at sa
+     totoong ped.ifp ni mavs: sa run_civi, ang mga kamay ay nananatili
+     sa likod ng balikat sa buong cycle (pinakamababang back offset
+     +0.13 sa totoong file, +0.27 sa sample), ang mga kamay ay nasa
+     taas ng balikat o bahagyang mataas lang, ang dibdib ay nauuna
+     sa balakang (lean +0.11~0.12), at eksaktong walang nagbabago
+     sa mga binti. */
+  var NARUTO_OFFSETS = {
+    clavicleL: [0, 0, 40], clavicleR: [0, 0, 40],
+    upperarmL: [0, 0, 65], upperarmR: [0, 0, 65],
+    forearmL: [0, 0, 10], forearmR: [0, 0, 10],
+    spine: [0, 0, 25]
+  };
+  function rolesInEntry(e){
+    var seen = {};
+    if (e && e.data) e.data.bones.forEach(function(b){
+      var r = animBoneRole(b);
+      if (r && r !== "root") seen[r] = true;
+    });
+    return EDIT_BONE_ORDER.filter(function(r){ return seen[r]; });
+  }
+  function syncRotSliders(){
+    var e = curEntry();
+    var o = (e && editBone && offsetsOf(e) && offsetsOf(e)[editBone]) || [0, 0, 0];
+    ["X", "Y", "Z"].forEach(function(ax, i){
+      var rg = $("animRot" + ax), val = $("animRot" + ax + "Val");
+      if (rg) rg.value = o[i];
+      if (val) val.textContent = Math.round(o[i]) + "°";
+    });
+  }
+  function syncEditInfo(msg){
+    var info = $("animEditInfo"); if (!info) return;
+    if (msg){ info.textContent = msg; return; }
+    var e = curEntry();
+    var o = offsetsOf(e);
+    var n = o ? Object.keys(o).length : 0;
+    info.textContent = n ? S().editInfoSome(n) : S().editInfoNone;
+  }
+  function refreshEditCard(msg){
+    var e = curEntry();
+    var tgt = $("animEditTarget");
+    if (tgt) tgt.textContent = e ? S().editFor(e.name) : S().noBones;
+    var sel = $("animBoneSel");
+    if (sel){
+      var roles = rolesInEntry(e);
+      if (roles.indexOf(editBone) < 0) editBone = roles[0] || "";
+      sel.innerHTML = "";
+      roles.forEach(function(r){
+        var op = document.createElement("option");
+        op.value = r;
+        op.textContent = S().boneNames[r] || r;
+        sel.appendChild(op);
+      });
+      sel.value = editBone;
+      sel.disabled = !roles.length;
+    }
+    ["animRotX", "animRotY", "animRotZ", "animNarutoBtn", "animBoneResetBtn", "animAllResetBtn"].forEach(function(id){
+      var el = $(id); if (el) el.disabled = !editBone;
+    });
+    syncRotSliders();
+    syncEditInfo(msg || "");
+  }
+  function onRotInput(){
+    var e = curEntry();
+    if (!e || !editBone) return;
+    var xyz = ["X", "Y", "Z"].map(function(ax){
+      var rg = $("animRot" + ax);
+      return rg ? (parseFloat(rg.value) || 0) : 0;
+    });
+    setBoneOffset(e, editBone, xyz);
+    syncRotSliders();
+    syncEditInfo("");
+    drawPreview();
+  }
+  /* Pag binitawan ang slider: saka lang i-refresh ang listahan at
+     bilang ng na-edit (mabigat ang 294-item list sa bawat tick). */
+  function onRotCommit(){
+    renderList();
+    syncInfo();
+  }
+  function applyNaruto(){
+    var e = curEntry();
+    if (!e) return;
+    Object.keys(NARUTO_OFFSETS).forEach(function(role){
+      setBoneOffset(e, role, NARUTO_OFFSETS[role].slice());
+    });
+    refreshEditCard(S().narutoDone);
+    renderList();
+    syncInfo();
+    drawPreview();
+  }
+  /* I-bake ang offsets ng isang entry sa bagong data object (ang
+     original data ay hindi ginagalaw — ang ibang entries na
+     nagsha-share ng data object ay mananatiling byte-identical). */
+  function bakeEntryData(e){
+    var o = offsetsOf(e);
+    if (!o || !e.data) return e.data;
+    var newBones = e.data.bones.map(function(b){
+      var r = animBoneRole(b);
+      var off = r ? o[r] : null;
+      if (!off) return b;
+      var oq = offsetQuat(off);
+      return { name: b.name, type: b.type, frameInts: b.frameInts, ok: b.ok, boneId: b.boneId,
+        frames: b.frames.map(function(f){
+          return { q: qUnitA(qMulA(f.q, oq)), tr: f.tr, sc: f.sc, t: f.t };
+        }) };
+    });
+    return { bones: newBones, rawDgan: e.data.rawDgan, dirty: true };
+  }
+  function buildDownloadBytes(){
+    var touched = editedCount() > 0 || entries.length !== origEntries.length;
+    if (!touched) return ifpBuild(animFile, entries, false);
+    var out = entries.map(function(e){
+      if (!offsetsActive(e)) return e;
+      return { name: e.name, rawName: e.rawName, rawBlock: e.rawBlock, data: bakeEntryData(e) };
+    });
+    return ifpBuild(animFile, out, true);
+  }
+  /* ---------------- pagpili ng animation (para sa preview) ---------------- */
+  function selectAnim(i){
+    selIdx = i;
+    playTime = 0;
+    renderList();
+    buildSlots();
+    refreshEditCard();
+    drawPreview();
+  }
+  /* ---------------- preview (ped skeleton, FK) ----------------
+     Pagtatantya ng galaw mula sa keyframes: forward kinematics ng
+     standard SA biped skeleton (ANIM_SKEL sa ibaba) gamit ang
+     quaternion ng bawat bone — kaparehong ideya ng HAnim bone
+     system ng 3D Preview. Ang boneRole dito ay para sa root
+     detection at sa bridge papuntang totoong ped model; ang
+     pagmamapa ng preview mismo ay nasa animBoneRole (boneID +
+     pangalan). */
+  function boneRole(name){
+    var n = String(name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    var side = "";
+    if (/(^|[^a-z])l([^a-z]|$)/.test(String(name || "").toLowerCase()) || n.indexOf("left") >= 0 || /^l/.test(n)) side = "L";
+    else if (/(^|[^a-z])r([^a-z]|$)/.test(String(name || "").toLowerCase()) || n.indexOf("right") >= 0 || /^r/.test(n)) side = "R";
+    if (n.indexOf("root") >= 0) return "root";
+    if (n.indexOf("pelvis") >= 0 || n.indexOf("hips") >= 0) return "pelvis";
+    if (n.indexOf("head") >= 0) return "head";
+    if (n.indexOf("neck") >= 0) return "neck";
+    if (n.indexOf("spine") >= 0 || n.indexOf("chest") >= 0 || n.indexOf("torso") >= 0) return "spine";
+    if (n.indexOf("upperarm") >= 0 || n.indexOf("uparm") >= 0 || n.indexOf("bicep") >= 0) return "upperarm" + side;
+    if (n.indexOf("forearm") >= 0 || n.indexOf("forarm") >= 0 || n.indexOf("elbow") >= 0) return "forearm" + side;
+    if (n.indexOf("hand") >= 0) return "hand" + side;
+    if (n.indexOf("thigh") >= 0 || n.indexOf("upleg") >= 0 || n.indexOf("upperleg") >= 0) return "thigh" + side;
+    if (n.indexOf("calf") >= 0 || n.indexOf("shin") >= 0 || n.indexOf("lowleg") >= 0 || n.indexOf("lowerleg") >= 0) return "calf" + side;
+    if (n.indexOf("foot") >= 0 || n.indexOf("toe") >= 0) return "foot" + side;
+    return "";
+  }
+  function sampleBone(bone, t){
+    if (!bone || !bone.frames.length) return { q: [0, 0, 0, 1], tr: [0, 0, 0] };
+    var fr = bone.frames;
+    if (t <= fr[0].t || fr.length === 1) return { q: fr[0].q, tr: fr[0].tr };
+    if (t >= fr[fr.length - 1].t) { var l = fr[fr.length - 1]; return { q: l.q, tr: l.tr }; }
+    for (var i = 0; i < fr.length - 1; i++){
+      if (t >= fr[i].t && t <= fr[i + 1].t){
+        var span = fr[i + 1].t - fr[i].t;
+        var k = span > 1e-6 ? (t - fr[i].t) / span : 0;
+        return { q: qNlerp(fr[i].q, fr[i + 1].q, k),
+          tr: [0, 1, 2].map(function(a){ return fr[i].tr[a] + (fr[i + 1].tr[a] - fr[i].tr[a]) * k; }) };
+      }
+    }
+    var last = fr[fr.length - 1];
+    return { q: last.q, tr: last.tr };
+  }
+  /* Axis conversion ng preview: ang GTA SA ay Z-up (X = kanan,
+     Y = pasulong, Z = pataas) pero ang preview ay Y-up. Kung walang
+     conversion, ang pasulong na galaw ng Root (GTA Y) ay nagiging
+     pataas sa preview kaya "lumilipad" ang ped habang tumatakbo.
+     Position (x, y, z) → (x, z, −y); ang quaternion ay conjugation
+     sa parehong basis change — (x, y, z, w) → (x, z, −y, w) — para
+     ang axis ng rotation ay ma-convert tulad ng position. Preview
+     lang ito: ang naka-imbak na IFP data ay hindi ginagalaw, kaya
+     ang keyframe edit at download ay eksaktong dati pa rin. */
+  function pGtaToThree(p){ return [p[0], p[2], -p[1]]; }
+  function qGtaToThree(q){ return [q[0], q[2], -q[1], q[3]]; }
+  /* Treadmill anchor: ang converted Root translation ng unang
+     keyframe. Ang horizontal ng bawat frame ay naka-pin dito at
+     ang vertical ay relative dito, kaya nananatili ang ped sa
+     gitna (tumatakbo sa lugar) — ang bounce at talon ay
+     nananatili, at ang edit sa Root keyframe sliders ay makikita
+     pa rin relative dito. */
+  function rootAnchor(e){
+    var rb = rootBoneOf(e);
+    if (rb && rb.frames.length) return pGtaToThree(rb.frames[0].tr);
+    return [0, 0, 0];
+  }
+  /* Ang Root bone ng anim: sa ANP3 (totoong ped.ifp) ang root object
+     ay frame type 4 at madalas "Normal" ang pangalan (hindi "Root"),
+     kaya hindi sapat ang pangalan lang; sa v1/sample, pangalan ang
+     tanda. Ito rin ang bone na may translation — ang iba ay rotation
+     lang. Preview lang ang gumagamit nito. */
+  function isRootBone(b){
+    if (!b) return false;
+    if (b.type === 4) return true;
+    return boneRole(b.name) === "root";
+  }
+  function rootBoneOf(e){
+    if (!e || !e.data) return null;
+    for (var i = 0; i < e.data.bones.length; i++) if (isRootBone(e.data.bones[i])) return e.data.bones[i];
+    return null;
+  }
+  /* ---------------- preview skeleton: standard SA biped ----------------
+     Ang totoong dahilan ng dating magulong pose: ang local quaternion
+     ng bawat bone sa ped.ifp ay ang BUONG orientation ng bone frame
+     niya sa hierarchy ng GTA biped (hal. ang Pelvis ay ~120° rotation,
+     ang Thigh ay ~172°) — hindi maliit na delta mula sa isang
+     axis-aligned na skeleton. Kaya ang preview ay kailangang gumamit
+     ng totoong hierarchy at rest offsets ng biped: ang child joint ay
+     nasa parent joint + (parent world rotation × rest offset ng
+     child), at ang world rotation ng bone = world rotation ng parent
+     × local quaternion niya (FK sa GTA axes; ang joint positions lang
+     ang cino-convert papuntang Y-up sa dulo, tulad ng dati).
+     Ang off = rest offset ng bone sa frame ng parent niya (mula sa
+     frame hierarchy ng standard SA ped skeleton); ang q = base local
+     quaternion ng neutral na tayo (fallback pag walang keyframe ang
+     bone sa anim, at base ng sample authoring). Ang mga bone na
+     walang katumbas dito (Jaw, L/R Brow, mga daliri, breast, Belly)
+     ay hindi iginuguhit. */
+  var ANIM_SKEL = [
+    { role: "root",      name: "Root",             parent: null,       off: [0, 0, 0],                 q: [0.0076, 0.0000, 0.7078, 0.7064] },
+    { role: "pelvis",    name: "Pelvis",           parent: "root",     off: [-0.0207, -0.0037, 0],     q: [-0.5197, -0.5197, -0.4794, 0.4794] },
+    { role: "spine",     name: "Spine",            parent: "pelvis",   off: [-0.0058, -0.0504, 0.0044], q: [0.0034, 0.0051, -0.0161, 0.9999] },
+    { role: "spine1",    name: "Spine1",           parent: "spine",    off: [0.2820, -0.0002, 0.0002],  q: [0.0100, 0.0530, 0.0442, 0.9976] },
+    { role: "neck",      name: "Neck",             parent: "spine1",   off: [0.2718, 0, 0.0002],       q: [-0.0298, -0.0181, 0.1294, 0.9910] },
+    { role: "head",      name: "Head",             parent: "neck",     off: [0.1460, 0, 0],            q: [0.0610, 0.0654, -0.0884, 0.9921] },
+    { role: "clavicleL", name: "Bip01 L Clavicle", parent: "neck",     off: [0, 0.0001, 0.0318],       q: [-0.6568, 0.1568, -0.7367, -0.0366] },
+    { role: "upperarmL", name: "L UpperArm",       parent: "clavicleL", off: [0.1563, 0, 0],           q: [0.1661, 0.5892, -0.1800, 0.7700] },
+    { role: "forearmL",  name: "L ForeArm",        parent: "upperarmL", off: [0.3506, 0, 0.0009],      q: [0, 0, -0.1109, 0.9938] },
+    { role: "handL",     name: "L Hand",           parent: "forearmL", off: [0.2070, 0, 0],            q: [-0.6494, -0.0171, -0.0054, 0.7603] },
+    { role: "clavicleR", name: "Bip01 R Clavicle", parent: "neck",     off: [0, 0.0001, -0.0318],      q: [0.6278, -0.1101, -0.7670, -0.0745] },
+    { role: "upperarmR", name: "R UpperArm",       parent: "clavicleR", off: [0.1563, 0, 0],           q: [-0.1272, -0.5673, -0.1302, 0.8032] },
+    { role: "forearmR",  name: "R ForeArm",        parent: "upperarmR", off: [0.3506, 0, 0.0008],      q: [0, 0, -0.0464, 0.9989] },
+    { role: "handR",     name: "R Hand",           parent: "forearmR", off: [0.2070, 0, 0],            q: [0.7445, 0.0361, 0.1341, 0.6530] },
+    { role: "thighL",    name: "L Thigh",          parent: "pelvis",   off: [0, 0, 0.1097],            q: [-0.1165, -0.9835, -0.1189, 0.0715] },
+    { role: "calfL",     name: "L Calf",           parent: "thighL",   off: [0.4652, 0, 0],            q: [0, 0, -0.2427, 0.9701] },
+    { role: "footL",     name: "L Foot",           parent: "calfL",    off: [0.4117, 0, 0],            q: [-0.0794, -0.0474, 0.1138, 0.9892] },
+    { role: "toeL",      name: "L Toe0",           parent: "footL",    off: [0.1297, 0.1493, 0],       q: [0, 0.0002, 0.7220, 0.6919] },
+    { role: "thighR",    name: "R Thigh",          parent: "pelvis",   off: [0, 0, -0.1097],           q: [-0.0588, -0.9941, 0.0791, 0.0457] },
+    { role: "calfR",     name: "R Calf",           parent: "thighR",   off: [0.4652, 0, 0],            q: [0, 0, -0.1631, 0.9866] },
+    { role: "footR",     name: "R Foot",           parent: "calfR",    off: [0.4117, 0, 0],            q: [0.0667, -0.0237, 0.1011, 0.9924] },
+    { role: "toeR",      name: "R Toe0",           parent: "footR",    off: [0.1297, 0.1493, 0],       q: [0, 0.0002, 0.7072, 0.7070] }
+  ];
+  var ANIM_SKEL_BY_ROLE = {};
+  ANIM_SKEL.forEach(function(sk){
+    var l = Math.sqrt(sk.q[0]*sk.q[0] + sk.q[1]*sk.q[1] + sk.q[2]*sk.q[2] + sk.q[3]*sk.q[3]);
+    if (l > 1e-6) sk.q = sk.q.map(function(v){ return v / l; });
+    ANIM_SKEL_BY_ROLE[sk.role] = sk;
+  });
+  function qMulA(a, b){
+    return [
+      a[3]*b[0] + a[0]*b[3] + a[1]*b[2] - a[2]*b[1],
+      a[3]*b[1] - a[0]*b[2] + a[1]*b[3] + a[2]*b[0],
+      a[3]*b[2] + a[0]*b[1] - a[1]*b[0] + a[2]*b[3],
+      a[3]*b[3] - a[0]*b[0] - a[1]*b[1] - a[2]*b[2]
+    ];
+  }
+  function qInvA(q){ return [-q[0], -q[1], -q[2], q[3]]; }
+  function qUnitA(q){
+    var l = Math.sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
+    if (l < 1e-6) return [0, 0, 0, 1];
+    return [q[0]/l, q[1]/l, q[2]/l, q[3]/l];
+  }
+  /* Quaternion ng isang bone offset (degrees, GTA axes) — ang
+     offset ay nasa local frame ng bone: local q × offset q. */
+  function offsetQuat(xyz){
+    return qFromEuler((xyz[0] || 0) * D2R, (xyz[1] || 0) * D2R, (xyz[2] || 0) * D2R);
+  }
+  var ANIM_REST_WORLD = {};
+  function animRestWorldQ(role){
+    if (ANIM_REST_WORLD[role]) return ANIM_REST_WORLD[role];
+    var sk = ANIM_SKEL_BY_ROLE[role];
+    var q = sk.parent ? qMulA(animRestWorldQ(sk.parent), sk.q) : sk.q;
+    ANIM_REST_WORLD[role] = q;
+    return q;
+  }
+  /* Local quaternion ng sample bone: base local ng biped na iniikot
+     ng authored Euler delta (world/GTA axes) — tingnan ang comment
+     sa smpBone. */
+  function smpLocalQ(role, rx, ry, rz){
+    var sk = ANIM_SKEL_BY_ROLE[role];
+    if (!sk) return qFromEuler(rx, ry, rz);
+    var rw = animRestWorldQ(role);
+    var dw = qFromEuler(rx, ry, rz);
+    return qMulA(sk.q, qMulA(qMulA(qInvA(rw), dw), rw));
+  }
+  /* Pagmamapa ng IFP bone papuntang preview skeleton: boneID muna
+     (standard SA HAnim IDs, sa ANP3), tapos trimmed na pangalan.
+     Ang walang katumbas ay "" — hindi iginuguhit. */
+  function animBoneRole(b){
+    if (!b) return "";
+    if (b.type === 4) return "root";
+    var byId = { 1: "pelvis", 2: "spine", 3: "spine1", 4: "neck", 5: "head",
+      21: "clavicleR", 22: "upperarmR", 23: "forearmR", 24: "handR",
+      31: "clavicleL", 32: "upperarmL", 33: "forearmL", 34: "handL",
+      41: "thighL", 42: "calfL", 43: "footL", 44: "toeL",
+      51: "thighR", 52: "calfR", 53: "footR", 54: "toeR" };
+    if (typeof b.boneId === "number" && byId[b.boneId]) return byId[b.boneId];
+    var n = String(b.name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (n === "root" || n === "normal") return "root";
+    if (n === "pelvis") return "pelvis";
+    if (n === "spine") return "spine";
+    if (n === "spine1") return "spine1";
+    if (n === "neck") return "neck";
+    if (n === "head") return "head";
+    var side = "";
+    if (n.indexOf("left") >= 0 || /^l/.test(n) || n.indexOf("bip01l") >= 0) side = "L";
+    else if (n.indexOf("right") >= 0 || /^r/.test(n) || n.indexOf("bip01r") >= 0) side = "R";
+    if (!side) return "";
+    if (n.indexOf("clavicle") >= 0) return "clavicle" + side;
+    if (n.indexOf("upperarm") >= 0) return "upperarm" + side;
+    if (n.indexOf("forearm") >= 0) return "forearm" + side;
+    if (n.indexOf("hand") >= 0) return "hand" + side;
+    if (n.indexOf("thigh") >= 0) return "thigh" + side;
+    if (n.indexOf("calf") >= 0) return "calf" + side;
+    if (n.indexOf("foot") >= 0) return "foot" + side;
+    if (n.indexOf("toe") >= 0) return "toe" + side;
+    return "";
+  }
+  function poseAt(e, t){
+    var byRole = {};
+    if (e && e.data) e.data.bones.forEach(function(b){
+      var r = animBoneRole(b);
+      if (r && ANIM_SKEL_BY_ROLE[r] && !byRole[r]) byRole[r] = b;
+    });
+    /* Root position sa GTA axes: ang horizontal ay naka-pin sa unang
+       keyframe (treadmill — hindi lumalayo ang ped habang tumatakbo)
+       at ang vertical ay relative sa unang keyframe, kaya
+       nananatili ang bounce at ang taas ng talon. Parehong anchor
+       tulad ng dati; dito lang ginagawa sa GTA axes at ang buong
+       pose ang cino-convert sa dulo. */
+    var rootPos = [0, 0, 0.96];
+    var rb = byRole.root;
+    if (rb && rb.frames.length){
+      var tr0 = rb.frames[0].tr, trc = sampleBone(rb, t).tr;
+      rootPos = [tr0[0], tr0[1], 0.96 + (trc[2] - tr0[2])];
+    }
+    /* FK: world rotation = parent world × local; ang joint position
+       ng child ay minamana sa parent (position + parent world
+       rotation × rest offset). Ang bone na wala sa anim ay gumagamit
+       ng base local ng skeleton. */
+    var W = {};
+    var offs = offsetsOf(e);
+    ANIM_SKEL.forEach(function(sk){
+      var b = byRole[sk.role];
+      var lq = b ? sampleBone(b, t).q : sk.q;
+      /* Bone offset ng "I-edit ang galaw": parehong offset sa bawat
+         keyframe, sa local frame ng bone (local q × offset q). */
+      if (offs && offs[sk.role]) lq = qUnitA(qMulA(lq, offsetQuat(offs[sk.role])));
+      if (!sk.parent){
+        W[sk.role] = { q: lq, p: rootPos };
+      } else {
+        var pw = W[sk.parent];
+        W[sk.role] = { q: qMulA(pw.q, lq),
+          p: vAdd(pw.p, matVec(qToMat(pw.q), sk.off)) };
+      }
+    });
+    function T(p){ return pGtaToThree(p); }
+    var J = {};
+    J.pelvis = T(W.pelvis.p);
+    J.spine = T(W.spine.p);
+    J.chest = T(W.spine1.p);
+    J.neck = T(W.neck.p);
+    J.head = T(vAdd(W.head.p, matVec(qToMat(W.head.q), [0.11, 0.01, 0])));
+    var segs = [];
+    function seg(a, b, role){ segs.push({ a: a, b: b, role: role }); }
+    seg(J.pelvis, J.spine, "spine");
+    seg(J.spine, J.chest, "spine");
+    seg(J.chest, J.neck, "neck");
+    seg(J.neck, J.head, "head");
+    ["L", "R"].forEach(function(sd){
+      var clav = T(W["clavicle" + sd].p);
+      var sh = T(W["upperarm" + sd].p);
+      var el = T(W["forearm" + sd].p);
+      var wr = T(W["hand" + sd].p);
+      var tip = T(vAdd(W["hand" + sd].p, matVec(qToMat(W["hand" + sd].q), [0.15, 0, 0])));
+      J["clav" + sd] = clav; J["sh" + sd] = sh; J["el" + sd] = el; J["wr" + sd] = wr;
+      seg(J.neck, clav, "");
+      seg(clav, sh, "");
+      seg(sh, el, "upperarm" + sd);
+      seg(el, wr, "forearm" + sd);
+      seg(wr, tip, "hand" + sd);
+      var hip = T(W["thigh" + sd].p);
+      var knee = T(W["calf" + sd].p);
+      var ank = T(W["foot" + sd].p);
+      var toe = T(W["toe" + sd].p);
+      J["hip" + sd] = hip; J["knee" + sd] = knee; J["ank" + sd] = ank;
+      seg(hip, knee, "thigh" + sd);
+      seg(knee, ank, "calf" + sd);
+      seg(ank, toe, "foot" + sd);
+    });
+    seg(J.hipL, J.hipR, "pelvis");
+    seg(J.shL, J.shR, "spine");
+    return { joints: J, segs: segs, headM: qToMat(qGtaToThree(W.head.q)) };
+  }
+  /* ---------------- 3D ped preview (Three.js) + totoong ped ----------------
+     Ang preview ng panel ay totoong 3D: skeleton ng ped (cylinders +
+     spheres) na gumagalaw ayon sa FK pose ng keyframes, umiikot
+     nang marahan ang camera. Pag walang Three.js/WebGL, ang 2D
+     canvas sa ibaba ang fallback. At pag may ped/skin model na
+     naka-load sa main 3D Preview, ang parehong frame ay ipinapasa
+     rin sa HAnim bridge (window.__pedAnimApply) — ang totoong model
+     ang gumagalaw doon habang nagpe-play dito. */
+  var anim3d = null, anim3dFailed = false, animOrbit = 0.6;
+  function anim3dInit(wrap){
+    if (anim3dFailed || typeof THREE === "undefined") return false;
+    try {
+      var renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(wrap.clientWidth, wrap.clientHeight || 212);
+      wrap.appendChild(renderer.domElement);
+      var scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0b0b10);
+      var camera = new THREE.PerspectiveCamera(42, wrap.clientWidth / (wrap.clientHeight || 212), 0.1, 100);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+      var dir = new THREE.DirectionalLight(0xffffff, 0.65);
+      dir.position.set(2, 4, 3);
+      scene.add(dir);
+      var ground = new THREE.Mesh(new THREE.CircleGeometry(1.7, 32),
+        new THREE.MeshStandardMaterial({ color: 0x1c1c22, roughness: 1 }));
+      ground.rotation.x = -Math.PI / 2;
+      scene.add(ground);
+      var boneMat = new THREE.MeshStandardMaterial({ color: 0xe8e4da, roughness: 0.5 });
+      var hotMat = new THREE.MeshStandardMaterial({ color: 0xffb02e, roughness: 0.4, emissive: 0x553a00 });
+      var jointMat = new THREE.MeshStandardMaterial({ color: 0xffb02e, roughness: 0.4 });
+      var cylGeo = new THREE.CylinderGeometry(0.021, 0.021, 1, 8);
+      cylGeo.translate(0, 0.5, 0);
+      var sphGeo = new THREE.SphereGeometry(0.032, 10, 8);
+      var segs = [], joints = [], i;
+      for (i = 0; i < 24; i++){ var m = new THREE.Mesh(cylGeo, boneMat); scene.add(m); segs.push(m); }
+      for (i = 0; i < 20; i++){ var s = new THREE.Mesh(sphGeo, jointMat); scene.add(s); joints.push(s); }
+      var head = new THREE.Mesh(new THREE.SphereGeometry(0.105, 14, 12), boneMat);
+      scene.add(head);
+      anim3d = { renderer: renderer, scene: scene, camera: camera, segs: segs, joints: joints,
+        head: head, boneMat: boneMat, hotMat: hotMat, _w: wrap.clientWidth };
+      if (canvasEl) canvasEl.style.display = "none";
+      return true;
+    } catch (err) {
+      anim3dFailed = true;
+      return false;
+    }
+  }
+  function anim3dRender(pose){
+    if (!panelEl || !panelEl.classList.contains("open")) return false;
+    var wrap = $("animGlWrap");
+    if (!wrap) return false;
+    if (!anim3d){
+      wrap.classList.remove("hidden");
+      if (!wrap.clientWidth || !anim3dInit(wrap)){
+        wrap.classList.add("hidden");
+        if (canvasEl) canvasEl.style.display = "";
+        return false;
+      }
+    }
+    if (anim3d._w !== wrap.clientWidth && wrap.clientWidth){
+      anim3d._w = wrap.clientWidth;
+      anim3d.renderer.setSize(wrap.clientWidth, wrap.clientHeight || 212);
+      anim3d.camera.aspect = wrap.clientWidth / (wrap.clientHeight || 212);
+      anim3d.camera.updateProjectionMatrix();
+    }
+    animOrbit += 0.004;
+    /* Auto-fit ng camera: i-frame sa bounding box ng ped habang
+       nagpe-play (smoothed, para walang biglaang talon ng camera)
+       kaya hindi ito lumalabas sa taas o gilid ng preview. */
+    var mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9];
+    function growPt(p){ for (var ai = 0; ai < 3; ai++){ if (p[ai] < mn[ai]) mn[ai] = p[ai]; if (p[ai] > mx[ai]) mx[ai] = p[ai]; } }
+    pose.segs.forEach(function(sg){ growPt(sg.a); growPt(sg.b); });
+    growPt(pose.joints.head);
+    var ctr = [(mn[0] + mx[0]) / 2, (mn[1] + mx[1]) / 2, (mn[2] + mx[2]) / 2];
+    var rad = Math.max(0.5, Math.sqrt(Math.pow(mx[0] - mn[0], 2) + Math.pow(mx[1] - mn[1], 2) + Math.pow(mx[2] - mn[2], 2)) / 2);
+    var dist = Math.min(7, Math.max(1.4, rad / Math.tan(anim3d.camera.fov * Math.PI / 360) * 1.05));
+    if (!anim3d._c){ anim3d._c = ctr.slice(); anim3d._d = dist; }
+    var LP = 0.18;
+    anim3d._c = [0, 1, 2].map(function(ai){ return anim3d._c[ai] + (ctr[ai] - anim3d._c[ai]) * LP; });
+    anim3d._d += (dist - anim3d._d) * LP;
+    var cc = anim3d._c, R = anim3d._d;
+    anim3d.camera.position.set(cc[0] + Math.sin(animOrbit) * R, cc[1] + R * 0.32, cc[2] + Math.cos(animOrbit) * R);
+    anim3d.camera.lookAt(cc[0], cc[1], cc[2]);
+    var selRole = editBone;
+    var up = new THREE.Vector3(0, 1, 0);
+    pose.segs.forEach(function(sg, i){
+      var m = anim3d.segs[i]; if (!m) return;
+      var a = new THREE.Vector3(sg.a[0], sg.a[1], sg.a[2]);
+      var b = new THREE.Vector3(sg.b[0], sg.b[1], sg.b[2]);
+      var d = b.clone().sub(a);
+      var len = d.length() || 0.0001;
+      m.position.copy(a);
+      m.quaternion.setFromUnitVectors(up, d.normalize());
+      m.scale.set(1, len, 1);
+      m.material = (selRole && sg.role === selRole) ? anim3d.hotMat : anim3d.boneMat;
+      m.visible = true;
+    });
+    for (var i2 = pose.segs.length; i2 < anim3d.segs.length; i2++) anim3d.segs[i2].visible = false;
+    var jk = Object.keys(pose.joints);
+    jk.forEach(function(k, i){
+      var s = anim3d.joints[i]; if (!s) return;
+      var p = pose.joints[k];
+      s.position.set(p[0], p[1], p[2]);
+      s.visible = true;
+    });
+    for (var j2 = jk.length; j2 < anim3d.joints.length; j2++) anim3d.joints[j2].visible = false;
+    var hp = pose.joints.head;
+    anim3d.head.position.set(hp[0], hp[1], hp[2]);
+    anim3d.renderer.render(anim3d.scene, anim3d.camera);
+    return true;
+  }
+  /* Ipadala ang kasalukuyang frame sa totoong ped model sa main
+     3D Preview, sa pamamagitan ng HAnim bridge ng ped pose system. */
+  function driveRealPed(e, t){
+    if (!e || !e.data) return;
+    if (typeof window.__pedAnimApply !== "function") return;
+    if (typeof window.__pedAnimHasPed !== "function" || !window.__pedAnimHasPed()) return;
+    var roleQuats = {};
+    var offs = offsetsOf(e);
+    e.data.bones.forEach(function(b){
+      var r = boneRole(b.name);
+      if (!r || roleQuats[r]) return;
+      var q = sampleBone(b, t).q;
+      var ar = animBoneRole(b);
+      if (offs && ar && offs[ar]) q = qUnitA(qMulA(q, offsetQuat(offs[ar])));
+      roleQuats[r] = q;
+    });
+    try { window.__pedAnimApply(roleQuats); } catch (err) {}
+  }
+  function drawPreview(){
+    if (!canvasEl) return;
+    var ctx = canvasEl.getContext("2d");
+    if (!ctx) return;
+    var W = canvasEl.width, H = canvasEl.height;
+    var g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#0b0b10");
+    g.addColorStop(1, "#141017");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    var e = curEntry();
+    var dur = animDuration(e);
+    var groundY = 312, SC = 148, cx = W / 2;
+    /* lupa */
+    ctx.strokeStyle = "rgba(255,176,46,0.25)";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(30, groundY); ctx.lineTo(W - 30, groundY); ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,0.05)";
+    ctx.fillRect(30, groundY, W - 60, 3);
+    var A = 0.55, cosA = Math.cos(A), sinA = Math.sin(A);
+    function proj(p){
+      var dx = p[0] * cosA - p[2] * sinA;
+      var depth = p[0] * sinA + p[2] * cosA;
+      return [cx + dx * SC, groundY - p[1] * SC + depth * 22];
+    }
+    if (!e){
+      ctx.fillStyle = "#9a9aa3";
+      ctx.font = "600 17px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(S().empty, W / 2, H / 2);
+      syncTimeUI(dur);
+      return;
+    }
+    var pose = poseAt(e, playTime);
+    driveRealPed(e, playTime);
+    if (anim3dRender(pose)){ syncTimeUI(dur); return; }
+    var selRole = editBone;
+    /* anino */
+    var rp = proj([pose.joints.pelvis[0], 0, pose.joints.pelvis[2]]);
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.beginPath(); ctx.ellipse(rp[0], groundY + 4, 52, 9, 0, 0, 6.2832); ctx.fill();
+    pose.segs.forEach(function(sg){
+      var hot = selRole && sg.role === selRole;
+      var a = proj(sg.a), b = proj(sg.b);
+      ctx.strokeStyle = hot ? "#ffb02e" : "#e8e4da";
+      ctx.lineWidth = hot ? 9 : 7;
+      ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    });
+    /* mga joint */
+    ctx.fillStyle = "#ffb02e";
+    Object.keys(pose.joints).forEach(function(k){
+      var p = proj(pose.joints[k]);
+      ctx.beginPath(); ctx.arc(p[0], p[1], 3.4, 0, 6.2832); ctx.fill();
+    });
+    /* ulo */
+    var hc = proj(pose.joints.head);
+    ctx.strokeStyle = "#e8e4da";
+    ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.arc(hc[0], hc[1], 17, 0, 6.2832); ctx.stroke();
+    /* pangalan ng anim + oras */
+    ctx.fillStyle = "rgba(242,242,244,0.92)";
+    ctx.font = "700 16px system-ui, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(e.name, 14, 26);
+    ctx.fillStyle = "rgba(154,154,163,0.95)";
+    ctx.font = "600 12.5px system-ui, sans-serif";
+    ctx.fillText(dur ? playTime.toFixed(2) + "s / " + dur.toFixed(2) + "s" : "", 14, 46);
+    syncTimeUI(dur);
+  }
+  function syncTimeUI(dur){
+    if (dur == null) dur = animDuration(curEntry());
+    var lbl = $("animTimeLbl");
+    if (lbl) lbl.textContent = playTime.toFixed(2) + "s / " + dur.toFixed(2) + "s";
+    var sc = $("animScrub");
+    if (sc && document.activeElement !== sc){
+      sc.max = Math.max(dur, 0.01);
+      sc.value = Math.min(playTime, dur);
+    }
+  }
+  /* ---------------- playback ---------------- */
+  function startLoop(){
+    if (rafId != null) return;
+    lastTs = 0;
+    function step(ts){
+      rafId = null;
+      if (!playing || !panelEl || !panelEl.classList.contains("open")) return;
+      if (lastTs && ts) playTime += (ts - lastTs) / 1000;
+      lastTs = ts || 0;
+      var dur = animDuration(curEntry());
+      if (dur > 0){
+        if (playTime >= dur) playTime = playTime % dur;
+      } else playTime = 0;
+      drawPreview();
+      rafId = requestAnimationFrame(step);
+    }
+    rafId = requestAnimationFrame(step);
+  }
+  function setPlaying(p){
+    playing = p;
+    var b = $("animPlayBtn");
+    if (b) b.textContent = p ? "⏸" : "▶";
+    if (p) startLoop();
+  }
+  /* ---------------- load / save ---------------- */
+  function setData(file, name){
+    animFile = file;
+    animFile.name = name;
+    entries = file.entries.map(function(e){ return { name: e.name, rawName: e.rawName, rawBlock: e.rawBlock, data: e.data }; });
+    origEntries = snapshot();
+    selIdx = 0;
+    playTime = 0;
+    slotMsg = "";
+    boneOffsets = {};
+    editBone = "";
+    renderList();
+    buildSlots();
+    refreshEditCard();
+    syncInfo();
+    drawPreview();
+  }
+  function loadDefault(){
+    var f = sampleFile();
+    setData(f, S().defName);
+  }
+  function animSaveDownload(){
+    if (!animFile || !entries.length) return;
+    var bytes = buildDownloadBytes();
+    var blob = new Blob([bytes], { type: "application/octet-stream" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "ped.ifp";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){
+      try { URL.revokeObjectURL(a.href); } catch(e){}
+      if (a.parentNode) a.parentNode.removeChild(a);
+    }, 400);
+  }
+  /* ---------------- language ---------------- */
+  function applyAnimStrings(){
+    var s = S();
+    var u = $("animUploadBtn"); if (u) u.textContent = s.upload;
+    var us = $("animUploadSub"); if (us) us.textContent = s.uploadSub;
+    var d = $("animDefaultBtn"); if (d) d.textContent = s.useDefault;
+    var sl = $("animSearchLbl"); if (sl) sl.textContent = s.searchLbl;
+    var sp = $("animSearch"); if (sp) sp.placeholder = s.searchPh;
+    var ll = $("animListLbl"); if (ll) ll.textContent = s.listLbl;
+    var slo = $("animSlotsLbl"); if (slo) slo.textContent = s.slotsLbl;
+    var edl = $("animEditLbl"); if (edl) edl.textContent = s.editLbl;
+    var bl = $("animBoneLbl"); if (bl) bl.textContent = s.boneLbl;
+    var rx = $("animRotXLbl"); if (rx) rx.textContent = s.rotX;
+    var ry = $("animRotYLbl"); if (ry) ry.textContent = s.rotY;
+    var rz = $("animRotZLbl"); if (rz) rz.textContent = s.rotZ;
+    var nb = $("animNarutoBtn"); if (nb) nb.textContent = s.naruto;
+    var brb = $("animBoneResetBtn"); if (brb) brb.textContent = s.resetBone;
+    var arb = $("animAllResetBtn"); if (arb) arb.textContent = s.resetAll;
+    var tl = $("animTlLbl"); if (tl) tl.textContent = s.timeline;
+    var nt = $("animNote"); if (nt) nt.textContent = s.note;
+    var dl = $("animDownloadBtn"); if (dl) dl.textContent = s.saveDownload;
+    var dlT = $("animDownloadTopBtn"); if (dlT) dlT.textContent = s.saveDownload;
+    var cl = $("animCloseBtn"); if (cl) cl.textContent = s.close;
+    var title = $("animTitle");
+    if (title){
+      title.innerHTML = "";
+      var span = document.createElement("span");
+      span.className = "cc-title-badge";
+      span.textContent = "🎬 Animation Editor ";
+      var badge = document.createElement("span");
+      badge.className = "beta-badge";
+      badge.textContent = "BETA";
+      span.appendChild(badge);
+      title.appendChild(span);
+    }
+    renderList();
+    buildSlots();
+    refreshEditCard();
+    syncInfo();
+    drawPreview();
+  }
+  function openAnim(){
+    if (!panelEl) return;
+    if (!animFile) loadDefault();
+    panelEl.classList.add("open");
+    renderList();
+    buildSlots();
+    refreshEditCard();
+    syncInfo();
+    drawPreview();
+  }
+  function closeAnim(){
+    if (panelEl) panelEl.classList.remove("open");
+    setPlaying(false);
+    /* Ibalik ang totoong ped sa 3D Preview sa normal pose. */
+    if (typeof window.__pedAnimReset === "function"){ try { window.__pedAnimReset(); } catch (err) {} }
+  }
+  /* ---------------- wiring ---------------- */
+  var upBtn = $("animUploadBtn"), fileInp = $("animFile");
+  if (upBtn && fileInp) upBtn.addEventListener("click", function(){ fileInp.click(); });
+  if (fileInp) fileInp.addEventListener("change", function(){
+    var f = fileInp.files && fileInp.files[0];
+    fileInp.value = "";
+    if (!f) return;
+    if (!/\.ifp$/i.test(f.name || "")){
+      var nm = $("animLoadedName"), inf = $("animFileInfo");
+      if (nm) nm.textContent = S().notIfp;
+      if (inf) inf.textContent = "";
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(){
+      var parsed = ifpParse(reader.result);
+      parsed.isDefault = false;
+      if (!parsed.entries.length){
+        animFile = parsed;
+        entries = []; origEntries = [];
+        renderList(); buildSlots(); syncInfo(); drawPreview();
+        return;
+      }
+      setData(parsed, f.name || "ped.ifp");
+    };
+    reader.readAsArrayBuffer(f);
+  });
+  var defBtn = $("animDefaultBtn");
+  if (defBtn) defBtn.addEventListener("click", loadDefault);
+  var searchInp = $("animSearch");
+  if (searchInp) searchInp.addEventListener("input", renderList);
+  var playBtn = $("animPlayBtn");
+  if (playBtn) playBtn.addEventListener("click", function(){ setPlaying(!playing); });
+  var scrub = $("animScrub");
+  if (scrub){
+    scrub.addEventListener("input", function(){
+      playTime = parseFloat(scrub.value) || 0;
+      drawPreview();
+    });
+  }
+  var boneSel = $("animBoneSel");
+  if (boneSel) boneSel.addEventListener("change", function(){
+    editBone = boneSel.value;
+    syncRotSliders();
+    drawPreview();
+  });
+  ["animRotX", "animRotY", "animRotZ"].forEach(function(id){
+    var rg = $(id);
+    if (rg){
+      rg.addEventListener("input", onRotInput);
+      rg.addEventListener("change", onRotCommit);
+    }
+  });
+  var narutoBtn = $("animNarutoBtn");
+  if (narutoBtn) narutoBtn.addEventListener("click", applyNaruto);
+  var boneResetBtn = $("animBoneResetBtn");
+  if (boneResetBtn) boneResetBtn.addEventListener("click", function(){
+    var e = curEntry();
+    if (!e || !editBone) return;
+    setBoneOffset(e, editBone, null);
+    refreshEditCard();
+    renderList();
+    syncInfo();
+    drawPreview();
+  });
+  var allResetBtn = $("animAllResetBtn");
+  if (allResetBtn) allResetBtn.addEventListener("click", function(){
+    var e = curEntry();
+    if (!e) return;
+    delete boneOffsets[e.name];
+    refreshEditCard();
+    renderList();
+    syncInfo();
+    drawPreview();
+  });
+  var dlBtn = $("animDownloadBtn"); if (dlBtn) dlBtn.addEventListener("click", animSaveDownload);
+  var dlTopBtn = $("animDownloadTopBtn"); if (dlTopBtn) dlTopBtn.addEventListener("click", animSaveDownload);
+  var closeBtn = $("animCloseBtn"); if (closeBtn) closeBtn.addEventListener("click", closeAnim);
+  if (panelEl) panelEl.addEventListener("click", function(e){ if (e.target === panelEl) closeAnim(); });
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape" && panelEl && panelEl.classList.contains("open")) closeAnim();
+  });
+  applyAnimStrings();
+
+  window.__animOpen = openAnim;
+  window.__animApplyLang = function(lang){
+    animLang = (lang === "en") ? "en" : "tl";
+    if (animFile && animFile.isDefault) animFile.name = S().defName;
+    applyAnimStrings();
+  };
+  /* Pang-verify lang: parser/writer/state na ma-check mula sa labas. */
+  window.__animDebug = {
+    parse: ifpParse,
+    build: ifpBuild,
+    sampleFile: sampleFile,
+    poseAt: poseAt,
+    data: function(){ return animFile; },
+    entries: function(){ return entries; },
+    select: function(i){ selectAnim(i); },
+    state: function(){ return { sel: selIdx, time: playTime, edited: editedCount(), duration: animDuration(curEntry()) }; },
+    offsets: function(){ return boneOffsets; },
+    setOffset: function(entryName, role, xyz){
+      for (var i = 0; i < entries.length; i++)
+        if (entries[i].name === entryName){ setBoneOffset(entries[i], role, xyz); return true; }
+      return false;
+    },
+    naruto: function(){ applyNaruto(); },
+    buildDownload: function(){ return buildDownloadBytes(); }
+  };
 })();
 </script>
   </body>
