@@ -505,6 +505,15 @@
       .anim-rotrow input[type=range]{flex:1; min-width:0;}
       .anim-rotrow .r-val{width:48px; flex:none; text-align:right; font-size:12.5px; font-variant-numeric:tabular-nums;}
       .anim-wide{width:100%; min-height:48px;}
+      /* ---------- Sky Editor panel (BETA) ----------
+         Sariling preview wrap tulad ng #tcGlWrap / #animGlWrap:
+         totoong Three.js scene (malaking flat plane sa itaas,
+         camera sa lupa na nakatingala). Pag walang WebGL, ang
+         #skyFallback (ang sky image mismo) ang ipinapakita. */
+      #skyGlWrap{width:100%; height:212px; flex:none; border-radius:12px; border:1px solid var(--line); background:#000; overflow:hidden; touch-action:none;}
+      #skyGlWrap canvas{display:block; width:100%; height:100%;}
+      #skyGlWrap.hidden{display:none;}
+      #skyFallback{width:100%; height:212px; flex:none; display:block; border-radius:12px; border:1px solid var(--line); object-fit:cover; background:#2a0a4a;}
       @media (prefers-reduced-motion: reduce){
         .gate-spinner{animation-duration:2.4s;}
         .gate-bar-fill{animation:none; width:100%;}
@@ -999,6 +1008,41 @@
         <button type="button" id="animCloseBtn">Isara</button>
       </div>
     </div>
+    <!-- Sky Editor (BETA): bubukas mula sa ••• menu, sa ilalim ng
+         Animation Editor. Dalawang parte: (1) Sky colors — presets
+         na nagse-set ng kulay ng langit sa isang timecyc.dat
+         (parehong format at writer ng Timecyc Editor, lahat ng
+         weather at oras), at (2) Sky image — image na nagiging
+         texture ng isang malaking flat plane (sky.dff + sky.txd),
+         naka-preview sa 3D mula sa lupa na nakatingala. -->
+    <div id="skyPanel" class="admin-overlay" role="dialog" aria-modal="true" aria-labelledby="skyTitle">
+      <div class="admin-card tc-card">
+        <h2 class="admin-title" id="skyTitle"><span class="cc-title-badge">🌌 Sky Editor <span class="beta-badge">BETA</span></span></h2>
+        <div class="tc-sec">
+          <span class="lbl" id="skyColorsLbl">Sky colors</span>
+          <div id="skyPresets" class="tc-chips"></div>
+          <p class="tc-loaded-meta" id="skyPresetInfo" role="status"></p>
+        </div>
+        <button type="button" class="primary tc-save-big" id="skyTcDownloadBtn">💾 Download timecyc.dat</button>
+        <div class="tc-sec">
+          <span class="lbl" id="skyImgLbl">Sky image</span>
+          <button type="button" class="tc-upload-big" id="skyUploadBtn">🖼️ Upload sky image</button>
+          <p class="tc-upload-sub" id="skyUploadSub">Tap here and pick an image — it becomes the texture of the sky plane. Square images look best.</p>
+          <input type="file" id="skyFile" class="hidden" accept="image/*" />
+          <div id="skyGlWrap" class="hidden" aria-label="Sky 3D preview"></div>
+          <img id="skyFallback" class="hidden" alt="Sky image preview" />
+          <p class="tc-loaded-meta" id="skyImgInfo" role="status"></p>
+          <p class="tc-loaded-meta" id="skyDragHint"></p>
+        </div>
+        <div class="tc-toprow">
+          <button type="button" id="skyDefaultBtn">Use the built-in purple sky</button>
+        </div>
+        <button type="button" class="primary tc-save-big" id="skyDlBtn">💾 Download sky.dff + sky.txd</button>
+        <p class="tc-loaded-meta" id="skyDlInfo" role="status"></p>
+        <p class="admin-note" id="skyNote"></p>
+        <button type="button" id="skyCloseBtn">Close</button>
+      </div>
+    </div>
     <header id="topbar">
       <div id="brand">XSS <b>TXD</b></div>
       <div class="topbtns">
@@ -1019,6 +1063,7 @@
         <button type="button" id="menuCcBtn" role="menuitem">🎨 <span id="menuCcLbl">Colorcycle Editor</span> <span class="beta-badge">BETA</span></button>
         <button type="button" id="menuCheatsBtn" role="menuitem">🔓 <span id="menuCheatsLbl">Cheats</span></button>
         <button type="button" id="menuAnimBtn" role="menuitem">🎬 <span id="menuAnimLbl">Animation Editor</span> <span class="beta-badge">BETA</span></button>
+        <button type="button" id="menuSkyBtn" role="menuitem">🌌 <span id="menuSkyLbl">Sky Editor</span> <span class="beta-badge">BETA</span></button>
       </div>
       <div id="fileinfo" class="infopop">A sample model is loaded — upload your DFF + TXD to edit a real file.</div>
       <div id="popZip" class="infopop">ZIP — download the TXD and DFF together in a single .zip file (whichever is loaded). One download, easy to share or back up.</div>
@@ -11150,6 +11195,531 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     },
     naruto: function(){ applyNaruto(); },
     buildDownload: function(){ return buildDownloadBytes(); }
+  };
+})();
+</script>
+<script>
+/* =====================================================================
+   Sky Editor (BETA) — bubukas mula sa ••• menu, sa ilalim ng
+   Animation Editor. Dalawang parte:
+
+   1) Sky colors: presets (Purple Night / Sunset / Golden Hour /
+      Normal) na ina-apply sa LAHAT ng weather × oras ng isang
+      timecyc.dat. Ang file ay binubuo gamit mismo ang parser/writer
+      ng Timecyc Editor (window.__tcDebug: defaultText + parse +
+      build), kaya eksaktong parehong format ang dina-download —
+      hindi ginagalaw ang sariling state ng Timecyc Editor.
+
+   2) Sky image: isang image (in-upload o ang built-in purple
+      default, 512×512) na nagiging texture na "sky" ng isang
+      malaking flat plane. Ang preview ay totoong Three.js scene sa
+      loob ng panel: plane sa itaas, camera sa lupa na nakatingala,
+      drag para lumingon. Ang download ay sky.dff (bagong DFF na
+      binuo mula sa simula: 1 frame, 1 geometry na plane na may UV
+      at texture material, 1 atomic — RenderWare 3.6) at sky.txd
+      (binubuo ng RW.buildTXD ng editor mismo).
+   ===================================================================== */
+(function(){
+  "use strict";
+
+  var STR = {
+    en: {
+      colorsLbl: "Sky colors — one tap sets the whole sky",
+      presetApplied: function(n){ return "Preset applied: " + n + " — set for all weathers and times in the timecyc.dat you download below."; },
+      presetNone: "Normal sky is active — pick a preset above to change the sky colors.",
+      tcDownload: "💾 Download timecyc.dat",
+      imgLbl: "Sky image — one big flat plane above the map",
+      upload: "🖼️ Upload sky image",
+      uploadSub: "Tap here and pick an image — it becomes the texture of the sky plane. Square images look best.",
+      imgDefault: "Built-in purple sky image — 512 × 512",
+      imgLoaded: function(n){ return "Your image: " + n + " — resized to 512 × 512 for the TXD"; },
+      notImg: "That is not an image file — please pick a PNG or JPG image. Nothing was changed.",
+      dragHint: "Preview: view from the ground looking up at the sky plane. Drag on the preview to look around.",
+      useDefault: "Use the built-in purple sky",
+      dlSky: "💾 Download sky.dff + sky.txd",
+      dlSent: "Sending sky.dff and sky.txd — if only one arrived, tap the button again for the missing one.",
+      note: "How to install: the timecyc.dat replaces data/timecyc.dat (or put it in ModLoader). The sky.dff and sky.txd are added as a map object — with ModLoader, give it an .ide/.ipl entry and place it high above the map; on a server, the server places it as an object. Client-side only — only you will see it.",
+      close: "Close"
+    },
+    tl: {
+      colorsLbl: "Kulay ng langit — isang tap, buong langit ang mababago",
+      presetApplied: function(n){ return "Na-apply ang preset: " + n + " — naka-set ito sa lahat ng weather at oras sa timecyc.dat na ida-download mo sa ibaba."; },
+      presetNone: "Normal na langit ang aktibo — pumili ng preset sa itaas para baguhin ang kulay ng langit.",
+      tcDownload: "💾 I-download ang timecyc.dat",
+      imgLbl: "Sky image — isang malaking flat plane sa ibabaw ng mapa",
+      upload: "🖼️ I-upload ang sky image",
+      uploadSub: "I-tap ito at pumili ng image — yun ang magiging texture ng sky plane. Pinakamaganda ang square na image.",
+      imgDefault: "Built-in na purple sky image — 512 × 512",
+      imgLoaded: function(n){ return "Image mo: " + n + " — ni-resize sa 512 × 512 para sa TXD"; },
+      notImg: "Hindi image file ang napili mo — pumili ng PNG o JPG na image. Walang nabago.",
+      dragHint: "Preview: tanaw mula sa lupa na nakatingala sa sky plane. I-drag ang preview para lumingon.",
+      useDefault: "Gamitin ang built-in purple sky",
+      dlSky: "💾 I-download ang sky.dff + sky.txd",
+      dlSent: "Pinapadala na ang sky.dff at sky.txd — kung isa lang ang dumating, pindutin ulit ang button para sa kulang.",
+      note: "Paano i-install: ang timecyc.dat ang ipapalit sa data/timecyc.dat (o ilagay sa ModLoader). Ang sky.dff at sky.txd ay idadagdag bilang map object — sa ModLoader, bigyan ito ng .ide/.ipl entry at ilagay nang mataas sa ibabaw ng mapa; sa server, ang server ang maglalagay nito bilang object. Client-side lang ito — ikaw lang ang makakakita.",
+      close: "Isara"
+    }
+  };
+
+  /* Mga preset ng kulay: parehong field layout ng Timecyc Editor
+     (COLOR_INDEX = token index ng bawat kulay sa isang row). Ang
+     Sunset at Golden Hour ay kapareho ng presets ng Timecyc Editor;
+     ang Purple Night ay purple ang Sky Top at Sky Bottom at pink
+     ang araw. Ang "normal" ay walang binabago (default file). */
+  var COLOR_INDEX = { amb: 0, ambobj: 3, dir: 6, skytop: 9, skybot: 12, suncore: 15, suncorona: 18, lowcloud: 30, botcloud: 33, water: 36 };
+  var SLIDER_INDEX = { sunSz: 21, sprSz: 22, sprBght: 23 };
+  var SKY_PRESETS = {
+    purple: { name: "🌌 Purple Night",
+      colors: { skytop: [74,20,140], skybot: [150,60,200], suncore: [255,105,180], suncorona: [255,45,150], amb: [86,60,110], ambobj: [78,54,100], dir: [200,140,220], lowcloud: [120,70,170], botcloud: [100,55,150], water: [52,32,86] },
+      sliders: { sunSz: 2.0, sprBght: 0.8 } },
+    sunset: { name: "🌇 Sunset",
+      colors: { skytop: [104,58,158], skybot: [255,110,140], suncore: [255,190,120], suncorona: [255,92,132], amb: [106,80,106], ambobj: [97,74,97], dir: [240,150,160], lowcloud: [202,120,170], botcloud: [172,100,160], water: [60,60,100] },
+      sliders: { sunSz: 2.4, sprBght: 0.85 } },
+    golden: { name: "🌅 Golden Hour",
+      colors: { skytop: [255,138,58], skybot: [255,196,110], suncore: [255,224,168], suncorona: [255,150,48], amb: [122,96,78], ambobj: [112,90,72], dir: [255,202,138], lowcloud: [255,182,120], botcloud: [255,170,108], water: [66,88,110] },
+      sliders: { sunSz: 2.2, sprBght: 0.9 } },
+    normal: null
+  };
+  var PRESET_ORDER = ["purple", "sunset", "golden", "normal"];
+  var PRESET_NAMES = { purple: "🌌 Purple Night", sunset: "🌇 Sunset", golden: "🌅 Golden Hour", normal: "☀️ Normal" };
+
+  var skyLang = "en";
+  function readLang(){
+    try {
+      var s = localStorage.getItem("mavs_txd_lang");
+      skyLang = (s === "tl") ? "tl" : "en";
+    } catch(e){ skyLang = "en"; }
+    return skyLang;
+  }
+  function S(){ return STR[skyLang] || STR.en; }
+  function el(id){ return document.getElementById(id); }
+
+  var panelEl = el("skyPanel");
+  var curPreset = "normal";
+  var skyImgName = "";
+
+  /* ---------------- sky image (512×512 canvas) ---------------- */
+  function makePurpleCanvas(){
+    var c = document.createElement("canvas"); c.width = 512; c.height = 512;
+    var g = c.getContext("2d");
+    var grad = g.createLinearGradient(0, 0, 0, 512);
+    grad.addColorStop(0, "#2a0750"); grad.addColorStop(0.55, "#4b1180"); grad.addColorStop(1, "#6d1fa0");
+    g.fillStyle = grad; g.fillRect(0, 0, 512, 512);
+    var blobs = [[120,110,190,"rgba(150,60,220,0.55)"],[330,90,160,"rgba(255,80,190,0.35)"],
+      [250,300,230,"rgba(90,20,160,0.60)"],[430,360,170,"rgba(190,70,255,0.40)"],
+      [90,400,150,"rgba(255,60,160,0.28)"],[300,180,120,"rgba(30,0,70,0.50)"]];
+    blobs.forEach(function(b){
+      var rg = g.createRadialGradient(b[0], b[1], 4, b[0], b[1], b[2]);
+      rg.addColorStop(0, b[3]); rg.addColorStop(1, "rgba(0,0,0,0)");
+      g.fillStyle = rg; g.fillRect(0, 0, 512, 512);
+    });
+    g.fillStyle = "rgba(255,255,255,0.85)";
+    for (var i = 0; i < 130; i++){
+      var x = (i * 197.3) % 512, y = (i * 89.7) % 512, r = (i % 3) * 0.7 + 0.6;
+      g.beginPath(); g.arc(x, y, r, 0, 6.2832); g.fill();
+    }
+    return c;
+  }
+  var skyCanvas = makePurpleCanvas();
+
+  function setSkyImage(img, name){
+    var g = skyCanvas.getContext("2d");
+    var s = Math.max(512 / img.width, 512 / img.height);
+    var w = img.width * s, h = img.height * s;
+    g.fillStyle = "#000"; g.fillRect(0, 0, 512, 512);
+    g.drawImage(img, (512 - w) / 2, (512 - h) / 2, w, h);
+    skyImgName = name || "";
+    syncSkyImgInfo();
+    updateSkyPreview();
+  }
+  function useDefaultImage(){
+    skyCanvas = makePurpleCanvas();
+    skyImgName = "";
+    syncSkyImgInfo();
+    updateSkyPreview();
+  }
+  function syncSkyImgInfo(){
+    var info = el("skyImgInfo"); if (!info) return;
+    info.textContent = skyImgName ? S().imgLoaded(skyImgName) : S().imgDefault;
+  }
+
+  /* ---------------- timecyc.dat mula sa preset ----------------
+     Ginagamit ang parser/writer ng Timecyc Editor mismo
+     (window.__tcDebug) sa isang BAGONG parse ng default text —
+     ang naka-load na file at edits ng Timecyc Editor ay hindi
+     ginagalaw. Ang preset ay ina-apply sa lahat ng rows. */
+  function buildTimecycText(presetId){
+    var dbg = window.__tcDebug;
+    if (!dbg || typeof dbg.parse !== "function" || typeof dbg.build !== "function") return null;
+    var data = dbg.parse(dbg.defaultText());
+    var P = SKY_PRESETS[presetId];
+    if (P){
+      data.sections.forEach(function(sec){
+        sec.rows.forEach(function(r){
+          Object.keys(P.colors).forEach(function(k){
+            var idx = COLOR_INDEX[k], c = P.colors[k];
+            r.tokens[idx] = String(c[0]);
+            r.tokens[idx + 1] = String(c[1]);
+            r.tokens[idx + 2] = String(c[2]);
+          });
+          Object.keys(P.sliders || {}).forEach(function(k){
+            r.tokens[SLIDER_INDEX[k]] = String(P.sliders[k]);
+          });
+          r.dirty = true;
+        });
+      });
+    }
+    return dbg.build(data);
+  }
+
+  /* ---------------- sky.txd (RW.buildTXD ng editor) ---------------- */
+  function buildSkyTXD(){
+    var g = skyCanvas.getContext("2d");
+    var rgba = g.getImageData(0, 0, 512, 512).data;
+    var tex = { name: "sky", platform: 9, filterMode: 6, uAddr: 1, vAddr: 1, maskName: "",
+      rasterFormat: 0x0500, d3dFormat: 21, width: 512, height: 512, depth: 32,
+      numLevels: 10, rasterType: 4, flagsByte: 0, raw: null, edited: true,
+      formatLabel: "A8R8G8B8", hasAlpha: false, rgba: rgba };
+    return RW.buildTXD({ version: 0x36003, deviceId: 1, textures: [tex] }, { format: "raw" });
+  }
+
+  /* ---------------- sky.dff (bagong DFF mula sa simula) ----------------
+     RenderWare 3.6 Clump: Struct (1 atomic) · FrameList (1 frame na
+     "sky", identity, parent -1) · GeometryList (1 geometry: flat
+     plane 3000×3000 sa XY, Z=0, 4 verts, 4 tris — 2 nakaharap pababa
+     at 2 pataas para kita sa magkabilang side, 1 UV set, normals
+     (0,0,-1), isang material na may texture na "sky") · Atomic
+     (frame 0, geometry 0, flags 5). Walang LIGHT flag sa geometry:
+     hindi ito iilawan ng game, kaya buong liwanag ang texture —
+     tulad ng sky object na dapat sana. */
+  function buildSkyDFF(){
+    var version = 0x36003;
+    var CH = { STRUCT: 0x01, STRING: 0x02, EXTENSION: 0x03, TEXTURE: 0x06, MATERIAL: 0x07,
+      MATERIALLIST: 0x08, ATOMIC: 0x14, GEOMETRY: 0x0F, CLUMP: 0x10, FRAMELIST: 0x0E,
+      GEOMETRYLIST: 0x1A, FRAME: 0x253F2FE };
+    function chunk(type, payload){
+      var out = new Uint8Array(12 + payload.length);
+      var d = new DataView(out.buffer);
+      d.setUint32(0, type, true); d.setUint32(4, payload.length, true); d.setUint32(8, version, true);
+      out.set(payload, 12);
+      return out;
+    }
+    function concat(list){
+      var n = 0, i;
+      for (i = 0; i < list.length; i++) n += list[i].length;
+      var out = new Uint8Array(n), o = 0;
+      for (i = 0; i < list.length; i++){ out.set(list[i], o); o += list[i].length; }
+      return out;
+    }
+    function emptyExt(){ return chunk(CH.EXTENSION, new Uint8Array(0)); }
+    function stringChunk(s){
+      var len = s.length + 1;
+      var pad = (4 - (len % 4)) % 4;
+      var p = new Uint8Array(len + pad);
+      for (var i = 0; i < s.length; i++) p[i] = s.charCodeAt(i) & 0x7F;
+      return chunk(CH.STRING, p);
+    }
+    /* geometry struct: header + UVs + tris + morph (sphere, flags, pos, normals) */
+    var H = 1500; /* half-size: 3000 × 3000 plane */
+    var pos = [-H,-H,0,  H,-H,0,  H,H,0,  -H,H,0];
+    var uv = [0,1,  1,1,  1,0,  0,0];
+    var nor = [0,0,-1,  0,0,-1,  0,0,-1,  0,0,-1];
+    var tris = [[0,2,1],[0,3,2],[0,1,2],[0,2,3]]; /* unang pares: harap pababa; pangalawa: pataas */
+    var nv = 4, nt = 4, i, t, p;
+    var sb = new Uint8Array(16 + nv * 8 + nt * 8 + 16 + 8 + nv * 12 + nv * 12);
+    var sd = new DataView(sb.buffer);
+    sd.setUint32(0, 0x10056, true); /* 1 UV set (bits 16+) | POSITIONS | TEXTURED | NORMALS | MODULATE */
+    sd.setUint32(4, nt, true); sd.setUint32(8, nv, true); sd.setUint32(12, 1, true);
+    p = 16;
+    for (i = 0; i < nv * 2; i++){ sd.setFloat32(p, uv[i], true); p += 4; }
+    for (t = 0; t < nt; t++){ /* file order: v2, v1, materialId, v3 */
+      sd.setUint16(p, tris[t][1], true); sd.setUint16(p + 2, tris[t][0], true);
+      sd.setUint16(p + 4, 0, true); sd.setUint16(p + 6, tris[t][2], true);
+      p += 8;
+    }
+    var rad = Math.sqrt(2) * H + 0.001;
+    sd.setFloat32(p, 0, true); sd.setFloat32(p + 4, 0, true); sd.setFloat32(p + 8, 0, true); sd.setFloat32(p + 12, rad, true);
+    p += 16;
+    sd.setUint32(p, 1, true); sd.setUint32(p + 4, 1, true); p += 8; /* morph: hasVerts, hasNormals */
+    for (i = 0; i < nv * 3; i++){ sd.setFloat32(p, pos[i], true); p += 4; }
+    for (i = 0; i < nv * 3; i++){ sd.setFloat32(p, nor[i], true); p += 4; }
+    /* material: puti, textured, may Texture chunk na "sky" */
+    var mb = new Uint8Array(28);
+    var md = new DataView(mb.buffer);
+    mb[4] = 255; mb[5] = 255; mb[6] = 255; mb[7] = 255;
+    md.setInt32(12, 1, true); /* textured */
+    md.setFloat32(16, 1.0, true); /* ambient */
+    md.setFloat32(24, 1.0, true); /* diffuse */
+    var texStruct = new Uint8Array(4);
+    new DataView(texStruct.buffer).setUint32(0, 0x1106, true); /* filter + addressing */
+    var texChunk = chunk(CH.TEXTURE, concat([chunk(CH.STRUCT, texStruct), stringChunk("sky"), stringChunk(""), emptyExt()]));
+    var matChunk = chunk(CH.MATERIAL, concat([chunk(CH.STRUCT, mb), texChunk, emptyExt()]));
+    var mlStruct = new Uint8Array(8);
+    var mld = new DataView(mlStruct.buffer);
+    mld.setUint32(0, 1, true); mld.setInt32(4, -1, true);
+    var matList = chunk(CH.MATERIALLIST, concat([chunk(CH.STRUCT, mlStruct), matChunk]));
+    var geoChunk = chunk(CH.GEOMETRY, concat([chunk(CH.STRUCT, sb), matList, emptyExt()]));
+    var glStruct = new Uint8Array(4);
+    new DataView(glStruct.buffer).setUint32(0, 1, true);
+    var geoList = chunk(CH.GEOMETRYLIST, concat([chunk(CH.STRUCT, glStruct), geoChunk]));
+    /* frame list: isang frame, identity rotation, pos 0, parent -1 */
+    var flStruct = new Uint8Array(4 + 56);
+    var fd = new DataView(flStruct.buffer);
+    fd.setUint32(0, 1, true);
+    fd.setFloat32(4, 1, true); fd.setFloat32(4 + 16, 1, true); fd.setFloat32(4 + 32, 1, true);
+    fd.setInt32(4 + 48, -1, true);
+    var nameBytes = new Uint8Array(4);
+    nameBytes[0] = 115; nameBytes[1] = 107; nameBytes[2] = 121; /* "sky\0" */
+    var frameExt = chunk(CH.EXTENSION, chunk(CH.FRAME, nameBytes));
+    var frameList = chunk(CH.FRAMELIST, concat([chunk(CH.STRUCT, flStruct), frameExt]));
+    /* atomic */
+    var ab = new Uint8Array(16);
+    var ad = new DataView(ab.buffer);
+    ad.setUint32(0, 0, true); ad.setUint32(4, 0, true); ad.setUint32(8, 5, true); /* flags: collision test + render */
+    var atomic = chunk(CH.ATOMIC, concat([chunk(CH.STRUCT, ab), emptyExt()]));
+    /* clump */
+    var cb = new Uint8Array(12);
+    new DataView(cb.buffer).setUint32(0, 1, true); /* 1 atomic, 0 lights, 0 cameras */
+    var clump = chunk(CH.CLUMP, concat([chunk(CH.STRUCT, cb), frameList, geoList, atomic]));
+    return clump.buffer;
+  }
+
+  /* ---------------- 3D preview (Three.js) ----------------
+     Scene: malaking flat plane sa itaas na may sky texture, ground
+     disc sa ibaba, background = Sky Bottom ng napiling preset.
+     Camera nasa lupa (y=1.7) na nakatingala; drag = lumingon. */
+  var sky3d = null, sky3dFailed = false;
+  var skyYaw = 0.6, skyPitch = 1.12;
+  function sky3dInit(wrap){
+    if (typeof THREE === "undefined") return false;
+    try {
+      var renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(wrap.clientWidth, wrap.clientHeight || 212);
+      wrap.appendChild(renderer.domElement);
+      var scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x78a6e0);
+      var camera = new THREE.PerspectiveCamera(70, wrap.clientWidth / (wrap.clientHeight || 212), 0.1, 1200);
+      camera.position.set(0, 1.7, 0);
+      var tex = new THREE.CanvasTexture(skyCanvas);
+      var plane = new THREE.Mesh(
+        new THREE.PlaneGeometry(340, 340),
+        new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, fog: false }));
+      plane.rotation.x = Math.PI / 2;
+      plane.position.y = 60;
+      scene.add(plane);
+      var ground = new THREE.Mesh(
+        new THREE.CircleGeometry(400, 32),
+        new THREE.MeshBasicMaterial({ color: 0x23261f, fog: false }));
+      ground.rotation.x = -Math.PI / 2;
+      scene.add(ground);
+      sky3d = { renderer: renderer, scene: scene, camera: camera, tex: tex, _w: wrap.clientWidth };
+      return true;
+    } catch (e) {
+      sky3dFailed = true;
+      return false;
+    }
+  }
+  function skyResize(){
+    var wrap = el("skyGlWrap");
+    if (!sky3d || !wrap || !wrap.clientWidth) return;
+    var w = wrap.clientWidth, h = wrap.clientHeight || 212;
+    sky3d.renderer.setSize(w, h);
+    sky3d.camera.aspect = w / h;
+    sky3d.camera.updateProjectionMatrix();
+  }
+  function skyRender(){
+    if (!sky3d) return;
+    var cam = sky3d.camera;
+    var dir = new THREE.Vector3(
+      Math.sin(skyYaw) * Math.cos(skyPitch),
+      Math.sin(skyPitch),
+      Math.cos(skyYaw) * Math.cos(skyPitch));
+    cam.lookAt(cam.position.clone().add(dir));
+    sky3d.renderer.render(sky3d.scene, sky3d.camera);
+  }
+  function showSkyFallback(){
+    var fb = el("skyFallback"); if (!fb) return;
+    try { fb.src = skyCanvas.toDataURL("image/png"); } catch (e) {}
+    fb.classList.remove("hidden");
+    var hint = el("skyDragHint"); if (hint) hint.textContent = "";
+  }
+  function updateSkyPreview(){
+    var wrap = el("skyGlWrap");
+    if (!wrap || !panelEl || !panelEl.classList.contains("open")) return;
+    if (sky3dFailed){ showSkyFallback(); return; }
+    if (!sky3d){
+      wrap.classList.remove("hidden");
+      if (!wrap.clientWidth || !sky3dInit(wrap)){
+        wrap.classList.add("hidden");
+        /* Walang 3D (hal. hindi pa nag-load ang Three.js): ang sky
+           image mismo ang ipakita bilang fallback, tulad ng 2D
+           canvas ng Timecyc preview. Susubukan ulit ang 3D sa
+           susunod na update. */
+        showSkyFallback();
+        return;
+      }
+      var fb = el("skyFallback"); if (fb) fb.classList.add("hidden");
+      var hint = el("skyDragHint"); if (hint) hint.textContent = S().dragHint;
+    }
+    if (sky3d._w !== wrap.clientWidth){ sky3d._w = wrap.clientWidth; skyResize(); }
+    /* Ang CanvasTexture ay nakaturo sa skyCanvas mismo; pag
+       napalitan ang canvas object (default reset), ituro ulit. */
+    if (sky3d.tex.image !== skyCanvas) sky3d.tex.image = skyCanvas;
+    sky3d.tex.needsUpdate = true;
+    var P = SKY_PRESETS[curPreset];
+    var bot = P ? P.colors.skybot : [122, 170, 235];
+    sky3d.scene.background.setRGB(bot[0] / 255, bot[1] / 255, bot[2] / 255);
+    skyRender();
+  }
+  /* Drag sa preview = lumingon (yaw/pitch ng camera). */
+  (function(){
+    var wrap = el("skyGlWrap");
+    if (!wrap) return;
+    var drag = null;
+    wrap.addEventListener("pointerdown", function(e){
+      drag = { x: e.clientX, y: e.clientY };
+      try { wrap.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    wrap.addEventListener("pointermove", function(e){
+      if (!drag) return;
+      skyYaw += (e.clientX - drag.x) * 0.005;
+      skyPitch += (e.clientY - drag.y) * 0.005;
+      if (skyPitch < 0.12) skyPitch = 0.12;
+      if (skyPitch > 1.5) skyPitch = 1.5;
+      drag = { x: e.clientX, y: e.clientY };
+      skyRender();
+    });
+    function endDrag(){ drag = null; }
+    wrap.addEventListener("pointerup", endDrag);
+    wrap.addEventListener("pointercancel", endDrag);
+  })();
+
+  /* ---------------- UI ---------------- */
+  function buildPresets(){
+    var box = el("skyPresets"); if (!box) return;
+    box.innerHTML = "";
+    PRESET_ORDER.forEach(function(id){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = PRESET_NAMES[id];
+      if (id === curPreset) b.classList.add("on");
+      b.addEventListener("click", function(){
+        curPreset = id;
+        buildPresets();
+        syncPresetInfo();
+        updateSkyPreview();
+      });
+      box.appendChild(b);
+    });
+  }
+  function syncPresetInfo(){
+    var info = el("skyPresetInfo"); if (!info) return;
+    info.textContent = SKY_PRESETS[curPreset] ? S().presetApplied(PRESET_NAMES[curPreset]) : S().presetNone;
+  }
+  function applySkyStrings(){
+    readLang();
+    var s = S();
+    var cl = el("skyColorsLbl"); if (cl) cl.textContent = s.colorsLbl;
+    var tc = el("skyTcDownloadBtn"); if (tc) tc.textContent = s.tcDownload;
+    var il = el("skyImgLbl"); if (il) il.textContent = s.imgLbl;
+    var ub = el("skyUploadBtn"); if (ub) ub.textContent = s.upload;
+    var us = el("skyUploadSub"); if (us) us.textContent = s.uploadSub;
+    var dh = el("skyDragHint"); if (dh && !sky3dFailed) dh.textContent = s.dragHint;
+    var db = el("skyDefaultBtn"); if (db) db.textContent = s.useDefault;
+    var dl = el("skyDlBtn"); if (dl) dl.textContent = s.dlSky;
+    var nt = el("skyNote"); if (nt) nt.textContent = s.note;
+    var cb = el("skyCloseBtn"); if (cb) cb.textContent = s.close;
+    syncPresetInfo();
+    syncSkyImgInfo();
+  }
+  function openSky(){
+    if (!panelEl) return;
+    panelEl.classList.add("open");
+    applySkyStrings();
+    buildPresets();
+    updateSkyPreview();
+    if (window.requestAnimationFrame){
+      requestAnimationFrame(function(){ skyResize(); updateSkyPreview(); });
+    }
+  }
+  function closeSky(){ if (panelEl) panelEl.classList.remove("open"); }
+
+  function skyDownload(blob, name){
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){
+      try { URL.revokeObjectURL(a.href); } catch (e) {}
+      if (a.parentNode) a.parentNode.removeChild(a);
+    }, 400);
+  }
+
+  /* ---------------- wiring ---------------- */
+  buildPresets();
+  applySkyStrings();
+
+  var menuBtn = el("menuSkyBtn");
+  if (menuBtn) menuBtn.addEventListener("click", function(){
+    var m = el("dotsMenu"); if (m) m.classList.add("hidden");
+    openSky();
+  });
+  var upBtn = el("skyUploadBtn"), fileInp = el("skyFile");
+  if (upBtn && fileInp) upBtn.addEventListener("click", function(){ fileInp.click(); });
+  if (fileInp) fileInp.addEventListener("change", function(){
+    var f = fileInp.files && fileInp.files[0];
+    fileInp.value = "";
+    if (!f) return;
+    if (!/^image\//.test(f.type || "") && !/\.(png|jpe?g|webp|gif|bmp)$/i.test(f.name || "")){
+      var info = el("skyImgInfo");
+      if (info) info.textContent = S().notImg;
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(){
+      var img = new Image();
+      img.onload = function(){ setSkyImage(img, f.name || "image"); };
+      img.src = String(reader.result || "");
+    };
+    reader.readAsDataURL(f);
+  });
+  var defBtn = el("skyDefaultBtn");
+  if (defBtn) defBtn.addEventListener("click", useDefaultImage);
+  var tcBtn = el("skyTcDownloadBtn");
+  if (tcBtn) tcBtn.addEventListener("click", function(){
+    var text = buildTimecycText(curPreset);
+    if (text == null) return;
+    skyDownload(new Blob([text], { type: "application/octet-stream" }), "timecyc.dat");
+  });
+  var dlBtn = el("skyDlBtn");
+  if (dlBtn) dlBtn.addEventListener("click", function(){
+    try {
+      skyDownload(new Blob([buildSkyDFF()], { type: "application/octet-stream" }), "sky.dff");
+      var info = el("skyDlInfo"); if (info) info.textContent = S().dlSent;
+      setTimeout(function(){
+        try { skyDownload(new Blob([buildSkyTXD()], { type: "application/octet-stream" }), "sky.txd"); } catch (e) {}
+      }, 450);
+    } catch (e) {}
+  });
+  var closeBtn = el("skyCloseBtn");
+  if (closeBtn) closeBtn.addEventListener("click", closeSky);
+  if (panelEl) panelEl.addEventListener("click", function(e){ if (e.target === panelEl) closeSky(); });
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape" && panelEl && panelEl.classList.contains("open")) closeSky();
+  });
+
+  window.__skyOpen = openSky;
+  window.__skyApplyLang = function(){ applySkyStrings(); buildPresets(); updateSkyPreview(); };
+  /* Pang-verify lang: mga builder at state na ma-check mula sa labas. */
+  window.__skyDebug = {
+    buildDFF: buildSkyDFF,
+    buildTXD: buildSkyTXD,
+    timecyc: buildTimecycText,
+    presets: function(){ return PRESET_ORDER.slice(); },
+    state: function(){ return { preset: curPreset, imgName: skyImgName }; },
+    setPreset: function(id){ if (id in SKY_PRESETS){ curPreset = id; buildPresets(); syncPresetInfo(); } }
   };
 })();
 </script>
