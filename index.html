@@ -251,7 +251,7 @@
       #toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
       .hidden{display:none !important;}
 
-      /* ---------- XSS TXD gate (loading + code) ---------- */
+      /* ---------- XSS TXD welcome screen (loading + Enter) ---------- */
       body.gate-locked{overflow:hidden;}
       body.gate-locked header#topbar,
       body.gate-locked nav#tabs,
@@ -266,10 +266,10 @@
       #dlAllNotice .dlall-btns button{min-height:44px; font-size:13px; background:var(--panel2);}
       #dlAllNotice .dlall-btns button.ghost{background:transparent;}
       #gate{position:fixed; inset:0; z-index:1000; background:#000; color:var(--txt);
-        display:flex; align-items:center; justify-content:center; padding:24px 18px calc(24px + env(safe-area-inset-bottom));
-        opacity:1; transition:opacity .35s ease;}
+        display:flex; padding:24px 18px calc(24px + env(safe-area-inset-bottom));
+        opacity:1; transition:opacity .35s ease; overflow-y:auto; -webkit-overflow-scrolling:touch;}
       #gate.done{opacity:0; pointer-events:none;}
-      .gate-card{width:100%; max-width:340px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:14px;}
+      .gate-card{width:100%; max-width:600px; margin:auto; text-align:center; display:flex; flex-direction:column; align-items:center; gap:14px;}
       .gate-logo{font-family:"Russo One",sans-serif; font-size:40px; line-height:1.05; letter-spacing:.02em;}
       .gate-logo span{color:var(--accent);}
       .gate-tag{font-size:13.5px; color:var(--dim); line-height:1.45; margin-top:-6px;}
@@ -280,16 +280,17 @@
       .gate-bar-fill{height:100%; width:0; background:var(--accent); border-radius:999px; animation:gateFill 1.15s ease-out forwards;}
       @keyframes gateFill{to{width:100%;}}
       .gate-status{font-size:13.5px; color:var(--dim); margin:0; line-height:1.5;}
-      #gateForm{width:100%; display:flex; flex-direction:column; gap:12px; margin-top:6px; text-align:left;}
-      #gateForm label{font-size:12px; color:var(--dim); font-weight:700; letter-spacing:.04em; text-transform:uppercase; text-align:center;}
-      #gateCode{text-align:center; font-size:22px; font-weight:700; letter-spacing:.35em; min-height:56px;
-        background:var(--panel2); border:1px solid var(--line); border-radius:12px; color:var(--txt); width:100%; padding:0 12px 0 calc(12px + .35em);}
-      #gateCode:focus{outline:2px solid var(--accent); outline-offset:1px;}
-      #gateCode::placeholder{letter-spacing:.06em; font-size:16px; font-weight:600; color:var(--dim);}
-      .gate-error{margin:0; color:#ff8a8a; background:#2b1010; border:1px solid #6e2222; border-radius:10px;
-        padding:10px 12px; font-size:13.5px; font-weight:600; text-align:center; line-height:1.45;}
-      .gate-btn{width:100%; min-height:52px; font-size:15.5px; border-radius:12px;}
-      .gate-hint{margin:2px 0 0; font-size:12.5px; color:var(--dim); text-align:center; line-height:1.55;}
+      #gateMain{width:100%; display:flex; flex-direction:column; gap:16px; margin-top:6px;}
+      .gate-btn{width:100%; min-height:56px; font-size:17px; font-weight:800; border-radius:12px;}
+      /* ---------- Tungkol sa XSS TXD (welcome screen content) ---------- */
+      .gate-about{width:100%; text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:16px;
+        padding:20px 18px; display:flex; flex-direction:column; gap:12px;}
+      .gate-about h2{margin:0; font-size:19px; line-height:1.3; font-weight:800;}
+      .gate-about h3{margin:6px 0 0; font-size:13px; letter-spacing:.04em; text-transform:uppercase; color:var(--accent); font-weight:800;}
+      .gate-about p{margin:0; font-size:14px; line-height:1.65; color:#d8d8de;}
+      .gate-about ul, .gate-about ol{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:7px;}
+      .gate-about li{font-size:14px; line-height:1.6; color:#d8d8de;}
+      .gate-about b{color:var(--txt);}
       .gate-lang{display:flex; gap:10px; justify-content:center; align-items:stretch; margin-top:2px; flex-wrap:wrap;}
       .gate-lang .lang-btn{min-height:52px; padding:8px 16px; border-radius:12px; background:var(--panel2); border:2px solid var(--line); display:inline-flex; align-items:center; gap:8px; font-size:14px; font-weight:700; line-height:1;}
       .gate-lang .lang-btn .flag{font-size:26px; line-height:1;}
@@ -297,7 +298,7 @@
       .gate-lang-label{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.05em; text-transform:uppercase; text-align:center; margin:0;}
       .gate-shake{animation:gateShake .35s ease;}
       @keyframes gateShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-7px);}75%{transform:translateX(7px);}}
-      /* ---------- Legal / Privacy popup (unang lumalabas, bago ang loading at password) ---------- */
+      /* ---------- Legal / Privacy popup (unang lumalabas, bago ang loading at welcome screen) ---------- */
       #legalPopup{position:fixed; inset:0; z-index:2000; background:#000; color:var(--txt);
         display:flex; align-items:center; justify-content:center; padding:18px 14px calc(18px + env(safe-area-inset-bottom));
         opacity:1; transition:opacity .3s ease; overflow-y:auto;}
@@ -418,10 +419,11 @@
       .cc-vrow input[type=range]{flex:1; min-width:0;}
       .cc-vrow input[type=number]{width:74px; flex:none; min-height:40px; text-align:right; font-variant-numeric:tabular-nums;}
       .cc-title-badge{display:inline-flex; align-items:center; gap:8px;}
-      /* ---------- Cheats gate + Weapon / Handling / Ped panels ----------
-         Ang tatlong editor na ito ay nasa likod ng "🔓 Cheats" password
-         (tulad ng Admin Panel auth). Ang field rows ay slider + number
-         input, tulad ng Colorcycle rows pero mas mahaba ang label. */
+      /* ---------- Cheats list + Weapon / Handling / Ped panels ----------
+         Ang tatlong editor na ito ay bubukas mula sa "🔓 Cheats" list
+         sa ••• menu — diretso, walang password. Ang field rows ay
+         slider + number input, tulad ng Colorcycle rows pero mas
+         mahaba ang label. */
       .cheats-list{display:flex; flex-direction:column; gap:8px;}
       .cheat-item{display:flex; align-items:center; gap:9px; width:100%; min-height:56px;
         padding:0 14px; font-size:15.5px; font-weight:700; text-align:left; border-radius:12px;}
@@ -513,10 +515,10 @@
   </head>
   <body class="gate-locked">
     <!-- Legal / Privacy popup: ITO ang unang lumalabas sa bawat bukas ng
-         app — bago ang loading screen at bago ang password. Walang
+         app — bago ang loading screen at bago ang welcome screen. Walang
          naka-save na dismissal: bawat fresh open, lalabas ulit ito.
          Pag pinindot ang continue button, saka lang magsisimula ang
-         loading ng gate, tapos ang password form. -->
+         loading, tapos ang welcome screen na may Enter button. -->
     <div id="legalPopup" role="dialog" aria-modal="true" aria-labelledby="legalTitle">
       <div class="legal-card">
         <div class="legal-logo">XSS <span>TXD</span></div>
@@ -547,15 +549,15 @@
           </section>
         </div>
         <button type="button" class="primary" id="legalContinue">Naiintindihan ko — Magpatuloy</button>
-        <p class="legal-note" id="legalNote">Pag nagpatuloy ka, lalabas ang loading screen at hihingin ang password mo.</p>
+        <p class="legal-note" id="legalNote">Pag nagpatuloy ka, lalabas ang loading screen at ang welcome screen — isang pindot lang sa Enter, diretso ka na sa editor.</p>
       </div>
     </div>
-    <!-- XSS TXD gate: loading screen muna, tapos password entry sa
-         panibagong session. Pag naipasok na ang password, ang session ay
-         naka-save sa sessionStorage — ang reload, pagbalik mula sa
-         download, o pag-close ng notice ay diretso pabalik sa editor at
-         hindi na hihingi ng password. Panibagong session lang (sinara
-         talaga ang tab/app) ang hihingi ulit. -->
+    <!-- XSS TXD welcome screen: loading muna, tapos isang malaking
+         "Pumasok / Enter" button — walang code, walang check. Isang
+         pindot, diretso sa editor. Sa ilalim ng button ay ang
+         "Tungkol sa XSS TXD" section na may totoong paliwanag tungkol
+         sa app, mga kaya nitong gawin, paano gamitin, at mga
+         sinusuportahang file. -->
     <div id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
       <div class="gate-card" id="gateCard">
         <div class="gate-logo" id="gateTitle">XSS <span>TXD</span></div>
@@ -570,17 +572,49 @@
           <div class="gate-bar" aria-hidden="true"><div class="gate-bar-fill"></div></div>
           <p class="gate-status" id="gateStatus">Naglo-load ang XSS TXD…</p>
         </div>
-        <form id="gateForm" class="hidden" novalidate>
-          <label for="gateCode" id="gateLabel">Ilagay ang password</label>
-          <input id="gateCode" type="password" inputmode="numeric" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" placeholder="Password mo" aria-describedby="gateError gateHint" />
-          <p id="gateError" class="gate-error hidden" role="alert">Mali ang password — pakisuri at subukan ulit.</p>
-          <button type="submit" class="primary gate-btn" id="gateSubmit">Buksan ang XSS TXD</button>
-          <p class="gate-hint" id="gateHint">Makukuha mo ang password kay mavs pag bumili ka ng XSS TXD. Pag naipasok mo na, mananatili kang nasa editor — mag-download ka man at isara ang notice, hindi ka babalik dito. Hihingin lang ulit ang password sa panibagong bukas ng app.</p>
-        </form>
+        <div id="gateMain" class="hidden">
+          <button type="button" class="primary gate-btn" id="gateEnterBtn">Pumasok / Enter</button>
+          <section class="gate-about" id="gateAbout" aria-labelledby="gateAboutTitle">
+            <h2 id="gateAboutTitle">Tungkol sa XSS TXD</h2>
+            <p>Ang XSS TXD ay isang libreng online editor para sa mga file ng GTA San Andreas at SA-MP. Gumagana ito nang buo sa browser ng phone mo (iOS o Android) o ng computer — walang kailangang i-install, at ang mga file na ina-upload mo ay hindi umaalis sa device mo. Dito mo pwedeng baguhin ang textures at models ng sasakyan at ped, ayusin ang itsura ng langit at panahon, i-edit ang stats ng baril, sasakyan at ped, at baguhin ang galaw (animations) ng character mo.</p>
+            <h3>Ano ang kaya nitong gawin</h3>
+            <ul>
+              <li><b>TXD / DFF Editor</b> — mag-edit ng textures: magdagdag ng text at image, brush at eraser, Layers panel, at DXT compression para lumiit ang file.</li>
+              <li><b>3D Preview</b> — makita agad ang model sa 3D habang nag-e-edit, kasama ang Ped Pose para sa mga skin / ped model.</li>
+              <li><b>UV Editor</b> — ayusin ang pagkaka-mapa ng texture sa model.</li>
+              <li><b>3D Objects (BETA)</b> — magdagdag ng simpleng 3D parts tulad ng spoiler, bullbar, roof rack at light bar, at isama sila sa dina-download na DFF.</li>
+              <li><b>Timecyc Editor (BETA)</b> — i-edit ang kulay ng langit, araw, ulap at tubig sa bawat weather at oras, may batch edit at presets tulad ng Golden Hour at Sunset Vibes.</li>
+              <li><b>Colorcycle Editor (BETA)</b> — ayusin ang color grading ng mobile version ng laro.</li>
+              <li><b>Cheats</b> — Weapon Editor (53 baril), Handling Editor (210 sasakyan, may Drift / Race / Off-road / Realistic presets), at Ped Editor (43 entries).</li>
+              <li><b>Animation Editor (BETA)</b> — magpalit at mag-edit ng galaw sa ped.ifp: i-rotate ang mga buto (bones) at subukan ang isang-tap na Naruto Run preset.</li>
+              <li><b>Sticker packs</b> — Logos, Flames at Tribal stickers na pwedeng ilagay, i-drag, i-resize at i-rotate sa texture.</li>
+              <li><b>ZIP download / Download All</b> — i-download ang lahat ng na-edit na file nang sabay-sabay.</li>
+            </ul>
+            <h3>Paano gamitin</h3>
+            <ol>
+              <li>Pindutin ang <b>Pumasok / Enter</b> sa itaas para buksan ang editor.</li>
+              <li>I-upload ang DFF at TXD file mo sa editor — o buksan ang Timecyc, Colorcycle, Cheats o Animation Editor mula sa ••• menu.</li>
+              <li>I-edit ang texture, model, o values — makikita mo agad ang resulta sa preview.</li>
+              <li>I-download ang na-edit na file at ilagay ito sa folder ng laro mo, tulad ng dati mong ginagawa sa mga mod.</li>
+            </ol>
+            <h3>Mga sinusuportahang file</h3>
+            <ul>
+              <li><b>DFF</b> — 3D model ng sasakyan, ped at iba pang objects</li>
+              <li><b>TXD</b> — texture file na kasama ng DFF</li>
+              <li><b>timecyc.dat</b> — panahon, langit at oras</li>
+              <li><b>colorcycle.dat</b> — color grading (mobile)</li>
+              <li><b>weapon.dat</b> — stats ng mga baril</li>
+              <li><b>handling.cfg</b> — takbo at handling ng mga sasakyan</li>
+              <li><b>pedstats.dat</b> — ugali at stats ng mga ped</li>
+              <li><b>ped.ifp</b> — animations / galaw ng character</li>
+            </ul>
+            <p>Gumagana ang XSS TXD sa iOS, Android at PC, at sumusuporta sa lahat ng launcher / APK ng GTA SA at SA-MP. Ang mga edit mo ay naka-save sa session ng browser mo, kaya kahit mag-reload ang page ay babalik ang trabaho mo.</p>
+          </section>
+        </div>
         <button type="button" id="gateDots" class="gate-dots" aria-label="Admin">•••</button>
       </div>
     </div>
-    <!-- Admin: pag pinindot ang ••• (sa gate o sa header ng editor),
+    <!-- Admin: pag pinindot ang ••• (sa welcome screen o sa header ng editor),
          hihingin muna ang admin password. Pag tama, saka lang bubukas
          ang Admin Panel. -->
     <div id="adminAuth" class="admin-overlay" role="dialog" aria-modal="true" aria-labelledby="adminAuthTitle">
@@ -589,6 +623,9 @@
         <form id="adminAuthForm" novalidate>
           <label for="adminAuthInput" id="adminAuthLabel">Admin password</label>
           <input id="adminAuthInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="64" />
+          <label for="adminAuthInput2" id="adminAuthLabel2" class="hidden">Ulitin ang admin password</label>
+          <input id="adminAuthInput2" type="password" class="hidden" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="64" />
+          <p class="admin-note hidden" id="adminAuthSetupNote">Wala pang admin password sa device na ito — gumawa ng bago dito. Ang hash lang nito ang mase-save sa device na ito; walang password na naka-hardcode sa app.</p>
           <p id="adminAuthError" class="admin-msg err" role="alert">Mali ang admin password — hindi nagbukas ang panel.</p>
           <div class="admin-btnrow">
             <button type="button" class="ghost" id="adminAuthCancel">Cancel</button>
@@ -602,19 +639,6 @@
         <h2 class="admin-title" id="adminPanelTitle">Admin Panel</h2>
         <p id="adminMsg" class="admin-msg" role="status"></p>
         <div class="admin-sec" style="border-top:none;padding-top:0;">
-          <h3 id="admSecPasscode">Passcode ng buyer</h3>
-          <p class="admin-cur"><span id="admCurLabel">Kasalukuyang passcode:</span> <b id="admCurPasscode">2607</b></p>
-          <form id="admPasscodeForm" novalidate>
-            <label for="admNewPasscode" id="admNewPasscodeLabel">Bagong passcode</label>
-            <input id="admNewPasscode" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" />
-            <label for="admNewPasscode2" id="admNewPasscode2Label">Ulitin ang bagong passcode</label>
-            <input id="admNewPasscode2" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" />
-            <button type="submit" class="primary" id="admSavePasscode">I-save ang passcode</button>
-          </form>
-          <p class="admin-note" id="admPasscodeNote">Paalala: ang pagpapalit dito ay sa device / browser lang na ito gumagana. Para mapalitan ang passcode para sa lahat ng buyer, kailangang i-update ang naka-publish na file — sabihin kay Kit.</p>
-          <button type="button" id="admResetPasscode">I-reset ang passcode sa 2607</button>
-        </div>
-        <div class="admin-sec">
           <h3 id="admSecAdmin">Admin password</h3>
           <form id="admAdminForm" novalidate>
             <label for="admCurAdmin" id="admCurAdminLabel">Kasalukuyang admin password</label>
@@ -629,7 +653,7 @@
         <div class="admin-sec">
           <h3 id="admSecWork">Saved work</h3>
           <button type="button" class="admin-danger" id="admClearWork">Burahin ang lahat ng saved work</button>
-          <p class="admin-note" id="admClearNote">Binubura lang nito ang work snapshot / edits na naka-save sa session. Hindi gagalawin ang passcode, admin password, at wika. Magre-reload ang app pagkatapos.</p>
+          <p class="admin-note" id="admClearNote">Binubura lang nito ang work snapshot / edits na naka-save sa session. Hindi gagalawin ang admin password at wika. Magre-reload ang app pagkatapos.</p>
         </div>
         <div class="admin-sec">
           <h3 id="admSecInfo">Impormasyon ng app</h3>
@@ -737,23 +761,8 @@
       </div>
     </div>
     <!-- Cheats: bubukas mula sa ••• menu ng editor, sa ilalim ng
-         Colorcycle Editor. Tulad ng Admin Panel, may sariling password
-         muna ("Enter cheat password") bago makita ang listahan ng
-         tatlong cheat editor (Weapon / Handling / Ped). -->
-    <div id="cheatAuth" class="admin-overlay" role="dialog" aria-modal="true" aria-labelledby="cheatAuthTitle">
-      <div class="admin-card" id="cheatAuthCard">
-        <h2 class="admin-title" id="cheatAuthTitle">Enter cheat password</h2>
-        <form id="cheatAuthForm" novalidate>
-          <label for="cheatAuthInput" id="cheatAuthLabel">Cheat password</label>
-          <input id="cheatAuthInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="64" />
-          <p id="cheatAuthError" class="admin-msg" role="alert">Mali ang cheat password — hindi nagbukas ang Cheats.</p>
-          <div class="admin-btnrow">
-            <button type="button" class="ghost" id="cheatAuthCancel">Cancel</button>
-            <button type="submit" class="primary" id="cheatAuthConfirm">Confirm</button>
-          </div>
-        </form>
-      </div>
-    </div>
+         Colorcycle Editor — diretso na, walang password. Ang listahan
+         ng tatlong cheat editor (Weapon / Handling / Ped). -->
     <div id="cheatsPanel" class="admin-overlay" role="dialog" aria-modal="true" aria-labelledby="cheatsTitle">
       <div class="admin-card">
         <h2 class="admin-title" id="cheatsTitle">🔓 Cheats</h2>
@@ -5640,8 +5649,8 @@ $("#btnDlPendDff").addEventListener("click", () => {
   if (dlAllPending.dff) download(dlAllPending.dff.blob, dlAllPending.dff.name);
 });
 /* Ang Isara ng notice ay notice lang ang tinatago — hindi nito ginalaw
-   ang gate, ang session, o kahit anong edit state. Mananatili ang user
-   sa editor na buo ang ginawa niya. */
+   ang welcome screen, ang session, o kahit anong edit state.
+   Mananatili ang user sa editor na buo ang ginawa niya. */
 $("#btnDlNoticeClose").addEventListener("click", (e) => {
   e.preventDefault();
   e.stopPropagation();
@@ -5760,77 +5769,87 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
 <script>
 "use strict";
 /* =====================================================================
-   XSS TXD gate — loading screen + password entry.
+   XSS TXD welcome screen — loading screen + "Pumasok / Enter" button.
 
-   Password ang hinihingi sa PANIBAGONG session. Pag naipasok na ang
-   tamang password, may session flag sa sessionStorage: hangga't buhay
-   ang session na iyon, ang kahit anong reload o pagbalik — mula sa
-   pag-download ng TXD/DFF, pag-close ng download notice, o pagbalik
-   mula sa background — ay diretso pabalik sa editor, walang password
-   ulit. Ang trabaho mismo ay may sariling session snapshot
-   (mavs_txd_work, tingnan ang "session work snapshot" sa editor
-   script) na nire-restore sa load, kaya buo pa rin ang mga edit kahit
-   ni-reload ng phone ang page.
+   WALA nang passcode: isang pindot lang sa Enter button, diretso na
+   sa editor. Walang code input, walang code check, walang session
+   check para makapasok.
 
+   Ang session flag sa sessionStorage (mavs_txd_session) ay HINDI
+   gate — internal na marker lang ito ng editor script: habang buhay
+   ang session, ang work snapshot (mavs_txd_work, tingnan ang
+   "session work snapshot" sa editor script) ay nase-save at
+   nire-restore sa reload, kaya buo pa rin ang mga edit kahit
+   ni-reload ng phone ang page. Itina-tag ito pag pinindot ang Enter.
    Ang sessionStorage ay kusang nawawala pag sinara talaga ang tab /
-   webview o na-force close ang app — doon lang hihingin ulit ang
-   password, at doon lang din nawawala ang hindi pa nada-download na
-   trabaho, tulad ng gusto ng may-ari. Walang permanenteng "unlocked"
-   flag sa localStorage: ang lumang flag ng dating version ay
-   tinatanggal pa rin sa load.
+   webview o na-force close ang app — doon lang din nawawala ang
+   hindi pa nada-download na trabaho.
 
-   Ang buong password check ay nasa validateCode() lang sa ibaba.
+   Ang mga lumang flag ng dating version (remember-on-device at ang
+   dating buyer passcode sa localStorage) ay tinatanggal sa load —
+   wala na silang gamit.
    ===================================================================== */
 (function gate(){
-  /* Alisin ang lumang remember-on-device flag ng dating version. */
+  /* Alisin ang mga lumang flag ng dating version. */
   try { localStorage.removeItem("mavs_txd_unlocked"); } catch(e){}
+  try { localStorage.removeItem("mavs_txd_passcode"); } catch(e){}
 
-  /* Session flag: buhay lang habang buhay ang tab/webview session. */
+  /* Session marker ng work snapshot (hindi ito gate check). */
   var SESSION_KEY = "mavs_txd_session";
-  function sessionIsOpen(){
-    try { return sessionStorage.getItem(SESSION_KEY) === "1"; } catch(e){ return false; }
-  }
   function markSessionOpen(){
     try { sessionStorage.setItem(SESSION_KEY, "1"); } catch(e){}
   }
 
-  /* --- THE password check ---
-     Ang gate ay tumitingin muna sa passcode na naka-save sa
-     localStorage (mavs_txd_passcode — pwedeng palitan ni mavs sa
-     Admin Panel). Pag wala pang naka-save, ang default na 2607 ang
-     gamit. Ang pagpapalit sa panel ay sa device/browser lang na ito
-     gumagana. */
-  var PASS_KEY = "mavs_txd_passcode";
-  var DEFAULT_PASSCODE = "2607";
-  function getPasscode(){
-    try {
-      var saved = localStorage.getItem(PASS_KEY);
-      if (saved != null && String(saved).trim() !== "") return String(saved);
-    } catch(e){}
-    return DEFAULT_PASSCODE;
-  }
-  function validateCode(code){
-    return String(code == null ? "" : code).trim() === getPasscode();
-  }
-
-  /* --- Admin password: default xsstxd2026!, pwedeng palitan sa
-     Admin Panel (naka-save sa localStorage, device/browser lang). --- */
+  /* --- Admin password: WALANG default na naka-ship sa source.
+     Sa unang bukas ng Admin Panel, ang user ang gagawa ng admin
+     password; ang SHA-256 hash lang nito ang naka-save sa
+     localStorage ng device/browser na ito (hindi ang password mismo,
+     at walang password na naka-hardcode sa file). Ang lumang
+     plaintext value mula sa dating version ay tinutugma pa rin sa
+     unang login at kusang nire-replace ng hash pagkatapos. --- */
   var ADMIN_KEY = "mavs_txd_adminpass";
-  var DEFAULT_ADMIN_PASS = "xsstxd2026!";
-  function getAdminPass(){
+  function getAdminStored(){
     try {
       var savedA = localStorage.getItem(ADMIN_KEY);
       if (savedA != null && String(savedA) !== "") return String(savedA);
     } catch(e){}
-    return DEFAULT_ADMIN_PASS;
+    return "";
+  }
+  function adminIsSet(){ return getAdminStored() !== ""; }
+  function sha256Hex(str){
+    if (window.crypto && crypto.subtle && crypto.subtle.digest){
+      return crypto.subtle.digest("SHA-256", new TextEncoder().encode(str)).then(function(buf){
+        return Array.prototype.map.call(new Uint8Array(buf), function(b){ return ("0" + b.toString(16)).slice(-2); }).join("");
+      }).catch(function(){ return null; });
+    }
+    return Promise.resolve(null);
+  }
+  function setAdminPass(pw){
+    return sha256Hex(pw).then(function(h){
+      /* Pag walang WebCrypto (hindi secure context), device-local
+         storage pa rin ang fallback — walang naka-ship na password
+         sa source kahit alin ang mangyari. */
+      try { localStorage.setItem(ADMIN_KEY, h ? "sha256:" + h : "local:" + pw); } catch(e){}
+    });
+  }
+  function verifyAdminPass(pw){
+    var stored = getAdminStored();
+    if (!stored) return Promise.resolve(false);
+    if (stored.indexOf("local:") === 0) return Promise.resolve(stored.slice(6) === pw);
+    if (stored.indexOf("sha256:") === 0){
+      return sha256Hex(pw).then(function(h){ return h != null && ("sha256:" + h) === stored; });
+    }
+    /* Legacy plaintext ng dating version: itugma, tapos i-migrate
+       sa hash para hindi na plaintext ang naka-save. */
+    if (stored === pw){ setAdminPass(pw); return Promise.resolve(true); }
+    return Promise.resolve(false);
   }
 
   var gateEl = document.getElementById("gate");
-  var cardEl = document.getElementById("gateCard");
   var loadingEl = document.getElementById("gateLoading");
-  var formEl = document.getElementById("gateForm");
-  var codeEl = document.getElementById("gateCode");
-  var errorEl = document.getElementById("gateError");
+  var mainEl = document.getElementById("gateMain");
+  var enterBtn = document.getElementById("gateEnterBtn");
+  var aboutEl = document.getElementById("gateAbout");
   if (!gateEl) return;
 
   /* ---------- Language picker: 🇺🇸 English / 🇵🇭 Tagalog ----------
@@ -5843,26 +5862,20 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       tag: "TXD editor para sa GTA SA-MP — mag-edit ng textures, i-preview sa 3D, i-download ang TXD at DFF.",
       status: "Naglo-load ang XSS TXD\u2026",
       langLabel: "Pumili ng wika",
-      label: "Ilagay ang password",
-      placeholder: "Password mo",
-      placeholderAria: "Ilagay ang password",
-      submit: "Buksan ang XSS TXD",
+      enter: "Pumasok / Enter",
       dlAll: "I-download Lahat",
-      error: "Mali ang password \u2014 pakisuri at subukan ulit.",
-      hint: "Makukuha mo ang password kay mavs pag bumili ka ng XSS TXD. Pag naipasok mo na, mananatili kang nasa editor \u2014 mag-download ka man at isara ang notice, hindi ka babalik dito. Hihingin lang ulit ang password sa panibagong bukas ng app.",
+      about: "<h2 id=\"gateAboutTitle\">Tungkol sa XSS TXD</h2><p>Ang XSS TXD ay isang libreng online editor para sa mga file ng GTA San Andreas at SA-MP. Gumagana ito nang buo sa browser ng phone mo (iOS o Android) o ng computer \u2014 walang kailangang i-install, at ang mga file na ina-upload mo ay hindi umaalis sa device mo. Dito mo pwedeng baguhin ang textures at models ng sasakyan at ped, ayusin ang itsura ng langit at panahon, i-edit ang stats ng baril, sasakyan at ped, at baguhin ang galaw (animations) ng character mo.</p><h3>Ano ang kaya nitong gawin</h3><ul><li><b>TXD / DFF Editor</b> \u2014 mag-edit ng textures: magdagdag ng text at image, brush at eraser, Layers panel, at DXT compression para lumiit ang file.</li><li><b>3D Preview</b> \u2014 makita agad ang model sa 3D habang nag-e-edit, kasama ang Ped Pose para sa mga skin / ped model.</li><li><b>UV Editor</b> \u2014 ayusin ang pagkaka-mapa ng texture sa model.</li><li><b>3D Objects (BETA)</b> \u2014 magdagdag ng simpleng 3D parts tulad ng spoiler, bullbar, roof rack at light bar, at isama sila sa dina-download na DFF.</li><li><b>Timecyc Editor (BETA)</b> \u2014 i-edit ang kulay ng langit, araw, ulap at tubig sa bawat weather at oras, may batch edit at presets tulad ng Golden Hour at Sunset Vibes.</li><li><b>Colorcycle Editor (BETA)</b> \u2014 ayusin ang color grading ng mobile version ng laro.</li><li><b>Cheats</b> \u2014 Weapon Editor (53 baril), Handling Editor (210 sasakyan, may Drift / Race / Off-road / Realistic presets), at Ped Editor (43 entries).</li><li><b>Animation Editor (BETA)</b> \u2014 magpalit at mag-edit ng galaw sa ped.ifp: i-rotate ang mga buto (bones) at subukan ang isang-tap na Naruto Run preset.</li><li><b>Sticker packs</b> \u2014 Logos, Flames at Tribal stickers na pwedeng ilagay, i-drag, i-resize at i-rotate sa texture.</li><li><b>ZIP download / Download All</b> \u2014 i-download ang lahat ng na-edit na file nang sabay-sabay.</li></ul><h3>Paano gamitin</h3><ol><li>Pindutin ang <b>Pumasok / Enter</b> sa itaas para buksan ang editor.</li><li>I-upload ang DFF at TXD file mo sa editor \u2014 o buksan ang Timecyc, Colorcycle, Cheats o Animation Editor mula sa \u2022\u2022\u2022 menu.</li><li>I-edit ang texture, model, o values \u2014 makikita mo agad ang resulta sa preview.</li><li>I-download ang na-edit na file at ilagay ito sa folder ng laro mo, tulad ng dati mong ginagawa sa mga mod.</li></ol><h3>Mga sinusuportahang file</h3><ul><li><b>DFF</b> \u2014 3D model ng sasakyan, ped at iba pang objects</li><li><b>TXD</b> \u2014 texture file na kasama ng DFF</li><li><b>timecyc.dat</b> \u2014 panahon, langit at oras</li><li><b>colorcycle.dat</b> \u2014 color grading (mobile)</li><li><b>weapon.dat</b> \u2014 stats ng mga baril</li><li><b>handling.cfg</b> \u2014 takbo at handling ng mga sasakyan</li><li><b>pedstats.dat</b> \u2014 ugali at stats ng mga ped</li><li><b>ped.ifp</b> \u2014 animations / galaw ng character</li></ul><p>Gumagana ang XSS TXD sa iOS, Android at PC, at sumusuporta sa lahat ng launcher / APK ng GTA SA at SA-MP. Ang mga edit mo ay naka-save sa session ng browser mo, kaya kahit mag-reload ang page ay babalik ang trabaho mo.</p>",
       admAuthTitle: "Enter admin password",
       admAuthLabel: "Admin password",
       admConfirm: "Confirm",
       admCancel: "Cancel",
       admWrong: "Mali ang admin password — hindi nagbukas ang panel.",
+      admAuthTitleSet: "Gumawa ng admin password",
+      admAuthLabelSet: "Bagong admin password",
+      admAuthLabel2: "Ulitin ang admin password",
+      admAuthSetupNote: "Wala pang admin password sa device na ito — gumawa ng bago dito. Ang hash lang nito ang mase-save sa device na ito; walang password na naka-hardcode sa app.",
+      admInfoUnset: "wala pang naka-set sa device na ito",
       admPanelTitle: "Admin Panel",
-      admSecPasscode: "Passcode ng buyer",
-      admCurLabel: "Kasalukuyang passcode:",
-      admNewPasscode: "Bagong passcode",
-      admNewPasscode2: "Ulitin ang bagong passcode",
-      admSavePasscode: "I-save ang passcode",
-      admPasscodeNote: "Paalala: ang pagpapalit dito ay sa device / browser lang na ito gumagana. Para mapalitan ang passcode para sa lahat ng buyer, kailangang i-update ang naka-publish na file — sabihin kay Kit.",
-      admResetPasscode: "I-reset ang passcode sa 2607",
       admSecAdmin: "Admin password",
       admCurAdmin: "Kasalukuyang admin password",
       admNewAdmin: "Bagong admin password",
@@ -5871,7 +5884,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       admSecWork: "Saved work",
       admClearWork: "Burahin ang lahat ng saved work",
       admClearWorkArmed: "Sigurado ka? Pindutin ulit para burahin",
-      admClearNote: "Binubura lang nito ang work snapshot / edits na naka-save sa session. Hindi gagalawin ang passcode, admin password, at wika. Magre-reload ang app pagkatapos.",
+      admClearNote: "Binubura lang nito ang work snapshot / edits na naka-save sa session. Hindi gagalawin ang admin password at wika. Magre-reload ang app pagkatapos.",
       admSecInfo: "Impormasyon ng app",
       admClose: "Isara",
       menuAdmin: "Admin Panel",
@@ -5879,57 +5892,43 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       menuCc: "Colorcycle Editor",
       menuCheats: "Cheats",
       menuAnim: "Animation Editor",
-      cheatAuthTitle: "Enter cheat password",
-      cheatAuthLabel: "Cheat password",
-      cheatConfirm: "Confirm",
-      cheatCancel: "Cancel",
-      cheatWrong: "Mali ang cheat password — hindi nagbukas ang Cheats.",
       cheatsTitle: "🔓 Cheats",
       cheatWp: "Weapon Editor",
       cheatHd: "Handling Editor",
       cheatPd: "Ped Editor",
       cheatsClose: "Isara",
-      admOkPasscode: "Na-save ang bagong passcode.",
       admOkAdmin: "Na-save ang bagong admin password.",
-      admOkReset: "Na-reset na ang passcode sa 2607.",
       admOkCleared: "Nabura ang saved work — magre-reload ang app…",
       admErrEmpty: "Walang laman — maglagay muna.",
       admErrMismatch: "Hindi magkatugma ang dalawang entry.",
       admErrCurAdmin: "Mali ang kasalukuyang admin password.",
       admInfoVersion: "Version",
-      admInfoPasscode: "Passcode ng buyer",
       admInfoAdmin: "Admin password",
       admInfoChanged: "napalitan na sa device na ito",
       admInfoDefault: "default",
       legalTitle: "Privacy, Legal at Credits",
       legalBtn: "Naiintindihan ko \u2014 Magpatuloy",
-      legalNote: "Pag nagpatuloy ka, lalabas ang loading screen at hihingin ang password mo.",
+      legalNote: "Pag nagpatuloy ka, lalabas ang loading screen at ang welcome screen — isang pindot lang sa Enter, diretso ka na sa editor.",
       legalBody: "<section><h3>\uD83D\uDD12 Privacy</h3><ul><li>Gumagana ang XSS TXD nang buo sa browser ng device mo \u2014 walang server na pinapadalhan ng files mo.</li><li>Ang mga DFF at TXD file na ina-upload mo ay <b>hindi umaalis sa device mo</b>. Dito lang sila binubuksan, ine-edit, at dina-download.</li><li>Walang personal na data na kinokolekta, walang tracking o analytics, at walang account na kailangan.</li><li>Ang mga edit mo ay nasa session lang ng browser mo habang bukas ang app \u2014 nawawala sila pag sinara mo talaga ang app/tab.</li></ul></section><section><h3>\u2696\uFE0F Legal</h3><ul><li>Tool lang ito para mag-edit ng <b>sarili mong files</b>. Mag-edit lang ng files na pag-aari mo o may karapatan kang baguhin.</li><li>Ikaw ang responsable sa mga mod na ginagawa at ginagamit mo, at sa pagsunod sa rules ng game at ng server na pinaglalaruan mo.</li><li>Ang XSS TXD ay <b>hindi affiliated o endorsed</b> ng Rockstar Games, Take-Two Interactive, Grand Theft Auto: San Andreas, SA-MP, o open.mp.</li><li>Lahat ng pangalan ng game, logos, at trademarks ay pag-aari ng kani-kanilang may-ari.</li><li>Walang warranty ang app na ito \u2014 <b>use at your own risk</b>. Hindi mananagot ang developer sa anumang sira ng file, problema sa game, o ban na maaaring idulot ng paggamit ng mga na-edit na file.</li><li>Pag pinindot mo ang button sa ibaba, ibig sabihin nabasa mo at sinasang-ayunan mo ang lahat ng nakasulat dito.</li></ul></section><section class=\"legal-credits\" aria-label=\"Credits\"><p>Developer: <b>mavs</b><br/>Owner: <b>mavs</b></p></section>"
     },
     en: {
       tag: "TXD editor for GTA SA-MP \u2014 edit textures, preview in 3D, and download your TXD and DFF.",
       status: "Loading XSS TXD\u2026",
       langLabel: "Choose language",
-      label: "Enter your password",
-      placeholder: "Your password",
-      placeholderAria: "Enter your password",
-      submit: "Open XSS TXD",
+      enter: "Pumasok / Enter",
       dlAll: "Download All",
-      error: "Wrong password \u2014 please check and try again.",
-      hint: "Get the password from mavs when you buy XSS TXD. Once entered, you stay in the editor \u2014 downloading a file and closing the notice won't bring you back here. The password is only asked again on a fresh open of the app.",
+      about: "<h2 id=\"gateAboutTitle\">About XSS TXD</h2><p>XSS TXD is a free online editor for GTA San Andreas and SA-MP files. It runs fully in the browser of your phone (iOS or Android) or computer \u2014 nothing to install, and the files you upload never leave your device. Here you can change vehicle and ped textures and models, adjust the sky and weather look, edit weapon, vehicle and ped stats, and change your character's animations.</p><h3>What it can do</h3><ul><li><b>TXD / DFF Editor</b> \u2014 edit textures: add text and images, brush and eraser, Layers panel, and DXT compression to shrink the file.</li><li><b>3D Preview</b> \u2014 see the model in 3D while you edit, including Ped Pose for skin / ped models.</li><li><b>UV Editor</b> \u2014 fix how the texture is mapped onto the model.</li><li><b>3D Objects (BETA)</b> \u2014 add simple 3D parts like a spoiler, bullbar, roof rack and light bar, and bake them into the downloaded DFF.</li><li><b>Timecyc Editor (BETA)</b> \u2014 edit sky, sun, cloud and water colors for every weather and time, with batch edit and presets like Golden Hour and Sunset Vibes.</li><li><b>Colorcycle Editor (BETA)</b> \u2014 adjust the color grading of the mobile version of the game.</li><li><b>Cheats</b> \u2014 Weapon Editor (53 guns), Handling Editor (210 vehicles, with Drift / Race / Off-road / Realistic presets), and Ped Editor (43 entries).</li><li><b>Animation Editor (BETA)</b> \u2014 swap and edit movement in ped.ifp: rotate the bones and try the one-tap Naruto Run preset.</li><li><b>Sticker packs</b> \u2014 Logos, Flames and Tribal stickers you can place, drag, resize and rotate on a texture.</li><li><b>ZIP download / Download All</b> \u2014 download all your edited files at once.</li></ul><h3>How to use it</h3><ol><li>Tap <b>Pumasok / Enter</b> above to open the editor.</li><li>Upload your DFF and TXD files in the editor \u2014 or open the Timecyc, Colorcycle, Cheats or Animation Editor from the \u2022\u2022\u2022 menu.</li><li>Edit the texture, model, or values \u2014 you see the result in the preview right away.</li><li>Download the edited file and put it in your game folder, the same way you install any mod.</li></ol><h3>Supported files</h3><ul><li><b>DFF</b> \u2014 3D model of vehicles, peds and other objects</li><li><b>TXD</b> \u2014 the texture file that goes with the DFF</li><li><b>timecyc.dat</b> \u2014 weather, sky and time of day</li><li><b>colorcycle.dat</b> \u2014 color grading (mobile)</li><li><b>weapon.dat</b> \u2014 weapon stats</li><li><b>handling.cfg</b> \u2014 vehicle speed and handling</li><li><b>pedstats.dat</b> \u2014 ped behavior and stats</li><li><b>ped.ifp</b> \u2014 character animations / movement</li></ul><p>XSS TXD works on iOS, Android and PC, and supports all GTA SA and SA-MP launchers / APKs. Your edits are saved in your browser session, so even if the page reloads, your work comes back.</p>",
       admAuthTitle: "Enter admin password",
       admAuthLabel: "Admin password",
       admConfirm: "Confirm",
       admCancel: "Cancel",
       admWrong: "Wrong admin password — the panel did not open.",
+      admAuthTitleSet: "Create an admin password",
+      admAuthLabelSet: "New admin password",
+      admAuthLabel2: "Repeat the admin password",
+      admAuthSetupNote: "This device has no admin password yet — create one here. Only its hash is saved on this device; no password is hardcoded in the app.",
+      admInfoUnset: "not set on this device yet",
       admPanelTitle: "Admin Panel",
-      admSecPasscode: "Buyer passcode",
-      admCurLabel: "Current passcode:",
-      admNewPasscode: "New passcode",
-      admNewPasscode2: "Repeat the new passcode",
-      admSavePasscode: "Save passcode",
-      admPasscodeNote: "Note: changing it here only works on this device / browser. To change the passcode for all buyers, the published file has to be updated — tell Kit.",
-      admResetPasscode: "Reset passcode to 2607",
       admSecAdmin: "Admin password",
       admCurAdmin: "Current admin password",
       admNewAdmin: "New admin password",
@@ -5938,7 +5937,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       admSecWork: "Saved work",
       admClearWork: "Delete all saved work",
       admClearWorkArmed: "Are you sure? Tap again to delete",
-      admClearNote: "This only deletes the work snapshot / edits saved in this session. The passcode, admin password, and language are not touched. The app will reload afterwards.",
+      admClearNote: "This only deletes the work snapshot / edits saved in this session. The admin password and language are not touched. The app will reload afterwards.",
       admSecInfo: "App info",
       admClose: "Close",
       menuAdmin: "Admin Panel",
@@ -5946,40 +5945,29 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       menuCc: "Colorcycle Editor",
       menuCheats: "Cheats",
       menuAnim: "Animation Editor",
-      cheatAuthTitle: "Enter cheat password",
-      cheatAuthLabel: "Cheat password",
-      cheatConfirm: "Confirm",
-      cheatCancel: "Cancel",
-      cheatWrong: "Wrong cheat password — the Cheats did not open.",
       cheatsTitle: "🔓 Cheats",
       cheatWp: "Weapon Editor",
       cheatHd: "Handling Editor",
       cheatPd: "Ped Editor",
       cheatsClose: "Close",
-      admOkPasscode: "New passcode saved.",
       admOkAdmin: "New admin password saved.",
-      admOkReset: "Passcode reset to 2607.",
       admOkCleared: "Saved work deleted — reloading the app…",
       admErrEmpty: "Empty — type something first.",
       admErrMismatch: "The two entries don't match.",
       admErrCurAdmin: "Current admin password is wrong.",
       admInfoVersion: "Version",
-      admInfoPasscode: "Buyer passcode",
       admInfoAdmin: "Admin password",
       admInfoChanged: "changed on this device",
       admInfoDefault: "default",
       legalTitle: "Privacy, Legal & Credits",
       legalBtn: "I Understand \u2014 Continue",
-      legalNote: "When you continue, the loading screen will appear and your password will be asked.",
+      legalNote: "When you continue, the loading screen and the welcome screen will appear — one tap on Enter takes you straight into the editor.",
       legalBody: "<section><h3>\uD83D\uDD12 Privacy</h3><ul><li>XSS TXD runs fully in your device's browser \u2014 your files are never sent to any server.</li><li>The DFF and TXD files you upload <b>never leave your device</b>. They are only opened, edited, and downloaded here.</li><li>No personal data is collected, there is no tracking or analytics, and no account is needed.</li><li>Your edits live only in your browser session while the app is open \u2014 they are gone when you truly close the app/tab.</li></ul></section><section><h3>\u2696\uFE0F Legal</h3><ul><li>This is a tool for editing <b>your own files</b>. Only edit files you own or have the right to modify.</li><li>You are responsible for the mods you make and use, and for following the rules of the game and of the server you play on.</li><li>XSS TXD is <b>not affiliated with or endorsed by</b> Rockstar Games, Take-Two Interactive, Grand Theft Auto: San Andreas, SA-MP, or open.mp.</li><li>All game names, logos, and trademarks belong to their respective owners.</li><li>This app comes with no warranty \u2014 <b>use at your own risk</b>. The developer is not liable for any file damage, game problem, or ban that using edited files may cause.</li><li>By pressing the button below, you confirm that you have read and agree to everything written here.</li></ul></section><section class=\"legal-credits\" aria-label=\"Credits\"><p>Developer: <b>mavs</b><br/>Owner: <b>mavs</b></p></section>"
     }
   };
   var tagEl = document.getElementById("gateTag");
   var statusEl = document.getElementById("gateStatus");
   var langLabelEl = document.getElementById("gateLangLabel");
-  var labelEl = document.getElementById("gateLabel");
-  var submitEl = document.getElementById("gateSubmit");
-  var hintEl = document.getElementById("gateHint");
   var langEnBtn = document.getElementById("langEn");
   var langTlBtn = document.getElementById("langTl");
   var legalTitleEl = document.getElementById("legalTitle");
@@ -5997,13 +5985,10 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     if (tagEl) tagEl.textContent = s.tag;
     if (statusEl) statusEl.textContent = s.status;
     if (langLabelEl) langLabelEl.textContent = s.langLabel;
-    if (labelEl) labelEl.textContent = s.label;
-    if (codeEl) { codeEl.placeholder = s.placeholder; codeEl.setAttribute("aria-label", s.placeholderAria); }
-    if (submitEl) submitEl.textContent = s.submit;
+    if (enterBtn) enterBtn.textContent = s.enter;
+    if (aboutEl && s.about) aboutEl.innerHTML = s.about;
     var dlAllLbl = document.getElementById("btnDlAllLabel");
     if (dlAllLbl && s.dlAll) dlAllLbl.textContent = s.dlAll;
-    if (errorEl) errorEl.textContent = s.error;
-    if (hintEl) hintEl.textContent = s.hint;
     if (typeof applyAdminStrings === "function") applyAdminStrings();
     if (legalTitleEl && s.legalTitle) legalTitleEl.textContent = s.legalTitle;
     if (legalBodyEl && s.legalBody) legalBodyEl.innerHTML = s.legalBody;
@@ -6022,44 +6007,26 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   function openEditor(){
     if (opened) return;
     opened = true;
+    /* I-tag ang session para sa work snapshot ng editor (save/restore
+       ng edits sa reload) — hindi ito gate check, walang vinavalidate. */
+    markSessionOpen();
     document.body.classList.remove("gate-locked");
     gateEl.classList.add("done");
     setTimeout(function(){ gateEl.style.display = "none"; }, 420);
   }
 
-  /* Ang gate ay hindi pwedeng i-dismiss ng tap sa labas o ng Esc —
-     tamang password lang ang makakapagbukas ng editor. */
-  gateEl.addEventListener("click", function(e){ e.stopPropagation(); });
-  document.addEventListener("keydown", function(e){
-    if (!opened && e.key === "Escape"){ e.preventDefault(); e.stopPropagation(); }
-  }, true);
-
-  formEl.addEventListener("submit", function(e){
-    e.preventDefault();
-    if (validateCode(codeEl.value)){
-      markSessionOpen();
-      errorEl.classList.add("hidden");
-      formEl.classList.add("hidden");
-      loadingEl.style.display = "flex";
-      setTimeout(openEditor, 450);
-    } else {
-      errorEl.classList.remove("hidden");
-      codeEl.select();
-      cardEl.classList.remove("gate-shake");
-      void cardEl.offsetWidth; // restart the shake animation
-      cardEl.classList.add("gate-shake");
-    }
-  });
-  codeEl.addEventListener("input", function(){ errorEl.classList.add("hidden"); });
+  /* Isang pindot lang sa Enter — walang code, walang check. */
+  if (enterBtn) enterBtn.addEventListener("click", openEditor);
 
   /* =====================================================================
-     Admin Panel — bubukas lang mula sa ••• button (sa gate o sa header
-     ng editor) pagkatapos ng tamang admin password. Lahat ng setting
-     dito ay naka-save sa localStorage ng device/browser na ito lang:
-     mavs_txd_passcode (buyer passcode, fallback 2607) at
-     mavs_txd_adminpass (admin password, fallback xsstxd2026!).
+     Admin Panel — bubukas lang mula sa ••• button (sa welcome screen o
+     sa header ng editor) pagkatapos ng tamang admin password. Ang
+     setting dito ay naka-save sa localStorage ng device/browser na ito
+     lang: mavs_txd_adminpass (SHA-256 hash ng admin password na
+     ginawa ng user sa device na ito — walang default na naka-ship).
+     Wala nang buyer passcode — bukas na ang editor sa lahat.
      ===================================================================== */
-  var APP_VERSION = "v25";
+  var APP_VERSION = "v26";
   var adminAuthEl = document.getElementById("adminAuth");
   var adminAuthCard = document.getElementById("adminAuthCard");
   var adminAuthForm = document.getElementById("adminAuthForm");
@@ -6079,27 +6046,18 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     var el = document.getElementById(id);
     if (el && text != null) el.textContent = text;
   }
-  function syncGateInputMode(){
-    /* Numeric keypad lang pag purong numero ang passcode; pag may
-       letra/symbol na (pinalitan sa panel), full keyboard ang kailangan. */
-    if (!codeEl) return;
-    codeEl.setAttribute("inputmode", /^\d+$/.test(getPasscode()) ? "numeric" : "text");
-  }
   function refreshAdminPanel(){
     var s = admS();
-    admSetText("admCurPasscode", getPasscode());
-    var adminChanged = false, passChanged = false;
+    var adminChanged = false;
     try {
       adminChanged = localStorage.getItem(ADMIN_KEY) != null && String(localStorage.getItem(ADMIN_KEY)) !== "";
-      passChanged = localStorage.getItem(PASS_KEY) != null && String(localStorage.getItem(PASS_KEY)).trim() !== "";
     } catch(e){}
     var infoEl = document.getElementById("admInfo");
     if (infoEl){
       infoEl.innerHTML = "";
       var lines = [
         [s.admInfoVersion, "XSS TXD " + APP_VERSION],
-        [s.admInfoPasscode, getPasscode() + " (" + (passChanged ? s.admInfoChanged : s.admInfoDefault) + ")"],
-        [s.admInfoAdmin, "•••••• (" + (adminChanged ? s.admInfoChanged : s.admInfoDefault) + ")"]
+        [s.admInfoAdmin, adminChanged ? "•••••• (" + s.admInfoChanged + ")" : s.admInfoUnset]
       ];
       lines.forEach(function(pair, i){
         if (i) infoEl.appendChild(document.createElement("br"));
@@ -6117,14 +6075,6 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     admSetText("adminAuthCancel", s.admCancel);
     admSetText("adminAuthError", s.admWrong);
     admSetText("adminPanelTitle", s.admPanelTitle);
-    admSetText("admSecPasscode", s.admSecPasscode);
-    admSetText("admCurLabel", s.admCurLabel);
-    admSetText("admNewPasscodeLabel", s.admNewPasscode);
-    admSetText("admNewPasscode2Label", s.admNewPasscode2);
-    admSetText("admSavePasscode", s.admSavePasscode);
-    admSetText("admPasscodeNote", s.admPasscodeNote);
-    var resetBtn = document.getElementById("admResetPasscode");
-    if (resetBtn) resetBtn.textContent = s.admResetPasscode;
     admSetText("admSecAdmin", s.admSecAdmin);
     admSetText("admCurAdminLabel", s.admCurAdmin);
     admSetText("admNewAdminLabel", s.admNewAdmin);
@@ -6141,11 +6091,6 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     admSetText("menuCcLbl", s.menuCc);
     admSetText("menuCheatsLbl", s.menuCheats);
     admSetText("menuAnimLbl", s.menuAnim);
-    admSetText("cheatAuthTitle", s.cheatAuthTitle);
-    admSetText("cheatAuthLabel", s.cheatAuthLabel);
-    admSetText("cheatAuthConfirm", s.cheatConfirm);
-    admSetText("cheatAuthCancel", s.cheatCancel);
-    admSetText("cheatAuthError", s.cheatWrong);
     admSetText("cheatsTitle", s.cheatsTitle);
     admSetText("cheatWpLbl", s.cheatWp);
     admSetText("cheatHdLbl", s.cheatHd);
@@ -6163,14 +6108,38 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     if (!adminAuthEl) return;
     if (adminAuthInput) adminAuthInput.value = "";
     if (adminAuthError) adminAuthError.classList.remove("err");
+    /* Setup mode pag wala pang admin password sa device na ito:
+       dalawang field (gawa + ulitin) at paliwanag ang lalabas;
+       kung hindi, isang password field lang tulad ng dati. */
+    var s = admS();
+    var setup = !adminIsSet();
+    admSetText("adminAuthTitle", setup ? s.admAuthTitleSet : s.admAuthTitle);
+    admSetText("adminAuthLabel", setup ? s.admAuthLabelSet : s.admAuthLabel);
+    admSetText("adminAuthLabel2", s.admAuthLabel2);
+    admSetText("adminAuthSetupNote", s.admAuthSetupNote);
+    var in2 = document.getElementById("adminAuthInput2");
+    var lb2 = document.getElementById("adminAuthLabel2");
+    var note = document.getElementById("adminAuthSetupNote");
+    if (in2){ in2.value = ""; in2.classList.toggle("hidden", !setup); }
+    if (lb2) lb2.classList.toggle("hidden", !setup);
+    if (note) note.classList.toggle("hidden", !setup);
     adminAuthEl.classList.add("open");
     try { adminAuthInput.focus({ preventScroll: true }); } catch(e){ if (adminAuthInput) adminAuthInput.focus(); }
+  }
+  function showAdminAuthError(msg){
+    if (adminAuthError){ adminAuthError.textContent = msg || admS().admWrong; adminAuthError.classList.add("err"); }
+    if (adminAuthInput) adminAuthInput.select();
+    if (adminAuthCard){
+      adminAuthCard.classList.remove("gate-shake");
+      void adminAuthCard.offsetWidth;
+      adminAuthCard.classList.add("gate-shake");
+    }
   }
   function closeAdminAuth(){ if (adminAuthEl) adminAuthEl.classList.remove("open"); }
   function openAdminPanel(){
     if (!adminPanelEl) return;
     setAdminMsg("", "");
-    ["admNewPasscode", "admNewPasscode2", "admCurAdmin", "admNewAdmin", "admNewAdmin2"].forEach(function(id){
+    ["admCurAdmin", "admNewAdmin", "admNewAdmin2"].forEach(function(id){
       var el = document.getElementById(id); if (el) el.value = "";
     });
     disarmClearWork();
@@ -6189,9 +6158,8 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   if (gateDotsBtn) gateDotsBtn.addEventListener("click", function(e){ e.preventDefault(); openAdminAuth(); });
   /* Ang ••• sa header ng editor ay maliit na menu na ngayon:
      "🔐 Admin Panel" (admin password muna, tulad ng dati) at sa ilalim
-     nito "🌇 Timecyc Editor". Ang ••• sa gate screen ay diretso pa
-     rin sa admin password — admin-only — para manatili ang lahat ng
-     panel sa likod ng buyer gate. */
+     nito "🌇 Timecyc Editor". Ang ••• sa welcome screen ay diretso pa
+     rin sa admin password — admin-only. */
   var dotsMenuEl = document.getElementById("dotsMenu");
   function closeDotsMenu(){ if (dotsMenuEl) dotsMenuEl.classList.add("hidden"); }
   function toggleDotsMenu(){
@@ -6205,55 +6173,19 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   if (menuTcBtn) menuTcBtn.addEventListener("click", function(){ closeDotsMenu(); if (typeof window.__tcOpen === "function") window.__tcOpen(); });
   var menuCcBtn = document.getElementById("menuCcBtn");
   if (menuCcBtn) menuCcBtn.addEventListener("click", function(){ closeDotsMenu(); if (typeof window.__ccOpen === "function") window.__ccOpen(); });
-  /* 🔓 Cheats: tulad ng Admin Panel, may sariling password muna bago
-     makita ang listahan ng tatlong cheat editor (Weapon / Handling /
-     Ped). Fixed ang cheat password; bawat pindot sa menu entry ay
-     hihingi ulit nito, tulad ng admin auth. */
-  var CHEAT_PASS = "xssontop";
-  var cheatAuthEl = document.getElementById("cheatAuth");
-  var cheatAuthCard = document.getElementById("cheatAuthCard");
-  var cheatAuthForm = document.getElementById("cheatAuthForm");
-  var cheatAuthInput = document.getElementById("cheatAuthInput");
-  var cheatAuthError = document.getElementById("cheatAuthError");
+  /* 🔓 Cheats: diretso nang bubukas ang listahan ng tatlong cheat
+     editor (Weapon / Handling / Ped) — walang password. (Ang dating
+     cheat password ay tinanggal: hindi ito naka-ship sa source.) */
   var cheatsPanelEl = document.getElementById("cheatsPanel");
-  function openCheatAuth(){
-    if (!cheatAuthEl) return;
-    if (cheatAuthInput) cheatAuthInput.value = "";
-    if (cheatAuthError) cheatAuthError.classList.remove("err");
-    cheatAuthEl.classList.add("open");
-    try { cheatAuthInput.focus({ preventScroll: true }); } catch(e){ if (cheatAuthInput) cheatAuthInput.focus(); }
-  }
-  function closeCheatAuth(){ if (cheatAuthEl) cheatAuthEl.classList.remove("open"); }
   function openCheatsPanel(){ if (cheatsPanelEl) cheatsPanelEl.classList.add("open"); }
   function closeCheatsPanel(){ if (cheatsPanelEl) cheatsPanelEl.classList.remove("open"); }
   var menuCheatsBtn = document.getElementById("menuCheatsBtn");
-  if (menuCheatsBtn) menuCheatsBtn.addEventListener("click", function(){ closeDotsMenu(); openCheatAuth(); });
+  if (menuCheatsBtn) menuCheatsBtn.addEventListener("click", function(){ closeDotsMenu(); openCheatsPanel(); });
   /* 🎬 Animation Editor: walang password — visual lang ito tulad ng
      Timecyc/Colorcycle, kaya diretso nang bubukas ang panel. */
   var menuAnimBtn = document.getElementById("menuAnimBtn");
   if (menuAnimBtn) menuAnimBtn.addEventListener("click", function(){ closeDotsMenu(); if (typeof window.__animOpen === "function") window.__animOpen(); });
-  var cheatAuthCancelBtn = document.getElementById("cheatAuthCancel");
-  if (cheatAuthCancelBtn) cheatAuthCancelBtn.addEventListener("click", closeCheatAuth);
-  if (cheatAuthEl) cheatAuthEl.addEventListener("click", function(e){ if (e.target === cheatAuthEl) closeCheatAuth(); });
   if (cheatsPanelEl) cheatsPanelEl.addEventListener("click", function(e){ if (e.target === cheatsPanelEl) closeCheatsPanel(); });
-  if (cheatAuthForm) cheatAuthForm.addEventListener("submit", function(e){
-    e.preventDefault();
-    if (cheatAuthInput && cheatAuthInput.value === CHEAT_PASS){
-      closeCheatAuth();
-      openCheatsPanel();
-    } else {
-      if (cheatAuthError){ cheatAuthError.textContent = admS().cheatWrong; cheatAuthError.classList.add("err"); }
-      if (cheatAuthInput) cheatAuthInput.select();
-      if (cheatAuthCard){
-        cheatAuthCard.classList.remove("gate-shake");
-        void cheatAuthCard.offsetWidth;
-        cheatAuthCard.classList.add("gate-shake");
-      }
-    }
-  });
-  if (cheatAuthInput) cheatAuthInput.addEventListener("input", function(){
-    if (cheatAuthError) cheatAuthError.classList.remove("err");
-  });
   var cheatWpBtn = document.getElementById("cheatWpBtn");
   if (cheatWpBtn) cheatWpBtn.addEventListener("click", function(){ closeCheatsPanel(); if (typeof window.__wpOpen === "function") window.__wpOpen(); });
   var cheatHdBtn = document.getElementById("cheatHdBtn");
@@ -6273,18 +6205,20 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   if (adminPanelEl) adminPanelEl.addEventListener("click", function(e){ if (e.target === adminPanelEl) closeAdminPanel(); });
   if (adminAuthForm) adminAuthForm.addEventListener("submit", function(e){
     e.preventDefault();
-    if (adminAuthInput && adminAuthInput.value === getAdminPass()){
-      closeAdminAuth();
-      openAdminPanel();
-    } else {
-      if (adminAuthError){ adminAuthError.textContent = admS().admWrong; adminAuthError.classList.add("err"); }
-      if (adminAuthInput) adminAuthInput.select();
-      if (adminAuthCard){
-        adminAuthCard.classList.remove("gate-shake");
-        void adminAuthCard.offsetWidth;
-        adminAuthCard.classList.add("gate-shake");
-      }
+    var pw = adminAuthInput ? adminAuthInput.value : "";
+    if (!adminIsSet()){
+      /* Unang gamit sa device na ito: gumawa ng admin password. */
+      var in2 = document.getElementById("adminAuthInput2");
+      var pw2 = in2 ? in2.value : "";
+      if (!pw){ showAdminAuthError(admS().admErrEmpty); return; }
+      if (pw !== pw2){ showAdminAuthError(admS().admErrMismatch); return; }
+      setAdminPass(pw).then(function(){ closeAdminAuth(); openAdminPanel(); });
+      return;
     }
+    verifyAdminPass(pw).then(function(ok){
+      if (ok){ closeAdminAuth(); openAdminPanel(); }
+      else showAdminAuthError();
+    });
   });
   if (adminAuthInput) adminAuthInput.addEventListener("input", function(){
     if (adminAuthError) adminAuthError.classList.remove("err");
@@ -6294,32 +6228,9 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     closeDotsMenu();
     if (adminAuthEl && adminAuthEl.classList.contains("open")) closeAdminAuth();
     else if (adminPanelEl && adminPanelEl.classList.contains("open")) closeAdminPanel();
-    else if (cheatAuthEl && cheatAuthEl.classList.contains("open")) closeCheatAuth();
     else if (cheatsPanelEl && cheatsPanelEl.classList.contains("open")) closeCheatsPanel();
   });
 
-  var admPasscodeForm = document.getElementById("admPasscodeForm");
-  if (admPasscodeForm) admPasscodeForm.addEventListener("submit", function(e){
-    e.preventDefault();
-    var s = admS();
-    var v1 = document.getElementById("admNewPasscode").value.trim();
-    var v2 = document.getElementById("admNewPasscode2").value.trim();
-    if (!v1){ setAdminMsg("err", s.admErrEmpty); return; }
-    if (v1 !== v2){ setAdminMsg("err", s.admErrMismatch); return; }
-    try { localStorage.setItem(PASS_KEY, v1); } catch(err){}
-    syncGateInputMode();
-    refreshAdminPanel();
-    document.getElementById("admNewPasscode").value = "";
-    document.getElementById("admNewPasscode2").value = "";
-    setAdminMsg("ok", s.admOkPasscode);
-  });
-  var admResetBtn = document.getElementById("admResetPasscode");
-  if (admResetBtn) admResetBtn.addEventListener("click", function(){
-    try { localStorage.removeItem(PASS_KEY); } catch(e){}
-    syncGateInputMode();
-    refreshAdminPanel();
-    setAdminMsg("ok", admS().admOkReset);
-  });
   var admAdminForm = document.getElementById("admAdminForm");
   if (admAdminForm) admAdminForm.addEventListener("submit", function(e){
     e.preventDefault();
@@ -6327,15 +6238,18 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     var cur = document.getElementById("admCurAdmin").value;
     var v1 = document.getElementById("admNewAdmin").value;
     var v2 = document.getElementById("admNewAdmin2").value;
-    if (cur !== getAdminPass()){ setAdminMsg("err", s.admErrCurAdmin); return; }
-    if (!v1){ setAdminMsg("err", s.admErrEmpty); return; }
-    if (v1 !== v2){ setAdminMsg("err", s.admErrMismatch); return; }
-    try { localStorage.setItem(ADMIN_KEY, v1); } catch(err){}
-    ["admCurAdmin", "admNewAdmin", "admNewAdmin2"].forEach(function(id){
-      var el = document.getElementById(id); if (el) el.value = "";
+    verifyAdminPass(cur).then(function(ok){
+      if (!ok){ setAdminMsg("err", s.admErrCurAdmin); return; }
+      if (!v1){ setAdminMsg("err", s.admErrEmpty); return; }
+      if (v1 !== v2){ setAdminMsg("err", s.admErrMismatch); return; }
+      setAdminPass(v1).then(function(){
+        ["admCurAdmin", "admNewAdmin", "admNewAdmin2"].forEach(function(id){
+          var el = document.getElementById(id); if (el) el.value = "";
+        });
+        refreshAdminPanel();
+        setAdminMsg("ok", s.admOkAdmin);
+      });
     });
-    refreshAdminPanel();
-    setAdminMsg("ok", s.admOkAdmin);
   });
   var admClearBtn = document.getElementById("admClearWork");
   if (admClearBtn) admClearBtn.addEventListener("click", function(){
@@ -6347,14 +6261,14 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       return;
     }
     if (clearArmTimer){ clearTimeout(clearArmTimer); clearArmTimer = null; }
-    /* Burahin lang ang work snapshot / edits — hindi ang passcode,
-       admin password, o wika. */
+    /* Burahin lang ang work snapshot / edits — hindi ang admin
+       password o wika. */
     try { sessionStorage.removeItem("mavs_txd_work"); } catch(e){}
     try {
       var drop = [];
       for (var i = 0; i < localStorage.length; i++){
         var k = localStorage.key(i);
-        if (k && k.indexOf("mavs_txd_") === 0 && k !== PASS_KEY && k !== ADMIN_KEY && k !== LANG_KEY) drop.push(k);
+        if (k && k.indexOf("mavs_txd_") === 0 && k !== ADMIN_KEY && k !== LANG_KEY) drop.push(k);
       }
       drop.forEach(function(k){ localStorage.removeItem(k); });
     } catch(e){}
@@ -6363,29 +6277,24 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   });
   var admCloseBtn = document.getElementById("admClose");
   if (admCloseBtn) admCloseBtn.addEventListener("click", closeAdminPanel);
-  syncGateInputMode();
 
-  /* Legal / Privacy popup muna — bago ang loading at bago ang password.
-     Walang naka-save na dismissal (walang localStorage/sessionStorage
-     flag para dito): bawat bukas ng page, lalabas ulit ang popup.
-     Ang loading block ng gate ay nakatago habang nakabukas ang popup
-     (ang popup mismo ay opaque at nasa ibabaw ng lahat), at saka lang
-     magsisimula ang loading timer pag pinindot ang continue. */
+  /* Legal / Privacy popup muna — bago ang loading at bago ang welcome
+     screen. Walang naka-save na dismissal (walang
+     localStorage/sessionStorage flag para dito): bawat bukas ng page,
+     lalabas ulit ang popup. Ang loading block ay nakatago habang
+     nakabukas ang popup (ang popup mismo ay opaque at nasa ibabaw ng
+     lahat), at saka lang magsisimula ang loading timer pag pinindot
+     ang continue. */
   var legalEl = document.getElementById("legalPopup");
   var legalDone = false;
   function startGateFlow(){
-    /* Loading screen muna (~1.2s). Pag buhay pa ang session — naipasok
-       na ang password at reload/pagbalik lang ito, tulad ng pagkatapos
-       mag-download — diretso sa editor, walang password ulit. Pag
-       panibagong session, password entry ang lalabas. */
+    /* Loading screen muna (~1.2s), tapos ang welcome screen: ang
+       malaking Enter button at ang "Tungkol sa XSS TXD" section.
+       Walang kahit anong check — isang pindot, diretso sa editor. */
     setTimeout(function(){
-      if (sessionIsOpen()){
-        openEditor();
-        return;
-      }
       loadingEl.style.display = "none";
-      formEl.classList.remove("hidden");
-      try { codeEl.focus({ preventScroll: true }); } catch(e){ codeEl.focus(); }
+      if (mainEl) mainEl.classList.remove("hidden");
+      if (enterBtn){ try { enterBtn.focus({ preventScroll: true }); } catch(e){} }
     }, 1200);
   }
   function dismissLegal(){
