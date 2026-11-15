@@ -1039,6 +1039,8 @@
         </div>
         <button type="button" class="primary tc-save-big" id="skyDlBtn">💾 Download sky.dff + sky.txd</button>
         <p class="tc-loaded-meta" id="skyDlInfo" role="status"></p>
+        <button type="button" class="primary tc-save-big" id="skyParticleBtn">💾 Download particle.txd</button>
+        <p class="tc-loaded-meta" id="skyParticleInfo" role="status"></p>
         <p class="admin-note" id="skyNote"></p>
         <button type="button" id="skyCloseBtn">Close</button>
       </div>
@@ -11238,7 +11240,9 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       useDefault: "Use the built-in purple sky",
       dlSky: "💾 Download sky.dff + sky.txd",
       dlSent: "Sending sky.dff and sky.txd — if only one arrived, tap the button again for the missing one.",
-      note: "How to install: the timecyc.dat replaces data/timecyc.dat (or put it in ModLoader). The sky.dff and sky.txd are added as a map object — with ModLoader, give it an .ide/.ipl entry and place it high above the map; on a server, the server places it as an object. Client-side only — only you will see it.",
+      dlParticle: "💾 Download particle.txd (SkyBox — for ReSA)",
+      particleSent: "particle.txd sent — it puts your sky image into the game's cloud textures (cloud + cloud001). Add it in ReSA's Mod Loader, then restart the game.",
+      note: "How to install: ReSA's Mod Loader only accepts files named after existing game models — a name the game does not use is refused. So for ReSA, use particle.txd (your sky image as the clouds) and timecyc.dat (the sky colors). sky.dff and sky.txd are for PC or server-side only, where a new object can be placed. Client-side only — only you will see it.",
       close: "Close"
     },
     tl: {
@@ -11256,7 +11260,9 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       useDefault: "Gamitin ang built-in purple sky",
       dlSky: "💾 I-download ang sky.dff + sky.txd",
       dlSent: "Pinapadala na ang sky.dff at sky.txd — kung isa lang ang dumating, pindutin ulit ang button para sa kulang.",
-      note: "Paano i-install: ang timecyc.dat ang ipapalit sa data/timecyc.dat (o ilagay sa ModLoader). Ang sky.dff at sky.txd ay idadagdag bilang map object — sa ModLoader, bigyan ito ng .ide/.ipl entry at ilagay nang mataas sa ibabaw ng mapa; sa server, ang server ang maglalagay nito bilang object. Client-side lang ito — ikaw lang ang makakakita.",
+      dlParticle: "💾 I-download ang particle.txd (SkyBox — pang-ReSA)",
+      particleSent: "Naipadala na ang particle.txd — inilalagay nito ang sky image mo sa cloud textures ng laro (cloud + cloud001). I-add ito sa Mod Loader ng ReSA, tapos i-restart ang game.",
+      note: "Paano i-install: ang Mod Loader ng ReSA ay tumatanggap lang ng files na ipinangalan sa existing game models — ang pangalang hindi ginagamit ng laro ay ni-re-refuse. Kaya para sa ReSA, gamitin ang particle.txd (ang sky image mo bilang ulap) at timecyc.dat (ang kulay ng langit). Ang sky.dff at sky.txd ay pang-PC o server-side lang, kung saan puwedeng maglagay ng bagong object. Client-side lang ito — ikaw lang ang makakakita.",
       close: "Isara"
     }
   };
@@ -11381,6 +11387,25 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       numLevels: 10, rasterType: 4, flagsByte: 0, raw: null, edited: true,
       formatLabel: "A8R8G8B8", hasAlpha: false, rgba: rgba };
     return RW.buildTXD({ version: 0x36003, deviceId: 1, textures: [tex] }, { format: "raw" });
+  }
+
+  /* ---------------- particle.txd — SkyBox pang-ReSA ----------------
+     Ang "particle" ay existing game texture file ng GTA SA, kaya
+     tinatanggap ito ng Mod Loader ng ReSA (hindi tulad ng "sky" na
+     bagong pangalan). Ang sky image (in-upload o ang built-in
+     purple default, parehong skyCanvas) ay inilalagay sa dalawang
+     cloud textures ng particle.txd: "cloud" at "cloud001" — yun
+     ang mga texture na ginagamit ng laro para sa ulap. */
+  function buildParticleTXD(){
+    var g = skyCanvas.getContext("2d");
+    var rgba = g.getImageData(0, 0, 512, 512).data;
+    function cloudTex(name){
+      return { name: name, platform: 9, filterMode: 6, uAddr: 1, vAddr: 1, maskName: "",
+        rasterFormat: 0x0500, d3dFormat: 21, width: 512, height: 512, depth: 32,
+        numLevels: 10, rasterType: 4, flagsByte: 0, raw: null, edited: true,
+        formatLabel: "A8R8G8B8", hasAlpha: false, rgba: rgba };
+    }
+    return RW.buildTXD({ version: 0x36003, deviceId: 1, textures: [cloudTex("cloud"), cloudTex("cloud001")] }, { format: "raw" });
   }
 
   /* ---------------- sky.dff (bagong DFF mula sa simula) ----------------
@@ -11628,6 +11653,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     var dh = el("skyDragHint"); if (dh && !sky3dFailed) dh.textContent = s.dragHint;
     var db = el("skyDefaultBtn"); if (db) db.textContent = s.useDefault;
     var dl = el("skyDlBtn"); if (dl) dl.textContent = s.dlSky;
+    var pb = el("skyParticleBtn"); if (pb) pb.textContent = s.dlParticle;
     var nt = el("skyNote"); if (nt) nt.textContent = s.note;
     var cb = el("skyCloseBtn"); if (cb) cb.textContent = s.close;
     syncPresetInfo();
@@ -11703,6 +11729,13 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       }, 450);
     } catch (e) {}
   });
+  var particleBtn = el("skyParticleBtn");
+  if (particleBtn) particleBtn.addEventListener("click", function(){
+    try {
+      skyDownload(new Blob([buildParticleTXD()], { type: "application/octet-stream" }), "particle.txd");
+      var info = el("skyParticleInfo"); if (info) info.textContent = S().particleSent;
+    } catch (e) {}
+  });
   var closeBtn = el("skyCloseBtn");
   if (closeBtn) closeBtn.addEventListener("click", closeSky);
   if (panelEl) panelEl.addEventListener("click", function(e){ if (e.target === panelEl) closeSky(); });
@@ -11716,6 +11749,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   window.__skyDebug = {
     buildDFF: buildSkyDFF,
     buildTXD: buildSkyTXD,
+    buildParticleTXD: buildParticleTXD,
     timecyc: buildTimecycText,
     presets: function(){ return PRESET_ORDER.slice(); },
     state: function(){ return { preset: curPreset, imgName: skyImgName }; },
