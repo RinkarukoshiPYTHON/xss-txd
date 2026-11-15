@@ -1,11 +1,24 @@
 <!doctype html>
-<html lang="tl">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
     <meta name="color-scheme" content="dark" />
     <link rel="icon" href="data:," />
     <title>XSS TXD</title>
+    <script>
+      /* English is now the main / default language of XSS TXD. One-time
+         reset: a language choice saved by an earlier version is set back
+         to English once, so the app opens in English for everyone. The
+         language picker on the welcome screen still works — a choice
+         made after this reset is kept as-is. */
+      try {
+        if (!localStorage.getItem("mavs_txd_lang_en_default_v1")) {
+          localStorage.setItem("mavs_txd_lang", "en");
+          localStorage.setItem("mavs_txd_lang_en_default_v1", "1");
+        }
+      } catch (e) {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Anton&family=Bebas+Neue&family=Montserrat:wght@500;700;900&family=Poppins:wght@500;700&family=Oswald:wght@500;700&family=Permanent+Marker&family=Bangers&display=swap" rel="stylesheet" />
@@ -522,34 +535,34 @@
     <div id="legalPopup" role="dialog" aria-modal="true" aria-labelledby="legalTitle">
       <div class="legal-card">
         <div class="legal-logo">XSS <span>TXD</span></div>
-        <h2 class="legal-title" id="legalTitle">Privacy, Legal at Credits</h2>
+        <h2 class="legal-title" id="legalTitle">Privacy, Legal &amp; Credits</h2>
         <div class="legal-body" id="legalBody">
           <section>
             <h3>🔒 Privacy</h3>
             <ul>
-              <li>Gumagana ang XSS TXD nang buo sa browser ng device mo — walang server na pinapadalhan ng files mo.</li>
-              <li>Ang mga DFF at TXD file na ina-upload mo ay <b>hindi umaalis sa device mo</b>. Dito lang sila binubuksan, ine-edit, at dina-download.</li>
-              <li>Walang personal na data na kinokolekta, walang tracking o analytics, at walang account na kailangan.</li>
-              <li>Ang mga edit mo ay nasa session lang ng browser mo habang bukas ang app — nawawala sila pag sinara mo talaga ang app/tab.</li>
+              <li>XSS TXD runs fully in your device's browser — your files are never sent to any server.</li>
+              <li>The DFF and TXD files you upload <b>never leave your device</b>. They are only opened, edited, and downloaded here.</li>
+              <li>No personal data is collected, there is no tracking or analytics, and no account is needed.</li>
+              <li>Your edits live only in your browser session while the app is open — they are gone when you truly close the app/tab.</li>
             </ul>
           </section>
           <section>
             <h3>⚖️ Legal</h3>
             <ul>
-              <li>Tool lang ito para mag-edit ng <b>sarili mong files</b>. Mag-edit lang ng files na pag-aari mo o may karapatan kang baguhin.</li>
-              <li>Ikaw ang responsable sa mga mod na ginagawa at ginagamit mo, at sa pagsunod sa rules ng game at ng server na pinaglalaruan mo.</li>
-              <li>Ang XSS TXD ay <b>hindi affiliated o endorsed</b> ng Rockstar Games, Take-Two Interactive, Grand Theft Auto: San Andreas, SA-MP, o open.mp.</li>
-              <li>Lahat ng pangalan ng game, logos, at trademarks ay pag-aari ng kani-kanilang may-ari.</li>
-              <li>Walang warranty ang app na ito — <b>use at your own risk</b>. Hindi mananagot ang developer sa anumang sira ng file, problema sa game, o ban na maaaring idulot ng paggamit ng mga na-edit na file.</li>
-              <li>Pag pinindot mo ang button sa ibaba, ibig sabihin nabasa mo at sinasang-ayunan mo ang lahat ng nakasulat dito.</li>
+              <li>This is a tool for editing <b>your own files</b>. Only edit files you own or have the right to modify.</li>
+              <li>You are responsible for the mods you make and use, and for following the rules of the game and of the server you play on.</li>
+              <li>XSS TXD is <b>not affiliated with or endorsed by</b> Rockstar Games, Take-Two Interactive, Grand Theft Auto: San Andreas, SA-MP, or open.mp.</li>
+              <li>All game names, logos, and trademarks belong to their respective owners.</li>
+              <li>This app comes with no warranty — <b>use at your own risk</b>. The developer is not liable for any file damage, game problem, or ban that using edited files may cause.</li>
+              <li>By pressing the button below, you confirm that you have read and agree to everything written here.</li>
             </ul>
           </section>
           <section class="legal-credits" aria-label="Credits">
             <p>Developer: <b>mavs</b><br/>Owner: <b>mavs</b></p>
           </section>
         </div>
-        <button type="button" class="primary" id="legalContinue">Naiintindihan ko — Magpatuloy</button>
-        <p class="legal-note" id="legalNote">Pag nagpatuloy ka, lalabas ang loading screen at ang welcome screen — isang pindot lang sa Enter, diretso ka na sa editor.</p>
+        <button type="button" class="primary" id="legalContinue">I Understand — Continue</button>
+        <p class="legal-note" id="legalNote">When you continue, the loading screen and the welcome screen will appear — one tap on Enter takes you straight into the editor.</p>
       </div>
     </div>
     <!-- XSS TXD welcome screen: loading muna, tapos isang malaking
@@ -561,54 +574,54 @@
     <div id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
       <div class="gate-card" id="gateCard">
         <div class="gate-logo" id="gateTitle">XSS <span>TXD</span></div>
-        <p class="gate-lang-label" id="gateLangLabel">Pumili ng wika / Choose language</p>
+        <p class="gate-lang-label" id="gateLangLabel">Choose language</p>
         <div class="gate-lang" role="group" aria-label="Language / Wika">
-          <button type="button" id="langEn" class="lang-btn" aria-pressed="false"><span class="flag" aria-hidden="true">🇺🇸</span><span>English</span></button>
-          <button type="button" id="langTl" class="lang-btn on" aria-pressed="true"><span class="flag" aria-hidden="true">🇵🇭</span><span>Tagalog</span></button>
+          <button type="button" id="langEn" class="lang-btn on" aria-pressed="true"><span class="flag" aria-hidden="true">🇺🇸</span><span>English</span></button>
+          <button type="button" id="langTl" class="lang-btn" aria-pressed="false"><span class="flag" aria-hidden="true">🇵🇭</span><span>Tagalog</span></button>
         </div>
-        <p class="gate-tag" id="gateTag">TXD editor para sa GTA SA-MP — mag-edit ng textures, i-preview sa 3D, i-download ang TXD at DFF.</p>
+        <p class="gate-tag" id="gateTag">TXD editor for GTA SA-MP — edit textures, preview in 3D, and download your TXD and DFF.</p>
         <div id="gateLoading" style="display:flex;flex-direction:column;align-items:center;gap:14px;">
           <div class="gate-spinner" aria-hidden="true"></div>
           <div class="gate-bar" aria-hidden="true"><div class="gate-bar-fill"></div></div>
-          <p class="gate-status" id="gateStatus">Naglo-load ang XSS TXD…</p>
+          <p class="gate-status" id="gateStatus">Loading XSS TXD…</p>
         </div>
         <div id="gateMain" class="hidden">
-          <button type="button" class="primary gate-btn" id="gateEnterBtn">Pumasok / Enter</button>
+          <button type="button" class="primary gate-btn" id="gateEnterBtn">Enter</button>
           <section class="gate-about" id="gateAbout" aria-labelledby="gateAboutTitle">
-            <h2 id="gateAboutTitle">Tungkol sa XSS TXD</h2>
-            <p>Ang XSS TXD ay isang libreng online editor para sa mga file ng GTA San Andreas at SA-MP. Gumagana ito nang buo sa browser ng phone mo (iOS o Android) o ng computer — walang kailangang i-install, at ang mga file na ina-upload mo ay hindi umaalis sa device mo. Dito mo pwedeng baguhin ang textures at models ng sasakyan at ped, ayusin ang itsura ng langit at panahon, i-edit ang stats ng baril, sasakyan at ped, at baguhin ang galaw (animations) ng character mo.</p>
-            <h3>Ano ang kaya nitong gawin</h3>
+            <h2 id="gateAboutTitle">About XSS TXD</h2>
+            <p>XSS TXD is a free online editor for GTA San Andreas and SA-MP files. It runs fully in the browser of your phone (iOS or Android) or computer — nothing to install, and the files you upload never leave your device. Here you can change vehicle and ped textures and models, adjust the sky and weather look, edit weapon, vehicle and ped stats, and change your character's animations.</p>
+            <h3>What it can do</h3>
             <ul>
-              <li><b>TXD / DFF Editor</b> — mag-edit ng textures: magdagdag ng text at image, brush at eraser, Layers panel, at DXT compression para lumiit ang file.</li>
-              <li><b>3D Preview</b> — makita agad ang model sa 3D habang nag-e-edit, kasama ang Ped Pose para sa mga skin / ped model.</li>
-              <li><b>UV Editor</b> — ayusin ang pagkaka-mapa ng texture sa model.</li>
-              <li><b>3D Objects (BETA)</b> — magdagdag ng simpleng 3D parts tulad ng spoiler, bullbar, roof rack at light bar, at isama sila sa dina-download na DFF.</li>
-              <li><b>Timecyc Editor (BETA)</b> — i-edit ang kulay ng langit, araw, ulap at tubig sa bawat weather at oras, may batch edit at presets tulad ng Golden Hour at Sunset Vibes.</li>
-              <li><b>Colorcycle Editor (BETA)</b> — ayusin ang color grading ng mobile version ng laro.</li>
-              <li><b>Cheats</b> — Weapon Editor (53 baril), Handling Editor (210 sasakyan, may Drift / Race / Off-road / Realistic presets), at Ped Editor (43 entries).</li>
-              <li><b>Animation Editor (BETA)</b> — magpalit at mag-edit ng galaw sa ped.ifp: i-rotate ang mga buto (bones) at subukan ang isang-tap na Naruto Run preset.</li>
-              <li><b>Sticker packs</b> — Logos, Flames at Tribal stickers na pwedeng ilagay, i-drag, i-resize at i-rotate sa texture.</li>
-              <li><b>ZIP download / Download All</b> — i-download ang lahat ng na-edit na file nang sabay-sabay.</li>
+              <li><b>TXD / DFF Editor</b> — edit textures: add text and images, brush and eraser, Layers panel, and DXT compression to shrink the file.</li>
+              <li><b>3D Preview</b> — see the model in 3D while you edit, including Ped Pose for skin / ped models.</li>
+              <li><b>UV Editor</b> — fix how the texture is mapped onto the model.</li>
+              <li><b>3D Objects (BETA)</b> — add simple 3D parts like a spoiler, bullbar, roof rack and light bar, and bake them into the downloaded DFF.</li>
+              <li><b>Timecyc Editor (BETA)</b> — edit sky, sun, cloud and water colors for every weather and time, with batch edit and presets like Golden Hour and Sunset Vibes.</li>
+              <li><b>Colorcycle Editor (BETA)</b> — adjust the color grading of the mobile version of the game.</li>
+              <li><b>Cheats</b> — Weapon Editor (53 guns), Handling Editor (210 vehicles, with Drift / Race / Off-road / Realistic presets), and Ped Editor (43 entries).</li>
+              <li><b>Animation Editor (BETA)</b> — swap and edit movement in ped.ifp: rotate the bones and try the one-tap Naruto Run preset.</li>
+              <li><b>Sticker packs</b> — Logos, Flames and Tribal stickers you can place, drag, resize and rotate on a texture.</li>
+              <li><b>ZIP download / Download All</b> — download all your edited files at once.</li>
             </ul>
-            <h3>Paano gamitin</h3>
+            <h3>How to use it</h3>
             <ol>
-              <li>Pindutin ang <b>Pumasok / Enter</b> sa itaas para buksan ang editor.</li>
-              <li>I-upload ang DFF at TXD file mo sa editor — o buksan ang Timecyc, Colorcycle, Cheats o Animation Editor mula sa ••• menu.</li>
-              <li>I-edit ang texture, model, o values — makikita mo agad ang resulta sa preview.</li>
-              <li>I-download ang na-edit na file at ilagay ito sa folder ng laro mo, tulad ng dati mong ginagawa sa mga mod.</li>
+              <li>Tap <b>Enter</b> above to open the editor.</li>
+              <li>Upload your DFF and TXD files in the editor — or open the Timecyc, Colorcycle, Cheats or Animation Editor from the ••• menu.</li>
+              <li>Edit the texture, model, or values — you see the result in the preview right away.</li>
+              <li>Download the edited file and put it in your game folder, the same way you install any mod.</li>
             </ol>
-            <h3>Mga sinusuportahang file</h3>
+            <h3>Supported files</h3>
             <ul>
-              <li><b>DFF</b> — 3D model ng sasakyan, ped at iba pang objects</li>
-              <li><b>TXD</b> — texture file na kasama ng DFF</li>
-              <li><b>timecyc.dat</b> — panahon, langit at oras</li>
+              <li><b>DFF</b> — 3D model of vehicles, peds and other objects</li>
+              <li><b>TXD</b> — the texture file that goes with the DFF</li>
+              <li><b>timecyc.dat</b> — weather, sky and time of day</li>
               <li><b>colorcycle.dat</b> — color grading (mobile)</li>
-              <li><b>weapon.dat</b> — stats ng mga baril</li>
-              <li><b>handling.cfg</b> — takbo at handling ng mga sasakyan</li>
-              <li><b>pedstats.dat</b> — ugali at stats ng mga ped</li>
-              <li><b>ped.ifp</b> — animations / galaw ng character</li>
+              <li><b>weapon.dat</b> — weapon stats</li>
+              <li><b>handling.cfg</b> — vehicle speed and handling</li>
+              <li><b>pedstats.dat</b> — ped behavior and stats</li>
+              <li><b>ped.ifp</b> — character animations / movement</li>
             </ul>
-            <p>Gumagana ang XSS TXD sa iOS, Android at PC, at sumusuporta sa lahat ng launcher / APK ng GTA SA at SA-MP. Ang mga edit mo ay naka-save sa session ng browser mo, kaya kahit mag-reload ang page ay babalik ang trabaho mo.</p>
+            <p>XSS TXD works on iOS, Android and PC, and supports all GTA SA and SA-MP launchers / APKs. Your edits are saved in your browser session, so even if the page reloads, your work comes back.</p>
           </section>
         </div>
         <button type="button" id="gateDots" class="gate-dots" aria-label="Admin">•••</button>
@@ -623,10 +636,10 @@
         <form id="adminAuthForm" novalidate>
           <label for="adminAuthInput" id="adminAuthLabel">Admin password</label>
           <input id="adminAuthInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="64" />
-          <label for="adminAuthInput2" id="adminAuthLabel2" class="hidden">Ulitin ang admin password</label>
+          <label for="adminAuthInput2" id="adminAuthLabel2" class="hidden">Repeat the admin password</label>
           <input id="adminAuthInput2" type="password" class="hidden" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="64" />
-          <p class="admin-note hidden" id="adminAuthSetupNote">Wala pang admin password sa device na ito — gumawa ng bago dito. Ang hash lang nito ang mase-save sa device na ito; walang password na naka-hardcode sa app.</p>
-          <p id="adminAuthError" class="admin-msg err" role="alert">Mali ang admin password — hindi nagbukas ang panel.</p>
+          <p class="admin-note hidden" id="adminAuthSetupNote">This device has no admin password yet — create one here. Only its hash is saved on this device; no password is hardcoded in the app.</p>
+          <p id="adminAuthError" class="admin-msg err" role="alert">Wrong admin password — the panel did not open.</p>
           <div class="admin-btnrow">
             <button type="button" class="ghost" id="adminAuthCancel">Cancel</button>
             <button type="submit" class="primary" id="adminAuthConfirm">Confirm</button>
@@ -641,25 +654,25 @@
         <div class="admin-sec" style="border-top:none;padding-top:0;">
           <h3 id="admSecAdmin">Admin password</h3>
           <form id="admAdminForm" novalidate>
-            <label for="admCurAdmin" id="admCurAdminLabel">Kasalukuyang admin password</label>
+            <label for="admCurAdmin" id="admCurAdminLabel">Current admin password</label>
             <input id="admCurAdmin" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="64" />
-            <label for="admNewAdmin" id="admNewAdminLabel">Bagong admin password</label>
+            <label for="admNewAdmin" id="admNewAdminLabel">New admin password</label>
             <input id="admNewAdmin" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="64" />
-            <label for="admNewAdmin2" id="admNewAdmin2Label">Ulitin ang bagong admin password</label>
+            <label for="admNewAdmin2" id="admNewAdmin2Label">Repeat the new admin password</label>
             <input id="admNewAdmin2" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="64" />
-            <button type="submit" class="primary" id="admSaveAdmin">I-save ang admin password</button>
+            <button type="submit" class="primary" id="admSaveAdmin">Save admin password</button>
           </form>
         </div>
         <div class="admin-sec">
           <h3 id="admSecWork">Saved work</h3>
-          <button type="button" class="admin-danger" id="admClearWork">Burahin ang lahat ng saved work</button>
-          <p class="admin-note" id="admClearNote">Binubura lang nito ang work snapshot / edits na naka-save sa session. Hindi gagalawin ang admin password at wika. Magre-reload ang app pagkatapos.</p>
+          <button type="button" class="admin-danger" id="admClearWork">Delete all saved work</button>
+          <p class="admin-note" id="admClearNote">This only deletes the work snapshot / edits saved in this session. The admin password and language are not touched. The app will reload afterwards.</p>
         </div>
         <div class="admin-sec">
-          <h3 id="admSecInfo">Impormasyon ng app</h3>
+          <h3 id="admSecInfo">App info</h3>
           <p class="admin-info" id="admInfo"></p>
         </div>
-        <button type="button" class="primary" id="admClose">Isara</button>
+        <button type="button" class="primary" id="admClose">Close</button>
       </div>
     </div>
     <!-- Timecyc Editor: bubukas mula sa ••• menu ng editor (sa ilalim
@@ -946,25 +959,25 @@
              animation. Live sa preview; sa download, naka-bake lang
              sa in-edit na animation. -->
         <div class="anim-edit-card" id="animEditCard">
-          <span class="lbl" id="animEditLbl">✏️ I-edit ang galaw — i-rotate ang buto</span>
+          <span class="lbl" id="animEditLbl">✏️ Edit the move — rotate a bone</span>
           <p class="tc-loaded-meta" id="animEditTarget" role="status"></p>
           <div class="anim-slotrow">
-            <span class="s-lbl" id="animBoneLbl">Buto</span>
-            <select id="animBoneSel" aria-label="Buto na ie-edit"></select>
+            <span class="s-lbl" id="animBoneLbl">Bone</span>
+            <select id="animBoneSel" aria-label="Bone to edit"></select>
           </div>
           <div class="anim-rotrow">
-            <span class="r-lbl" id="animRotXLbl">Ikot X</span>
-            <input type="range" id="animRotX" min="-180" max="180" step="1" value="0" aria-label="Ikot X" />
+            <span class="r-lbl" id="animRotXLbl">Rotate X</span>
+            <input type="range" id="animRotX" min="-180" max="180" step="1" value="0" aria-label="Rotate X" />
             <span class="r-val" id="animRotXVal">0°</span>
           </div>
           <div class="anim-rotrow">
-            <span class="r-lbl" id="animRotYLbl">Ikot Y</span>
-            <input type="range" id="animRotY" min="-180" max="180" step="1" value="0" aria-label="Ikot Y" />
+            <span class="r-lbl" id="animRotYLbl">Rotate Y</span>
+            <input type="range" id="animRotY" min="-180" max="180" step="1" value="0" aria-label="Rotate Y" />
             <span class="r-val" id="animRotYVal">0°</span>
           </div>
           <div class="anim-rotrow">
-            <span class="r-lbl" id="animRotZLbl">Ikot Z</span>
-            <input type="range" id="animRotZ" min="-180" max="180" step="1" value="0" aria-label="Ikot Z" />
+            <span class="r-lbl" id="animRotZLbl">Rotate Z</span>
+            <input type="range" id="animRotZ" min="-180" max="180" step="1" value="0" aria-label="Rotate Z" />
             <span class="r-val" id="animRotZVal">0°</span>
           </div>
           <button type="button" class="anim-wide" id="animNarutoBtn">🌀 Naruto Run</button>
@@ -984,12 +997,12 @@
       <div class="topbtns">
         <button id="btnDff" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>DFF</button>
         <button id="btnTxd" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-9 9"/></svg>TXD</button>
-        <button type="button" class="infobtn" data-pop="fileinfo" aria-expanded="false" aria-label="Info tungkol sa pag-upload ng DFF at TXD"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+        <button type="button" class="infobtn" data-pop="fileinfo" aria-expanded="false" aria-label="Info about uploading DFF and TXD"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
         <button id="btnDlTxd" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12m0 0l-5-5m5 5l5-5"/><path d="M4 21h16"/></svg>TXD</button>
         <button id="btnDlDff" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12m0 0l-5-5m5 5l5-5"/><path d="M4 21h16"/></svg>DFF</button>
         <button id="btnDlZip" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>ZIP</button>
-        <button type="button" class="infobtn" data-pop="popZip" aria-expanded="false" aria-label="Info tungkol sa ZIP download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
-        <button id="btnDlAll" class="primary" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12m0 0l-5-5m5 5l5-5"/><path d="M4 21h16"/></svg><span id="btnDlAllLabel">I-download Lahat</span></button>
+        <button type="button" class="infobtn" data-pop="popZip" aria-expanded="false" aria-label="Info about ZIP download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+        <button id="btnDlAll" class="primary" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12m0 0l-5-5m5 5l5-5"/><path d="M4 21h16"/></svg><span id="btnDlAllLabel">Download All</span></button>
         <button id="btnObj3dTop" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>3D Object</button>
         <button id="btnAdminDots" class="dots-btn" type="button" aria-label="Admin">•••</button>
       </div>
@@ -1000,23 +1013,23 @@
         <button type="button" id="menuCheatsBtn" role="menuitem">🔓 <span id="menuCheatsLbl">Cheats</span></button>
         <button type="button" id="menuAnimBtn" role="menuitem">🎬 <span id="menuAnimLbl">Animation Editor</span> <span class="beta-badge">BETA</span></button>
       </div>
-      <div id="fileinfo" class="infopop">Sample model ang naka-load — mag-upload ng DFF + TXD mo para mag-edit ng totoong file.</div>
-      <div id="popZip" class="infopop">ZIP — i-download ang TXD at DFF nang magkasama sa iisang .zip file (kung alin ang naka-load). Isang download lang, madaling i-share o i-backup.</div>
+      <div id="fileinfo" class="infopop">A sample model is loaded — upload your DFF + TXD to edit a real file.</div>
+      <div id="popZip" class="infopop">ZIP — download the TXD and DFF together in a single .zip file (whichever is loaded). One download, easy to share or back up.</div>
       <input type="file" id="fileDff" accept=".dff" class="hidden" />
       <input type="file" id="fileTxd" accept=".txd" class="hidden" />
       <input type="file" id="fileImg" accept="image/png,image/jpeg,image/webp" class="hidden" />
     </header>
 
     <div id="exportOpts">
-      <span class="lbl">Compression ng edited textures</span>
-      <button type="button" class="infobtn" data-pop="popDxt" aria-expanded="false" aria-label="Info tungkol sa compression"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
-      <select id="exportFmt" aria-label="Compression ng edited textures">
-        <option value="raw" selected>Walang compression — A8R8G8B8 (pinaka-safe)</option>
-        <option value="auto">Auto — DXT1 pag opaque, DXT5 pag may alpha (maliit)</option>
-        <option value="dxt1">DXT1 — pinakamaliit, walang alpha</option>
-        <option value="dxt5">DXT5 — maliit, may alpha</option>
+      <span class="lbl">Compression for edited textures</span>
+      <button type="button" class="infobtn" data-pop="popDxt" aria-expanded="false" aria-label="Info about compression"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+      <select id="exportFmt" aria-label="Compression for edited textures">
+        <option value="raw" selected>No compression — A8R8G8B8 (safest)</option>
+        <option value="auto">Auto — DXT1 if opaque, DXT5 if it has alpha (small)</option>
+        <option value="dxt1">DXT1 — smallest, no alpha</option>
+        <option value="dxt5">DXT5 — small, has alpha</option>
       </select>
-      <span class="ehint infopop" id="popDxt">DXT: mas maliit ang TXD at mas mabilis mag-load sa game. Ang hindi na-edit na textures, original pa rin.</span>
+      <span class="ehint infopop" id="popDxt">DXT: a smaller TXD that loads faster in-game. Textures you didn't edit stay original.</span>
     </div>
 
     <div id="dlAllNotice" class="hidden" role="status">
@@ -1024,7 +1037,7 @@
       <div class="dlall-btns">
         <button id="btnDlPendTxd" type="button"></button>
         <button id="btnDlPendDff" type="button"></button>
-        <button id="btnDlNoticeClose" type="button" class="ghost">Isara</button>
+        <button id="btnDlNoticeClose" type="button" class="ghost">Close</button>
       </div>
     </div>
 
@@ -1037,21 +1050,21 @@
       <!-- 3D PREVIEW -->
       <section class="pane on" id="pane3d">
         <div id="glwrap">
-          <div id="glempty"><span>Walang 3D model pa.<br/>Mag-upload ng <b>.dff</b> file para makita ang model dito.</span></div>
+          <div id="glempty"><span>No 3D model yet.<br/>Upload a <b>.dff</b> file to see the model here.</span></div>
         </div>
         <!-- Controls row ng 3D Preview: normal na flow sa ILALIM ng
              canvas (hindi na overlay) para wala nang tumatakip sa
              canvas, sa tabs, o sa isa't isa. -->
         <div id="glhint">
-          <span class="glpop infopop" id="popGlHint">I-drag: ikot &nbsp;·&nbsp; Pinch / scroll: zoom</span>
-          <button type="button" class="chip" data-pop="popGlHint" aria-expanded="false" aria-label="Paano galawin ang 3D preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
-          <label class="chip"><input type="checkbox" id="chkAllParts" /> Ipakita ang damaged / VLO parts</label>
-          <label class="chip">Kulay ng pintura <input type="color" id="paintColor" value="#ffffff" /></label>
+          <span class="glpop infopop" id="popGlHint">Drag: rotate &nbsp;·&nbsp; Pinch / scroll: zoom</span>
+          <button type="button" class="chip" data-pop="popGlHint" aria-expanded="false" aria-label="How to move the 3D preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+          <label class="chip"><input type="checkbox" id="chkAllParts" /> Show damaged / VLO parts</label>
+          <label class="chip">Paint color <input type="color" id="paintColor" value="#ffffff" /></label>
         </div>
         <div id="partsBar">
           <span class="lbl" style="font-size:11px;color:var(--dim);font-weight:700;letter-spacing:.04em">PARTS</span>
           <div id="partsList"></div>
-          <button id="btnEditPart" type="button" disabled>I-edit ang part →</button>
+          <button id="btnEditPart" type="button" disabled>Edit part →</button>
         </div>
         <!-- Ped pose: kita lang pag ped/skin model (may Skin plugin at
              bones) ang naka-load sa 3D Preview. Preview lang ito —
@@ -1067,18 +1080,18 @@
         <div id="obj3dPanel">
           <div class="obj3d-head">
             <span class="obj3d-title"><span id="obj3dTitle">3D Objects</span><span class="beta-badge">BETA</span></span>
-            <button type="button" class="infobtn" data-pop="obj3dNote" aria-expanded="false" aria-label="Info tungkol sa 3D Objects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
-            <button id="btnObj3dToggle" type="button">▼ Ipakita</button>
+            <button type="button" class="infobtn" data-pop="obj3dNote" aria-expanded="false" aria-label="Info about 3D Objects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+            <button id="btnObj3dToggle" type="button">▼ Show</button>
           </div>
           <div id="obj3dBody" class="hidden">
-            <p class="obj3d-note infopop" id="obj3dNote">BETA — try lang ito. Magdagdag ng simpleng 3D object sa model; pag nag-download ka ng DFF, isasama ang mga object sa mismong file. Kailangan pa itong i-test sa GTA SA kung lalabas sila in-game.</p>
+            <p class="obj3d-note infopop" id="obj3dNote">BETA — just trying it out. Add a simple 3D object to the model; when you download the DFF, the objects are baked into the file itself. This still needs testing in GTA SA to see if they show up in-game.</p>
             <div class="obj3d-addrow">
-              <select id="obj3dKind" aria-label="Uri ng 3D object"></select>
-              <button id="btnObj3dAdd" class="primary" type="button">+ Idagdag</button>
+              <select id="obj3dKind" aria-label="3D object type"></select>
+              <button id="btnObj3dAdd" class="primary" type="button">+ Add</button>
             </div>
             <div id="obj3dList"></div>
             <div id="obj3dEditor" class="hidden"></div>
-            <label class="obj3d-dl" id="obj3dDlWrap"><input type="checkbox" id="chkObjInDff" checked /><span id="obj3dDlLabel">Isama ang 3D objects sa DFF pag nag-download (BETA)</span></label>
+            <label class="obj3d-dl" id="obj3dDlWrap"><input type="checkbox" id="chkObjInDff" checked /><span id="obj3dDlLabel">Include the 3D objects in the DFF when downloading (BETA)</span></label>
           </div>
         </div>
       </section>
@@ -1086,16 +1099,16 @@
       <!-- TEXTURE EDITOR -->
       <section class="pane" id="paneEdit">
         <div id="rail">
-          <button data-tool="move" class="on" type="button" title="Pili / Galaw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 7-6.5 1.5L9 18 5 3z"/></svg></button>
-          <div class="rlabel">PILI</div>
+          <button data-tool="move" class="on" type="button" title="Select / Move"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 7-6.5 1.5L9 18 5 3z"/></svg></button>
+          <div class="rlabel">SELECT</div>
           <button data-tool="text" type="button" title="Text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 5h14M12 5v14"/></svg></button>
           <div class="rlabel">TEXT</div>
-          <button data-tool="image" type="button" title="Larawan / sticker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-9 9"/></svg></button>
+          <button data-tool="image" type="button" title="Image / sticker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-9 9"/></svg></button>
           <div class="rlabel">IMAGE</div>
           <button data-tool="brush" type="button" title="Brush"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3l4 4L9 19l-5 1 1-5L17 3z"/></svg></button>
           <div class="rlabel">BRUSH</div>
           <button data-tool="eraser" type="button" title="Eraser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3l5 5L11 18H5l-2-2L16 3z"/><path d="M8 21h13"/></svg></button>
-          <div class="rlabel">BURAHIN</div>
+          <div class="rlabel">ERASE</div>
           <div class="sep"></div>
           <button id="btnUndo" type="button" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14L4 9l5-5"/><path d="M4 9h9a7 7 0 017 7v1"/></svg></button>
           <div class="rlabel">UNDO</div>
@@ -1106,37 +1119,37 @@
           <div class="rlabel">ZOOM +</div>
           <button id="btnZoomOut" type="button" title="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6"/></svg></button>
           <div class="rlabel">ZOOM −</div>
-          <button id="btnFit" type="button" title="Fit sa screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+          <button id="btnFit" type="button" title="Fit to screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
           <div class="rlabel">FIT</div>
           <div class="sep"></div>
-          <button id="btnUVMode" type="button" title="UV editor — ilipat ang UV ng isang parte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg></button>
+          <button id="btnUVMode" type="button" title="UV editor — move a part's UV"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg></button>
           <div class="rlabel">UV</div>
-          <button id="btnLockObj" type="button" title="I-lock / i-unlock ang napiling object" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></button>
+          <button id="btnLockObj" type="button" title="Lock / unlock the selected object" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></button>
           <div class="rlabel">LOCK</div>
         </div>
         <div id="editMain">
           <div id="optHandle">
-            <button id="btnBack3d" type="button" title="Bumalik sa 3D Preview at downloads">‹ 3D Preview</button>
-            <span class="htitle">Settings ng tool</span>
+            <button id="btnBack3d" type="button" title="Back to 3D Preview and downloads">‹ 3D Preview</button>
+            <span class="htitle">Tool settings</span>
             <button id="btnTexLock" class="on" type="button">🔒 Texture lock: ON</button>
-            <button id="btnOptToggle" type="button">▲ Itago</button>
+            <button id="btnOptToggle" type="button">▲ Hide</button>
           </div>
           <div id="zoomBar">
             <button id="btnZoomOut2" type="button" title="Zoom out" aria-label="Zoom out">−</button>
             <input type="range" id="zoomRange" min="10" max="1000" step="5" value="100" aria-label="Zoom level" />
             <button id="btnZoomIn2" type="button" title="Zoom in" aria-label="Zoom in">+</button>
             <span id="zoomPct">100%</span>
-            <button id="btnFit2" type="button" title="Fit sa screen">Fit</button>
+            <button id="btnFit2" type="button" title="Fit to screen">Fit</button>
           </div>
           <div id="optbar"></div>
-          <div id="shareWarn" class="hidden"><span aria-hidden="true">⚠</span><span>Ang spot na ito ng texture ay ginagamit ng model sa <b>magkabilang side</b> (mirrored UV ng DFF) — ang ilalagay mo rito, lalabas din sa kabilang side, baliktad. Ganyan din ang lalabas sa mismong laro.</span></div>
+          <div id="shareWarn" class="hidden"><span aria-hidden="true">⚠</span><span>This spot of the texture is used by the model on <b>both sides</b> (mirrored UV in the DFF) — whatever you put here will also appear on the other side, flipped. It will look the same in the game.</span></div>
           <div id="editPartsBar">
             <span class="lbl" style="font-size:11px;color:var(--dim);font-weight:700;letter-spacing:.04em">PARTS</span>
             <div id="editPartsList"></div>
           </div>
           <div id="partFocus" class="hidden">
             <span id="partFocusTxt"></span>
-            <button id="btnPartAll" type="button">✕ Lahat</button>
+            <button id="btnPartAll" type="button">✕ All</button>
           </div>
           <div id="stageViewport">
             <div id="stageWrap">
@@ -1145,13 +1158,13 @@
               <canvas id="cvObj"></canvas>
             </div>
             <canvas id="overlayCv"></canvas>
-            <div id="stageLockBadge" class="show">🔒 Texture naka-lock</div>
-            <div id="stageMsg">Walang texture pa.<br/>Mag-upload ng <b>.txd</b> file para makapag-edit.</div>
+            <div id="stageLockBadge" class="show">🔒 Texture locked</div>
+            <div id="stageMsg">No texture yet.<br/>Upload a <b>.txd</b> file to start editing.</div>
           </div>
           <div id="layersPanel">
             <div id="layersHead">
-              <span class="ltitle">Layers — <span id="layersCount">0</span> sa texture na ito</span>
-              <button id="btnLayersToggle" type="button">▲ Itago</button>
+              <span class="ltitle">Layers — <span id="layersCount">0</span> on this texture</span>
+              <button id="btnLayersToggle" type="button">▲ Hide</button>
             </div>
             <div id="layersList"></div>
           </div>
@@ -1395,7 +1408,7 @@ const RW = (() => {
   function parseTXD(buf){
     const u8 = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
     const top = hdr(u8, 0);
-    if (top.type !== CH.TEXTUREDICTIONARY) throw new Error("Hindi ito TXD file (walang Texture Dictionary).");
+    if (top.type !== CH.TEXTUREDICTIONARY) throw new Error("This is not a TXD file (no Texture Dictionary).");
     const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
     const out = { version: top.version, deviceId: 1, textures: [] };
     for (const c of children(u8, top.data, top.end)){
@@ -1406,7 +1419,7 @@ const RW = (() => {
         if (t && t.width > 0 && t.height > 0) out.textures.push(t);
       }
     }
-    if (!out.textures.length) throw new Error("Walang nakitang texture sa TXD.");
+    if (!out.textures.length) throw new Error("No textures found in the TXD.");
     return out;
   }
 
@@ -1789,7 +1802,7 @@ const RW = (() => {
     const u8 = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
     const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
     const top = hdr(u8, 0);
-    if (top.type !== CH.CLUMP) throw new Error("Hindi ito DFF file (walang Clump).");
+    if (top.type !== CH.CLUMP) throw new Error("This is not a DFF file (no Clump).");
     const model = { frames: [], geometries: [], atomics: [] };
     // Some exporters write a bogus size on the Clump struct chunk
     // (e.g. 0x0100000C instead of 12). The clump struct is always 12 bytes,
@@ -1898,7 +1911,7 @@ const RW = (() => {
         if (arr.length) model.hierFrames = arr;
       }
     }
-    if (!model.geometries.length) throw new Error("Walang geometry na nakita sa DFF.");
+    if (!model.geometries.length) throw new Error("No geometry found in the DFF.");
     return model;
   }
 
@@ -2244,7 +2257,7 @@ const RW = (() => {
     if (!items || !items.length) return src.slice(0).buffer;
     const dv = new DataView(src.buffer, src.byteOffset, src.byteLength);
     const top = hdr(src, 0);
-    if (top.type !== CH.CLUMP) throw new Error("Hindi ito DFF file (walang Clump).");
+    if (top.type !== CH.CLUMP) throw new Error("This is not a DFF file (no Clump).");
     const version = top.version;
     // Same bogus-size guard as parseDFF: some exporters write a wrong
     // size on the Clump struct chunk; it is always really 12 bytes.
@@ -2265,10 +2278,10 @@ const RW = (() => {
     const kids = [...clumpKids(top.data, top.end)];
     const fl = kids.find(c => c.type === CH.FRAMELIST);
     const gl = kids.find(c => c.type === CH.GEOMETRYLIST);
-    if (!fl || !gl) throw new Error("Walang FrameList/GeometryList sa DFF.");
+    if (!fl || !gl) throw new Error("No FrameList/GeometryList in the DFF.");
     const flKids = [...children(src, fl.data, fl.end)];
     const flStruct = flKids.find(c => c.type === CH.STRUCT);
-    if (!flStruct) throw new Error("Walang FrameList struct sa DFF.");
+    if (!flStruct) throw new Error("No FrameList struct in the DFF.");
     const glKids = [...children(src, gl.data, gl.end)];
     const glStruct = glKids.find(c => c.type === CH.STRUCT) || null;
     const numFrames = dv.getUint32(flStruct.data, true);
@@ -2794,16 +2807,16 @@ function buildModelFromDFF(model){
 let pedGroup = null, pedMeshes = [], pedPoseName = "normal";
 const PED_POSES = [
   { id: "normal", label: "🧍 Normal", defs: [] },
-  { id: "handsup", label: "🙌 Kamay nakataas", defs: [
+  { id: "handsup", label: "🙌 Hands up", defs: [
     { role: "upperarmL", axis: "facing", deg: 150 }, { role: "upperarmR", axis: "facing", deg: -150 },
     { role: "forearmL", axis: "facing", deg: 22 }, { role: "forearmR", axis: "facing", deg: -22 } ] },
-  { id: "sit", label: "🪑 Nakaupo", defs: [
+  { id: "sit", label: "🪑 Sitting", defs: [
     { role: "thighL", axis: "lateral", deg: -88 }, { role: "thighR", axis: "lateral", deg: -88 },
     { role: "calfL", axis: "lateral", deg: 88 }, { role: "calfR", axis: "lateral", deg: 88 } ] },
-  { id: "kneel", label: "🧎 Nakaluhod", defs: [
+  { id: "kneel", label: "🧎 Kneeling", defs: [
     { role: "thighL", axis: "lateral", deg: -12 }, { role: "thighR", axis: "lateral", deg: -12 },
     { role: "calfL", axis: "lateral", deg: 112 }, { role: "calfR", axis: "lateral", deg: 112 } ] },
-  { id: "walk", label: "🚶 Naglalakad", defs: [
+  { id: "walk", label: "🚶 Walking", defs: [
     { role: "thighL", axis: "lateral", deg: -35 }, { role: "thighR", axis: "lateral", deg: 25 },
     { role: "calfL", axis: "lateral", deg: 12 }, { role: "calfR", axis: "lateral", deg: 40 },
     { role: "upperarmL", axis: "lateral", deg: 20 }, { role: "upperarmR", axis: "lateral", deg: -25 } ] }
@@ -3216,7 +3229,7 @@ function renderParts(){
     if (!names.length){
       const s = document.createElement("span");
       s.style.cssText = "font-size:12px;color:var(--dim)";
-      s.textContent = "Walang parts pa — mag-upload ng DFF.";
+      s.textContent = "No parts yet — upload a DFF.";
       list.appendChild(s);
       continue;
     }
@@ -3228,7 +3241,7 @@ function renderParts(){
       b.addEventListener("click", () => selectPart(part));
       list.appendChild(b);
     };
-    mk("Lahat", null);
+    mk("All", null);
     for (const n of names) mk(n, n);
   }
   updatePartFocus();
@@ -3253,7 +3266,7 @@ function selectPart(name){
       orbit.radius = Math.max(sz.x, sz.y, sz.z) * 1.5 + 1.2;
       gridHelper.position.y = box.min.y - 0.01;
     }
-    toast("Part lang ang nakikita: " + state.activePart + " — sa Edit Texture, texture lang niya ang lalabas. I-tap ulit o Lahat para buo.");
+    toast("Only this part is shown: " + state.activePart + " — in Edit Texture, only its texture will appear. Tap it again or All to show everything.");
   } else {
     frameObject(modelGroup);
   }
@@ -3305,7 +3318,7 @@ function updatePartFocus(){
     : [];
   $("#partFocusTxt").textContent = names.length
     ? "Part: " + state.activePart + " — texture: " + names.join(", ")
-    : "Part: " + state.activePart + " — walang sariling texture ang part na ito (kulay lang ng materyal).";
+    : "Part: " + state.activePart + " — this part has no texture of its own (material color only).";
 }
 function focusPartInEditor(){
   renderTexStrip();
@@ -3441,8 +3454,8 @@ function renderTexStrip(){
     const s = document.createElement("div");
     s.style.cssText = "color:var(--dim);font-size:13px;line-height:1.55;padding:8px 4px;max-width:300px";
     s.textContent = partSet.size
-      ? "Ang texture ng part na “" + state.activePart + "” ay wala sa TXD na naka-load — kaya walang mae-edit para sa part na ito."
-      : "Walang sariling texture ang part na “" + state.activePart + "” — kulay lang ng materyal ang gamit niya, kaya walang mae-edit dito. I-tap ang Lahat para makita ang lahat ng textures.";
+      ? "The texture of the part “" + state.activePart + "” is not in the loaded TXD — so there is nothing to edit for this part."
+      : "The part “" + state.activePart + "” has no texture of its own — it only uses a material color, so there is nothing to edit here. Tap All to see all textures.";
     strip.appendChild(s);
   }
 }
@@ -3821,7 +3834,7 @@ stageVp.addEventListener("pointerdown", e => {
     // lang. Para i-unlock: piliin siya sa Layers panel, tapos LOCK.
     if (state.sel){ state.sel = null; renderOptbar(); }
     drag = { mode: "none", pid: e.pointerId };
-    toast("Naka-lock ang object — hindi siya magagalaw. Para i-unlock: piliin sa Layers panel, tapos pindutin ang LOCK.", 3200);
+    toast("The object is locked — it can't be moved. To unlock it: select it in the Layers panel, then press LOCK.", 3200);
   } else {
     if (state.sel){ state.sel = null; renderOptbar(); }
     // Texture lock ON (default): a one-finger drag on empty space does
@@ -3899,7 +3912,7 @@ function endStagePointer(e){
   if (drag.pid != null && e.pointerId !== drag.pid) return;
   const t = curTex();
   if (drag.mode === "uvmove"){
-    if (drag.moved){ uvCommitOp(drag.op); toast("Nailipat ang UV ng napiling parte."); }
+    if (drag.moved){ uvCommitOp(drag.op); toast("Moved the UV of the selected part."); }
     drag = null; return;
   }
   if (drag.mode === "paint"){
@@ -3949,7 +3962,7 @@ function addTextObject(x, y){
   drawObjectsTo(cvObj.getContext("2d"), t);
   updateComposite(t);
   setTool("move");
-  toast("Text nailagay — i-drag para igalaw, gamitin ang handles para ikot/resize.");
+  toast("Text placed — drag to move it, use the handles to rotate/resize.");
 }
 function addImageObject(img){
   const t = curTex(); if (!t) return;
@@ -3965,7 +3978,7 @@ function addImageObject(img){
   drawObjectsTo(cvObj.getContext("2d"), t);
   updateComposite(t);
   setTool("move");
-  toast("Larawan nailagay — i-drag para igalaw, ⤡ sulok o slider para sa laki, ⟳ handle o Ikot slider para ikutin, at Flip ↔ / ↕ buttons para baligtarin.");
+  toast("Image placed — drag to move it, the ⤡ corner or slider for size, the ⟳ handle or Rotate slider to rotate, and the Flip ↔ / ↕ buttons to flip it.");
 }
 
 /* ---------------- sticker packs ----------------
@@ -4192,61 +4205,61 @@ function renderOptbar(){
       <input type="text" id="optTextVal" value="${(s.text || state.text.value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")}" style="width:130px" /></div>
       <div class="grp"><label class="lbl">Font</label>
       <select id="optFont">${FONTS.map(f => `<option ${f === s.font ? "selected" : ""} style="font-family:'${f}'">${f}</option>`).join("")}</select></div>
-      <div class="grp"><label class="lbl">Laki: <span id="optSizeVal">${Math.round(s.size)}</span></label>
+      <div class="grp"><label class="lbl">Size: <span id="optSizeVal">${Math.round(s.size)}</span></label>
       <input type="range" id="optSize" min="10" max="320" value="${s.size}" style="width:100px" /></div>
-      <div class="grp"><label class="lbl">Kulay</label><input type="color" id="optColor" value="${s.color}" /></div>
+      <div class="grp"><label class="lbl">Color</label><input type="color" id="optColor" value="${s.color}" /></div>
       <div class="grp"><label class="lbl">Outline</label>
       <div class="row"><input type="color" id="optOutColor" value="${s.outlineColor}" />
       <input type="range" id="optOutW" min="0" max="24" value="${s.outlineWidth}" style="width:70px" /></div></div>`;
-    if (!o) html += `<div class="grp"><label class="lbl">&nbsp;</label><div class="row"><button id="optAddText" class="primary" type="button">Idagdag</button><button type="button" class="infobtn" data-pop="popTextPlace" aria-expanded="false" aria-label="Info tungkol sa paglalagay ng text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button></div></div>
-      <div class="infopop" id="popTextPlace">o i-tap ang canvas para ilagay doon</div>`;
+    if (!o) html += `<div class="grp"><label class="lbl">&nbsp;</label><div class="row"><button id="optAddText" class="primary" type="button">Add</button><button type="button" class="infobtn" data-pop="popTextPlace" aria-expanded="false" aria-label="Info about placing text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button></div></div>
+      <div class="infopop" id="popTextPlace">or tap the canvas to place it there</div>`;
   }
   if (state.tool === "brush"){
-    html += `<div class="grp"><label class="lbl">Kulay ng brush</label><input type="color" id="optBrushColor" value="${state.brush.color}" /></div>
-      <div class="grp"><label class="lbl">Laki: <span id="optBrushSizeVal">${state.brush.size}</span></label>
+    html += `<div class="grp"><label class="lbl">Brush color</label><input type="color" id="optBrushColor" value="${state.brush.color}" /></div>
+      <div class="grp"><label class="lbl">Size: <span id="optBrushSizeVal">${state.brush.size}</span></label>
       <input type="range" id="optBrushSize" min="1" max="200" value="${state.brush.size}" style="width:130px" /></div>
-      <button type="button" class="infobtn" data-pop="popBrushHint" aria-expanded="false" aria-label="Info tungkol sa brush" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
-      <div class="infopop" id="popBrushHint">I-drag sa texture para magpinta — ang bilog sa canvas ang totoong laki ng brush. Undo: kasama ang bawat stroke.</div>`;
+      <button type="button" class="infobtn" data-pop="popBrushHint" aria-expanded="false" aria-label="Info about the brush" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+      <div class="infopop" id="popBrushHint">Drag on the texture to paint — the circle on the canvas is the brush's real size. Undo: every stroke is included.</div>`;
   }
   if (state.tool === "eraser"){
-    html += `<div class="grp"><label class="lbl">Laki ng eraser: <span id="optEraSizeVal">${state.eraserSize}</span></label>
+    html += `<div class="grp"><label class="lbl">Eraser size: <span id="optEraSizeVal">${state.eraserSize}</span></label>
       <input type="range" id="optEraSize" min="4" max="160" value="${state.eraserSize}" style="width:150px" /></div>
-      <button type="button" class="infobtn" data-pop="popEraserHint" aria-expanded="false" aria-label="Info tungkol sa eraser" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
-      <div class="infopop" id="popEraserHint">Binubura lang nito ang paint layer — hindi ang original texture.</div>`;
+      <button type="button" class="infobtn" data-pop="popEraserHint" aria-expanded="false" aria-label="Info about the eraser" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+      <div class="infopop" id="popEraserHint">This only erases the paint layer — not the original texture.</div>`;
   }
   if (state.tool === "image" && !o){
-    html += `<div class="grp"><label class="lbl">Larawan / sticker</label>
-      <button id="optAddImg" class="primary" type="button">Pumili ng PNG / larawan</button></div>
-      <button type="button" class="infobtn" data-pop="popImgHint" aria-expanded="false" aria-label="Info tungkol sa larawan / sticker" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
-      <div class="infopop" id="popImgHint">PNG na may transparent background ang pinaka-ok pang-sticker.</div>`;
+    html += `<div class="grp"><label class="lbl">Image / sticker</label>
+      <button id="optAddImg" class="primary" type="button">Choose a PNG / image</button></div>
+      <button type="button" class="infobtn" data-pop="popImgHint" aria-expanded="false" aria-label="Info about image / sticker" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+      <div class="infopop" id="popImgHint">A PNG with a transparent background works best as a sticker.</div>`;
     const pack = STICKER_PACKS.find(p => p.id === stickerPack) || STICKER_PACKS[0];
-    html += `<div class="grp" style="flex:1 1 100%"><label class="lbl">Sticker packs — i-tap ang sticker para ilagay</label>
+    html += `<div class="grp" style="flex:1 1 100%"><label class="lbl">Sticker packs — tap a sticker to place it</label>
       <div class="stk-packbtns">${STICKER_PACKS.map(p => `<button type="button" data-stkpack="${p.id}" class="${p.id === pack.id ? "on" : ""}">${p.label}</button>`).join("")}</div>
-      <div class="stk-grid">${pack.items.map(it => `<button type="button" data-sticker="${it.id}" title="${it.label}" aria-label="Ilagay ang sticker: ${it.label}"><img src="${stickerDataURL(it.id) || ""}" alt="" /></button>`).join("")}</div></div>`;
+      <div class="stk-grid">${pack.items.map(it => `<button type="button" data-sticker="${it.id}" title="${it.label}" aria-label="Place sticker: ${it.label}"><img src="${stickerDataURL(it.id) || ""}" alt="" /></button>`).join("")}</div></div>`;
   }
   if (o && o.type === "image"){
-    html += `<div class="grp"><label class="lbl">Laki ng larawan: <span id="optImgSizeVal">${Math.round(o.w)}</span>px</label>
+    html += `<div class="grp"><label class="lbl">Image size: <span id="optImgSizeVal">${Math.round(o.w)}</span>px</label>
       <input type="range" id="optImgSize" min="12" max="${t.width}" value="${Math.round(o.w)}" style="width:130px" /></div>
-      <div class="grp"><label class="lbl">Flip ng larawan</label>
+      <div class="grp"><label class="lbl">Flip image</label>
       <div class="row"><button id="optFlipH" type="button" class="${o.flipH ? "on" : ""}">Flip ↔</button>
       <button id="optFlipV" type="button" class="${o.flipV ? "on" : ""}">Flip ↕</button></div></div>
-      <button type="button" class="infobtn" data-pop="popImgObjHint" aria-expanded="false" aria-label="Info tungkol sa paggalaw ng larawan" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
-      <div class="infopop" id="popImgObjHint">Ikot: ⟳ handle sa canvas o Ikot slider sa ibaba. Laki: dilaw na sulok ⤡ o slider — proporsyonal.</div>`;
+      <button type="button" class="infobtn" data-pop="popImgObjHint" aria-expanded="false" aria-label="Info about moving the image" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+      <div class="infopop" id="popImgObjHint">Rotate: the ⟳ handle on the canvas or the Rotate slider below. Size: the yellow ⤡ corner or the slider — proportional.</div>`;
   }
   if (o){
-    html += `<div class="grp"><label class="lbl">Ikot: <span id="optRotVal">${Math.round(o.rot)}°</span></label>
+    html += `<div class="grp"><label class="lbl">Rotate: <span id="optRotVal">${Math.round(o.rot)}°</span></label>
       <input type="range" id="optRot" min="-180" max="180" value="${o.rot}" style="width:100px" /></div>
       <div class="grp"><label class="lbl">Opacity: <span id="optOpVal">${Math.round((o.opacity != null ? o.opacity : 1)*100)}%</span></label>
       <input type="range" id="optOp" min="10" max="100" value="${Math.round((o.opacity != null ? o.opacity : 1)*100)}" style="width:90px" /></div>
       <div class="grp"><label class="lbl">&nbsp;</label><div class="row">
-      <button id="optDup" type="button">Kopya</button>
-      <button id="optLock" type="button">${o.locked ? "🔓 I-unlock" : "🔒 I-lock"}</button>
-      <button id="optDel" type="button">Burahin</button></div></div>`;
+      <button id="optDup" type="button">Copy</button>
+      <button id="optLock" type="button">${o.locked ? "🔓 Unlock" : "🔒 Lock"}</button>
+      <button id="optDel" type="button">Delete</button></div></div>`;
   }
   if (!o && state.tool === "move"){
-    html += `<button type="button" class="infobtn" data-pop="popMoveHint" aria-expanded="false" aria-label="Info tungkol sa paggalaw, zoom at lock" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
-      <div class="infopop" id="popMoveHint">I-tap ang object para piliin, i-drag agad para igalaw ito lang · Zoom: slider o +/− sa panel · Fit button: balik sa fit · Texture lock ON: ang bakanteng lugar lang ang hindi gagalaw — ang text/image na nilagay mo, lagi mong mai-drag kahit naka-ON ito. Ang LOCK button lang ang nagla-lock ng isang object.</div>
-      <div class="grp"><label class="lbl">&nbsp;</label><button id="optResetTex" type="button">I-reset ang texture</button></div>`;
+    html += `<button type="button" class="infobtn" data-pop="popMoveHint" aria-expanded="false" aria-label="Info about moving, zoom and lock" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+      <div class="infopop" id="popMoveHint">Tap an object to select it, then drag right away to move just it · Zoom: the slider or +/− in the panel · Fit button: back to fit · Texture lock ON: only the empty area won't move — the text/image you placed can always be dragged even when it is ON. Only the LOCK button locks an object.</div>
+      <div class="grp"><label class="lbl">&nbsp;</label><button id="optResetTex" type="button">Reset texture</button></div>`;
   }
   bar.innerHTML = html;
   wireOptbar();
@@ -4266,9 +4279,9 @@ function renderLayers(){
   const objs = t ? (t.objects || []) : [];
   if (cnt) cnt.textContent = objs.length;
   list.innerHTML = "";
-  if (!t){ list.innerHTML = '<div class="layer-empty">Walang texture pa.</div>'; return; }
+  if (!t){ list.innerHTML = '<div class="layer-empty">No texture yet.</div>'; return; }
   if (!objs.length){
-    list.innerHTML = '<div class="layer-empty">Wala pang text o larawan sa texture na ito — magdagdag gamit ang TEXT o IMAGE tool.</div>';
+    list.innerHTML = '<div class="layer-empty">No text or image on this texture yet — add some with the TEXT or IMAGE tool.</div>';
     return;
   }
   // Topmost first: reverse drawing order.
@@ -4279,10 +4292,10 @@ function renderLayers(){
     const type = document.createElement("span"); type.className = "ltype";
     type.textContent = o.type === "text" ? "Text" : "Image";
     const name = document.createElement("span"); name.className = "lname";
-    name.textContent = o.type === "text" ? (o.text || "TEXT") : "Larawan / sticker";
+    name.textContent = o.type === "text" ? (o.text || "TEXT") : "Image / sticker";
     row.appendChild(type);
     if (o.locked){
-      const lk = document.createElement("span"); lk.textContent = "🔒"; lk.title = "Naka-lock — hindi magagalaw sa canvas";
+      const lk = document.createElement("span"); lk.textContent = "🔒"; lk.title = "Locked — can't be moved on the canvas";
       lk.style.flex = "none"; row.appendChild(lk);
     }
     row.appendChild(name);
@@ -4293,11 +4306,11 @@ function renderLayers(){
       row.appendChild(b);
       return b;
     };
-    mkBtn("▲", "Itaas ang layer", () => layerMove(idx, 1));
-    mkBtn("▼", "Ibaba ang layer", () => layerMove(idx, -1));
-    mkBtn("⧉", "I-duplicate ang layer", () => layerDuplicate(idx));
-    mkBtn(o.hidden ? "🙈" : "👁", o.hidden ? "Ipakita ang layer" : "Itago ang layer", () => layerToggleHide(idx));
-    mkBtn("🗑", "Burahin ang layer", () => layerDelete(idx));
+    mkBtn("▲", "Move layer up", () => layerMove(idx, 1));
+    mkBtn("▼", "Move layer down", () => layerMove(idx, -1));
+    mkBtn("⧉", "Duplicate layer", () => layerDuplicate(idx));
+    mkBtn(o.hidden ? "🙈" : "👁", o.hidden ? "Show layer" : "Hide layer", () => layerToggleHide(idx));
+    mkBtn("🗑", "Delete layer", () => layerDelete(idx));
     row.addEventListener("click", () => {
       state.sel = o;
       drawObjectsTo(cvObj.getContext("2d"), t);
@@ -4328,7 +4341,7 @@ function layerDuplicate(idx){
   t.objects.splice(idx + 1, 0, c);
   state.sel = c;
   layerAfterChange(t);
-  toast("Na-duplicate ang layer.");
+  toast("Layer duplicated.");
 }
 function layerToggleHide(idx){
   const t = curTex(); if (!t || !t.objects || !t.objects[idx]) return;
@@ -4345,12 +4358,12 @@ function layerDelete(idx){
   t.objects = t.objects.filter(x => x !== o);
   if (state.sel === o) state.sel = null;
   layerAfterChange(t);
-  toast("Nabura ang layer.");
+  toast("Layer deleted.");
 }
 $("#btnLayersToggle").addEventListener("click", () => {
   const list = $("#layersList");
   const hidden = list.classList.toggle("hidden");
-  $("#btnLayersToggle").textContent = hidden ? "▼ Ipakita" : "▲ Itago";
+  $("#btnLayersToggle").textContent = hidden ? "▼ Show" : "▲ Hide";
   requestAnimationFrame(drawOverlay);
 });
 function wireOptbar(){
@@ -4420,7 +4433,7 @@ function wireOptbar(){
     if (!o) return;
     o.locked = !o.locked;
     syncLockBtn(); renderOptbar(); drawOverlay();
-    toast(o.locked ? "Naka-lock na ang object — hindi siya magagalaw sa canvas." : "Na-unlock ang object — pwede na siyang igalaw.");
+    toast(o.locked ? "The object is now locked — it can't be moved on the canvas." : "The object is unlocked — you can move it now.");
   });
   const rst = $("#optResetTex");
   if (rst) rst.addEventListener("click", () => {
@@ -4429,7 +4442,7 @@ function wireOptbar(){
     const pg = cvPaint.getContext("2d"); pg.clearRect(0, 0, t.width, t.height);
     if (t._paintCv) t._paintCv.getContext("2d").clearRect(0, 0, t.width, t.height);
     drawObjectsTo(cvObj.getContext("2d"), t); updateComposite(t); renderOptbar(); drawOverlay();
-    toast("Na-reset ang texture na ito.");
+    toast("This texture has been reset.");
   });
 }
 /* Sliders mutate live on 'input'; arm a pre-change snapshot on pointerdown/focus
@@ -4504,7 +4517,7 @@ function updateFileInfo(){
   if (state.dffName) parts.push("DFF: " + state.dffName);
   if (state.txdName) parts.push("TXD: " + state.txdName + ` (${state.txd.textures.length} textures)`);
   $("#fileinfo").textContent = parts.length ? parts.join("  ·  ") :
-    "Sample model ang naka-load — mag-upload ng DFF + TXD mo para mag-edit ng totoong file.";
+    "A sample model is loaded — upload your DFF + TXD to edit a real file.";
   $("#btnDlDff").disabled = !state.dffBuffer;
   $("#btnDlAll").disabled = !(state.txd || state.dffBuffer);
   const zb = $("#btnDlZip"); if (zb) zb.disabled = !(state.txd || state.dffBuffer);
@@ -4516,12 +4529,12 @@ async function loadDFF(file){
     state.uvShare = buildUvShare(model);
     state.dffBuffer = buf; state.dffName = file.name; state.demo = false;
     if (GL_OK && modelGroup){
-      if (!buildModelFromDFF(model)) throw new Error("Walang na-render na geometry.");
+      if (!buildModelFromDFF(model)) throw new Error("No geometry was rendered.");
       $("#glempty").style.display = "none";
     }
     reapplyUvEdits();
     if (state.uvMode) computeUvParts();
-    toast("DFF na-load: " + file.name);
+    toast("DFF loaded: " + file.name);
   } catch(err){ toast("DFF error: " + err.message, 3400); }
   updateFileInfo();
   scheduleWorkSave();
@@ -4544,10 +4557,10 @@ async function loadTXD(file){
       state.uvShare = null;
       clearModel();
       $("#glempty").style.display = "flex";
-      $("#glempty").innerHTML = "<span>TXD lang ang na-upload.<br/>Mag-upload ng <b>.dff</b> para makita ang 3D model — pwede ka nang mag-edit ng textures sa Edit Texture tab.</span>";
+      $("#glempty").innerHTML = "<span>Only a TXD was uploaded.<br/>Upload a <b>.dff</b> to see the 3D model — you can already edit textures in the Edit Texture tab.</span>";
     }
     selectTexture(0);
-    toast(`TXD na-load: ${txd.textures.length} textures`);
+    toast(`TXD loaded: ${txd.textures.length} textures`);
     await applyPendingWorkForTxd(file.name); // kung may partial session snapshot para sa file na ito, ilapat ang edits
   } catch(err){ toast("TXD error: " + err.message, 3400); }
   updateFileInfo();
@@ -4570,7 +4583,7 @@ $("#paintColor").addEventListener("input", e => {
 $("#btnOptToggle").addEventListener("click", () => {
   const bar = $("#optbar");
   const collapsed = bar.classList.toggle("collapsed");
-  $("#btnOptToggle").textContent = collapsed ? "▼ Ipakita" : "▲ Itago";
+  $("#btnOptToggle").textContent = collapsed ? "▼ Show" : "▲ Hide";
   requestAnimationFrame(drawOverlay); // overlay canvas resizes to the freed space
 });
 
@@ -4594,8 +4607,8 @@ function computeUvParts(){
 }
 function setUvMode(on){
   if (on){
-    if (!state.dffBuffer){ toast("Mag-upload muna ng DFF — kailangan ang model para sa UV editor.", 3200); return; }
-    if (!curTex()){ toast("Mag-upload muna ng TXD.", 3000); return; }
+    if (!state.dffBuffer){ toast("Upload a DFF first — the UV editor needs the model.", 3200); return; }
+    if (!curTex()){ toast("Upload a TXD first.", 3000); return; }
     if (!state.model){
       try {
         state.model = RW.parseDFF(state.dffBuffer);
@@ -4605,11 +4618,11 @@ function setUvMode(on){
     }
     computeUvParts();
     if (!state.uvParts || !state.uvParts.length){
-      toast("Walang parte ng model na gumagamit ng texture na ito (" + (curTex().name || "") + ").", 3400);
+      toast("No part of the model uses this texture (" + (curTex().name || "") + ").", 3400);
       return;
     }
     state.uvMode = true;
-    toast("UV mode: pumili ng Parte A o B, i-drag sa canvas para ilipat ang UV nila, o i-Un-mirror para isang side lang ang gumamit ng spot.");
+    toast("UV mode: pick Part A or B, drag on the canvas to move their UV, or Un-mirror so only one side uses the spot.");
   } else {
     state.uvMode = false;
   }
@@ -4717,7 +4730,7 @@ function uvTransformOp(fn, label){
   if (!state.model) return;
   const op = uvBeginOp();
   const box = uvSelCenter(op.sel);
-  if (!box){ toast("Walang napiling parte."); return; }
+  if (!box){ toast("No part selected."); return; }
   for (const [gi, verts] of op.sel){
     const g = state.model.geometries[gi];
     for (const vi of verts){
@@ -4730,10 +4743,10 @@ function uvTransformOp(fn, label){
 }
 function applyUnmirror(){
   const t = curTex(); if (!t || !state.model) return;
-  if (state.uvSide === "all"){ toast("Pumili muna ng Parte A o Parte B — yun ang ililipat sa bakanteng kalahati."); return; }
+  if (state.uvSide === "all"){ toast("Pick Part A or Part B first — that is what moves to the empty half."); return; }
   const plan = RW.uvUnmirrorPlan(state.model, t.name, uvSelTris());
   if (!plan){
-    toast("Walang bakanteng kalahati sa texture na ito — ginagamit ng ibang parte ang buong texture. I-drag na lang mano-mano ang UV, o mag-Flip.", 3800);
+    toast("There is no empty half in this texture — another part uses the whole texture. Just drag the UV manually, or Flip it.", 3800);
     return;
   }
   const op = uvBeginOp();
@@ -4755,7 +4768,7 @@ function applyUnmirror(){
     }
   }
   uvCommitOp(op);
-  toast("Na-un-mirror na! Ang napiling parte, sarili na niyang kalahati ng texture ang gamit — ang ilalagay mo doon, sa isang side lang lalabas. I-download ang DFF para ma-save ang UV.");
+  toast("Un-mirrored! The selected part now uses its own half of the texture — whatever you put there appears on one side only. Download the DFF to save the UV.");
 }
 function uvUndo(){
   const before = state.uvUndoStack.pop();
@@ -4764,7 +4777,7 @@ function uvUndo(){
   rebuildUvEdits();
   if (state.model) state.uvShare = buildUvShare(state.model);
   drawOverlay(); renderOptbar();
-  toast("Na-undo ang huling UV edit.");
+  toast("Undid the last UV edit.");
 }
 function uvReset(){
   if (!state.model || !state.uvParts) return;
@@ -4782,10 +4795,10 @@ function uvReset(){
     }
     if (m.size) before.set(gi, m);
   }
-  if (!changed){ toast("Original pa ang UV ng texture na ito — walang ni-reset."); return; }
+  if (!changed){ toast("This texture's UV is still original — nothing was reset."); return; }
   state.uvUndoStack.push(before);
   rebuildUvEdits(); afterUvChange(); renderOptbar();
-  toast("Na-reset ang UV ng texture na ito sa original.");
+  toast("This texture's UV has been reset to the original.");
 }
 /* Re-apply saved UV edits after a (re)parse of the same DFF — loading a
    TXD rebuilds the model from scratch and must not lose UV work. */
@@ -4836,7 +4849,7 @@ function drawUVOverlay(g, r){
   const all = uvWireFor(tex, false), sel = uvWireFor(tex, true);
   if (all) g.drawImage(all, x, y, w, h);
   if (sel) g.drawImage(sel, x, y, w, h);
-  const label = "UV mode · Parte " + (state.uvSide === "all" ? "Lahat" : state.uvSide) + " ang napili (amber) — i-drag para ilipat ang UV";
+  const label = "UV mode · Part " + (state.uvSide === "all" ? "All" : state.uvSide) + " selected (amber) — drag to move the UV";
   g.font = "600 12px sans-serif";
   const tw = g.measureText(label).width;
   g.fillStyle = "rgba(10,10,12,.85)";
@@ -4848,31 +4861,31 @@ function drawUVOverlay(g, r){
 function uvOptbarHtml(){
   const t = curTex();
   if (!state.uvParts || !state.uvParts.length){
-    return `<span style="font-size:12.5px;color:var(--dim)">Walang parte ng model na gumagamit ng texture na ito.</span>
-      <div class="grp"><label class="lbl">&nbsp;</label><button id="uvDone" type="button">Tapos na</button></div>`;
+    return `<span style="font-size:12.5px;color:var(--dim)">No part of the model uses this texture.</span>
+      <div class="grp"><label class="lbl">&nbsp;</label><button id="uvDone" type="button">Done</button></div>`;
   }
   const c = uvCounts();
   const sideBtn = (side, label, n, dis) =>
     `<button type="button" data-uvside="${side}" class="${state.uvSide === side ? "on" : ""}" ${dis ? "disabled" : ""}>${label} (${n.toLocaleString()})</button>`;
   return `
   <div class="grp"><label class="lbl">UV editor — ${escHtml(t ? t.name : "")}</label>
-    <div class="row">${sideBtn("A", "Parte A", c.a, false)}${sideBtn("B", "Parte B", c.b, !c.hasB)}${sideBtn("all", "Lahat", c.all, false)}</div></div>
-  <div class="grp"><label class="lbl">Ayusin ang UV</label>
+    <div class="row">${sideBtn("A", "Part A", c.a, false)}${sideBtn("B", "Part B", c.b, !c.hasB)}${sideBtn("all", "All", c.all, false)}</div></div>
+  <div class="grp"><label class="lbl">Adjust UV</label>
     <div class="row">
-      <button id="uvUnmirror" class="primary" type="button" ${state.uvSide !== "all" && c.hasB ? "" : "disabled"}>Un-mirror → isang side lang</button>
+      <button id="uvUnmirror" class="primary" type="button" ${state.uvSide !== "all" && c.hasB ? "" : "disabled"}>Un-mirror → one side only</button>
       <button id="uvFlipH" type="button">Flip ↔</button>
       <button id="uvFlipV" type="button">Flip ↕</button>
-      <button id="uvScaleUp" type="button">Laki +</button>
-      <button id="uvScaleDn" type="button">Laki −</button>
+      <button id="uvScaleUp" type="button">Size +</button>
+      <button id="uvScaleDn" type="button">Size −</button>
     </div></div>
   <div class="grp"><label class="lbl">&nbsp;</label>
     <div class="row">
       <button id="uvUndo" type="button" ${state.uvUndoStack.length ? "" : "disabled"}>Undo UV</button>
-      <button id="uvReset" type="button">I-reset UV</button>
-      <button id="uvDone" type="button">Tapos na</button>
+      <button id="uvReset" type="button">Reset UV</button>
+      <button id="uvDone" type="button">Done</button>
     </div></div>
-  <button type="button" class="infobtn" data-pop="popUvHint" aria-expanded="false" aria-label="Info tungkol sa UV editor" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
-  <div class="infopop" id="popUvHint">I-drag sa canvas para ilipat ang UV ng napiling parte. Kasama ang UV edits sa Download DFF; ang TXD, hindi nagagalaw.</div>`;
+  <button type="button" class="infobtn" data-pop="popUvHint" aria-expanded="false" aria-label="Info about the UV editor" style="align-self:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+  <div class="infopop" id="popUvHint">Drag on the canvas to move the selected part's UV. UV edits are included in the DFF download; the TXD is untouched.</div>`;
 }
 function wireUvOptbar(){
   $$("#optbar [data-uvside]").forEach(b => b.addEventListener("click", () => {
@@ -4880,10 +4893,10 @@ function wireUvOptbar(){
     renderOptbar(); drawOverlay();
   }));
   const un = $("#uvUnmirror"); if (un) un.addEventListener("click", applyUnmirror);
-  const fh = $("#uvFlipH"); if (fh) fh.addEventListener("click", () => uvTransformOp((u, v, b) => [2 * b.cu - u, v], "Na-flip ang UV ng parte (↔)."));
-  const fv = $("#uvFlipV"); if (fv) fv.addEventListener("click", () => uvTransformOp((u, v, b) => [u, 2 * b.cv - v], "Na-flip ang UV ng parte (↕)."));
-  const su = $("#uvScaleUp"); if (su) su.addEventListener("click", () => uvTransformOp((u, v, b) => [b.cu + (u - b.cu) * 1.25, b.cv + (v - b.cv) * 1.25], "Pinalaki ang UV ng parte."));
-  const sd = $("#uvScaleDn"); if (sd) sd.addEventListener("click", () => uvTransformOp((u, v, b) => [b.cu + (u - b.cu) * 0.8, b.cv + (v - b.cv) * 0.8], "Pinaliit ang UV ng parte."));
+  const fh = $("#uvFlipH"); if (fh) fh.addEventListener("click", () => uvTransformOp((u, v, b) => [2 * b.cu - u, v], "Flipped the part's UV (↔)."));
+  const fv = $("#uvFlipV"); if (fv) fv.addEventListener("click", () => uvTransformOp((u, v, b) => [u, 2 * b.cv - v], "Flipped the part's UV (↕)."));
+  const su = $("#uvScaleUp"); if (su) su.addEventListener("click", () => uvTransformOp((u, v, b) => [b.cu + (u - b.cu) * 1.25, b.cv + (v - b.cv) * 1.25], "Enlarged the part's UV."));
+  const sd = $("#uvScaleDn"); if (sd) sd.addEventListener("click", () => uvTransformOp((u, v, b) => [b.cu + (u - b.cu) * 0.8, b.cv + (v - b.cv) * 0.8], "Shrunk the part's UV."));
   const uu = $("#uvUndo"); if (uu) uu.addEventListener("click", uvUndo);
   const ur = $("#uvReset"); if (ur) ur.addEventListener("click", uvReset);
   const ud = $("#uvDone"); if (ud) ud.addEventListener("click", () => setUvMode(false));
@@ -4899,14 +4912,14 @@ $("#btnLockObj").addEventListener("click", () => {
   const o = state.sel; if (!o) return;
   o.locked = !o.locked;
   syncLockBtn(); renderOptbar(); drawOverlay();
-  toast(o.locked ? "Naka-lock na ang object — hindi siya magagalaw sa canvas." : "Na-unlock ang object — pwede na siyang igalaw.");
+  toast(o.locked ? "The object is now locked — it can't be moved on the canvas." : "The object is unlocked — you can move it now.");
 });
 /* Badge sa stage: laging kita kung naka-lock ang texture na ine-edit. */
 function syncLockBadge(){
   const b = $("#stageLockBadge"); if (!b) return;
   b.classList.add("show");
   b.classList.toggle("off", !state.viewLock);
-  b.textContent = state.viewLock ? "🔒 Texture naka-lock" : "🔓 Texture hindi naka-lock — drag = pan";
+  b.textContent = state.viewLock ? "🔒 Texture locked" : "🔓 Texture not locked — drag = pan";
 }
 function syncTexLockBtn(){
   const b = $("#btnTexLock"); if (!b) return;
@@ -4918,8 +4931,8 @@ $("#btnTexLock").addEventListener("click", () => {
   state.viewLock = !state.viewLock;
   syncTexLockBtn();
   toast(state.viewLock
-    ? "Texture lock ON: hindi gagalaw ang texture habang nag-e-edit — kahit i-drag mo ang bakanteng lugar. Zoom = slider o +/− sa panel. Ang text/image na nilagay mo ay HINDI kasama dito — lagi mong mai-drag ang mga iyon."
-    : "Texture lock OFF: pwede nang i-drag ang bakanteng lugar para i-pan ang texture.", 3400);
+    ? "Texture lock ON: the texture won't move while you edit — even if you drag the empty area. Zoom = the slider or +/− in the panel. The text/image you placed is NOT included here — you can always drag those."
+    : "Texture lock OFF: you can now drag the empty area to pan the texture.", 3400);
 });
 $("#btnUVMode").addEventListener("click", () => setUvMode(!state.uvMode));
 
@@ -5130,7 +5143,7 @@ async function applyPendingWorkForTxd(fileName){
       const ct = curTex();
       if (ct){ drawObjectsTo(cvObj.getContext("2d"), ct); updateComposite(ct); }
     }
-    toast("Naibalik ang mga edit mo sa buong TXD — kumpleto na ulit ang file.", 3600);
+    toast("Your edits were re-applied to the whole TXD — the file is complete again.", 3600);
   } catch(e){}
 }
 
@@ -5177,7 +5190,7 @@ async function restoreWorkSession(){
       } else if (!snap.dffRaw){
         state.uvShare = null; clearModel();
         $("#glempty").style.display = "flex";
-        $("#glempty").innerHTML = "<span>TXD lang ang naibalik.<br/>Mag-upload ng <b>.dff</b> para makita ang 3D model — pwede ka nang mag-edit ng textures sa Edit Texture tab.</span>";
+        $("#glempty").innerHTML = "<span>Only a TXD was restored.<br/>Upload a <b>.dff</b> to see the 3D model — you can already edit textures in the Edit Texture tab.</span>";
       }
     } else if (!snap.demo){
       /* Malaking uploaded TXD: ang mga EDITED na texture lang ang may
@@ -5229,10 +5242,10 @@ async function restoreWorkSession(){
     }
     updateFileInfo();
     toast(state.txIncomplete
-      ? "Naibalik ang mga edited na texture mo — pero malaki ang original na TXD, kaya naka-pause ang Download TXD. I-upload ulit ang original na TXD: babalik ang edits mo sa buong file at maa-unlock ang download."
+      ? "Your edited textures were restored — but the original TXD was large, so TXD download is paused. Re-upload the original TXD: your edits will be re-applied to the whole file and downloads will unlock."
       : snap.partial
-      ? "Naibalik ang session mo — pero may hindi naisama (malaking file). I-upload ulit ang TXD/DFF para makumpleto."
-      : "Naibalik ang session mo — nandito pa ang mga edit mo, tuloy ka lang.", 4600);
+      ? "Your session was restored — but something was left out (a large file). Re-upload the TXD/DFF to complete it."
+      : "Your session was restored — your edits are still here, keep going.", 4600);
   } catch(e){ /* sirang snapshot: magpatuloy sa sariwang editor */ }
 }
 
@@ -5583,8 +5596,8 @@ $("#btnDlTxd").addEventListener("click", () => {
     if (!item) return;
     download(item.blob, item.name);
     const fmtLabel = item.format === "raw" ? "uncompressed" : item.format.toUpperCase() + " compressed";
-    toast(item.edited ? `Na-download ang TXD — ${item.edited} texture ang na-edit (${fmtLabel}), ang iba original pa rin.` :
-                   "Na-download ang TXD (walang binago).", 3400);
+    toast(item.edited ? `TXD downloaded — ${item.edited} texture(s) edited (${fmtLabel}), the rest are still original.` :
+                   "TXD downloaded (nothing changed).", 3400);
   } catch(err){ toast("Export error: " + err.message, 3400); }
 });
 $("#btnDlDff").addEventListener("click", () => {
@@ -5597,14 +5610,14 @@ $("#btnDlDff").addEventListener("click", () => {
     if (item.objCount) toast(uiLang() === "en"
       ? `DFF downloaded with ${item.objCount} 3D object(s) baked in (BETA) — test it in GTA SA to see if they appear in-game.`
       : `Na-download ang DFF na may ${item.objCount} 3D object na isinama (BETA) — i-test sa GTA SA kung lalabas sila in-game.`, 4200);
-    else if (item.uvVerts) toast(`Na-download ang DFF na may UV edits (${item.uvVerts} vertices ang nabago) — lahat ng ibang bytes, original pa rin.`, 3600);
+    else if (item.uvVerts) toast(`DFF downloaded with UV edits (${item.uvVerts} vertices changed) — all other bytes are still original.`, 3600);
   } catch(err){ toast("DFF export error: " + err.message, 3400); }
 });
 
 /* ---------------- download all (isang pindot: TXD + DFF) ---------------- */
 function uiLang(){
-  try { return localStorage.getItem("mavs_txd_lang") === "en" ? "en" : "tl"; }
-  catch(e){ return "tl"; }
+  try { return localStorage.getItem("mavs_txd_lang") === "tl" ? "tl" : "en"; }
+  catch(e){ return "en"; }
 }
 const DLALL_STR = {
   tl: {
@@ -5686,8 +5699,8 @@ $("#exportFmt").addEventListener("change", e => {
   state.exportFormat = e.target.value;
   scheduleWorkSave();
   toast(state.exportFormat === "raw"
-    ? "Compression: wala — edited textures ay A8R8G8B8 (uncompressed)."
-    : "Compression: " + state.exportFormat.toUpperCase() + " para sa edited textures sa susunod na download. Ang hindi na-edit, original pa rin.", 3000);
+    ? "Compression: none — edited textures are A8R8G8B8 (uncompressed)."
+    : "Compression: " + state.exportFormat.toUpperCase() + " for edited textures on the next download. Textures you didn't edit stay original.", 3000);
 });
 
 /* ---------------- download as ZIP (isang file: TXD + DFF) ---------------- */
@@ -5696,7 +5709,7 @@ $("#btnDlZip").addEventListener("click", async () => {
   if (state.txIncomplete){ toast(txIncompleteMsg(), 4600); return; }
   saveWorkNow();
   if (typeof JSZip === "undefined"){
-    toast("Hindi na-load ang ZIP library — kailangan ng internet sandali. Subukan ang I-download Lahat habang wala pa.", 3800);
+    toast("The ZIP library didn't load — it needs internet for a moment. Try Download All in the meantime.", 3800);
     return;
   }
   let txdItem = null, dffItem = null;
@@ -5705,15 +5718,15 @@ $("#btnDlZip").addEventListener("click", async () => {
   const items = [txdItem, dffItem].filter(Boolean);
   if (!items.length) return;
   try {
-    toast("Ginagawa ang ZIP…");
+    toast("Building the ZIP…");
     const zip = new JSZip();
     for (const it of items) zip.file(it.name, it.blob);
     const blob = await zip.generateAsync({ type: "blob", compression: "STORE" });
     const base = (state.txdName || state.dffName || "xss-txd").replace(/\.[^.]+$/, "");
     download(blob, base + ".zip");
     toast(items.length === 2
-      ? "Na-download ang ZIP — laman niya ang edited TXD at ang DFF (UV-patched kung may UV edits" + (dffItem && dffItem.objCount ? `, may ${dffItem.objCount} 3D object na isinama — BETA` : "") + ")."
-      : "Na-download ang ZIP — " + items[0].name + " lang ang laman (walang isang file na naka-load).", 3600);
+      ? "ZIP downloaded — it contains the edited TXD and the DFF (UV-patched if there are UV edits" + (dffItem && dffItem.objCount ? `, with ${dffItem.objCount} 3D object(s) baked in — BETA` : "") + ")."
+      : "ZIP downloaded — it only contains " + items[0].name + " (the other file is not loaded).", 3600);
   } catch(err){ toast("ZIP error: " + err.message, 3400); }
 });
 
@@ -5739,12 +5752,12 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       // show the notice but keep the texture editor fully working.
       const ge = $("#glempty");
       ge.style.display = "flex";
-      ge.innerHTML = "<span>Hindi gumana ang 3D preview sa device na ito.<br/>Pwede ka pa ring mag-edit ng textures sa <b>Edit Texture</b> tab.</span>";
+      ge.innerHTML = "<span>The 3D preview didn't work on this device.<br/>You can still edit textures in the <b>Edit Texture</b> tab.</span>";
     }
   } else {
     const ge = $("#glempty");
     ge.style.display = "flex";
-    ge.innerHTML = "<span>Hindi na-load ang 3D preview library (kailangan ng internet sandali).<br/>Pwede ka pa ring mag-edit ng textures sa <b>Edit Texture</b> tab.</span>";
+    ge.innerHTML = "<span>The 3D preview library didn't load (it needs internet for a moment).<br/>You can still edit textures in the <b>Edit Texture</b> tab.</span>";
   }
   selectTexture(0);
   renderOptbar();
@@ -5853,7 +5866,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   if (!gateEl) return;
 
   /* ---------- Language picker: 🇺🇸 English / 🇵🇭 Tagalog ----------
-     Default ay Tagalog. Ang huling pinili ay naka-save sa localStorage
+     Default ay English. Ang huling pinili ay naka-save sa localStorage
      (language preference lang ito — hindi ito ang password/session, na
      hiwalay na nasa sessionStorage). */
   var LANG_KEY = "mavs_txd_lang";
@@ -5915,9 +5928,9 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       tag: "TXD editor for GTA SA-MP \u2014 edit textures, preview in 3D, and download your TXD and DFF.",
       status: "Loading XSS TXD\u2026",
       langLabel: "Choose language",
-      enter: "Pumasok / Enter",
+      enter: "Enter",
       dlAll: "Download All",
-      about: "<h2 id=\"gateAboutTitle\">About XSS TXD</h2><p>XSS TXD is a free online editor for GTA San Andreas and SA-MP files. It runs fully in the browser of your phone (iOS or Android) or computer \u2014 nothing to install, and the files you upload never leave your device. Here you can change vehicle and ped textures and models, adjust the sky and weather look, edit weapon, vehicle and ped stats, and change your character's animations.</p><h3>What it can do</h3><ul><li><b>TXD / DFF Editor</b> \u2014 edit textures: add text and images, brush and eraser, Layers panel, and DXT compression to shrink the file.</li><li><b>3D Preview</b> \u2014 see the model in 3D while you edit, including Ped Pose for skin / ped models.</li><li><b>UV Editor</b> \u2014 fix how the texture is mapped onto the model.</li><li><b>3D Objects (BETA)</b> \u2014 add simple 3D parts like a spoiler, bullbar, roof rack and light bar, and bake them into the downloaded DFF.</li><li><b>Timecyc Editor (BETA)</b> \u2014 edit sky, sun, cloud and water colors for every weather and time, with batch edit and presets like Golden Hour and Sunset Vibes.</li><li><b>Colorcycle Editor (BETA)</b> \u2014 adjust the color grading of the mobile version of the game.</li><li><b>Cheats</b> \u2014 Weapon Editor (53 guns), Handling Editor (210 vehicles, with Drift / Race / Off-road / Realistic presets), and Ped Editor (43 entries).</li><li><b>Animation Editor (BETA)</b> \u2014 swap and edit movement in ped.ifp: rotate the bones and try the one-tap Naruto Run preset.</li><li><b>Sticker packs</b> \u2014 Logos, Flames and Tribal stickers you can place, drag, resize and rotate on a texture.</li><li><b>ZIP download / Download All</b> \u2014 download all your edited files at once.</li></ul><h3>How to use it</h3><ol><li>Tap <b>Pumasok / Enter</b> above to open the editor.</li><li>Upload your DFF and TXD files in the editor \u2014 or open the Timecyc, Colorcycle, Cheats or Animation Editor from the \u2022\u2022\u2022 menu.</li><li>Edit the texture, model, or values \u2014 you see the result in the preview right away.</li><li>Download the edited file and put it in your game folder, the same way you install any mod.</li></ol><h3>Supported files</h3><ul><li><b>DFF</b> \u2014 3D model of vehicles, peds and other objects</li><li><b>TXD</b> \u2014 the texture file that goes with the DFF</li><li><b>timecyc.dat</b> \u2014 weather, sky and time of day</li><li><b>colorcycle.dat</b> \u2014 color grading (mobile)</li><li><b>weapon.dat</b> \u2014 weapon stats</li><li><b>handling.cfg</b> \u2014 vehicle speed and handling</li><li><b>pedstats.dat</b> \u2014 ped behavior and stats</li><li><b>ped.ifp</b> \u2014 character animations / movement</li></ul><p>XSS TXD works on iOS, Android and PC, and supports all GTA SA and SA-MP launchers / APKs. Your edits are saved in your browser session, so even if the page reloads, your work comes back.</p>",
+      about: "<h2 id=\"gateAboutTitle\">About XSS TXD</h2><p>XSS TXD is a free online editor for GTA San Andreas and SA-MP files. It runs fully in the browser of your phone (iOS or Android) or computer \u2014 nothing to install, and the files you upload never leave your device. Here you can change vehicle and ped textures and models, adjust the sky and weather look, edit weapon, vehicle and ped stats, and change your character's animations.</p><h3>What it can do</h3><ul><li><b>TXD / DFF Editor</b> \u2014 edit textures: add text and images, brush and eraser, Layers panel, and DXT compression to shrink the file.</li><li><b>3D Preview</b> \u2014 see the model in 3D while you edit, including Ped Pose for skin / ped models.</li><li><b>UV Editor</b> \u2014 fix how the texture is mapped onto the model.</li><li><b>3D Objects (BETA)</b> \u2014 add simple 3D parts like a spoiler, bullbar, roof rack and light bar, and bake them into the downloaded DFF.</li><li><b>Timecyc Editor (BETA)</b> \u2014 edit sky, sun, cloud and water colors for every weather and time, with batch edit and presets like Golden Hour and Sunset Vibes.</li><li><b>Colorcycle Editor (BETA)</b> \u2014 adjust the color grading of the mobile version of the game.</li><li><b>Cheats</b> \u2014 Weapon Editor (53 guns), Handling Editor (210 vehicles, with Drift / Race / Off-road / Realistic presets), and Ped Editor (43 entries).</li><li><b>Animation Editor (BETA)</b> \u2014 swap and edit movement in ped.ifp: rotate the bones and try the one-tap Naruto Run preset.</li><li><b>Sticker packs</b> \u2014 Logos, Flames and Tribal stickers you can place, drag, resize and rotate on a texture.</li><li><b>ZIP download / Download All</b> \u2014 download all your edited files at once.</li></ul><h3>How to use it</h3><ol><li>Tap <b>Enter</b> above to open the editor.</li><li>Upload your DFF and TXD files in the editor \u2014 or open the Timecyc, Colorcycle, Cheats or Animation Editor from the \u2022\u2022\u2022 menu.</li><li>Edit the texture, model, or values \u2014 you see the result in the preview right away.</li><li>Download the edited file and put it in your game folder, the same way you install any mod.</li></ol><h3>Supported files</h3><ul><li><b>DFF</b> \u2014 3D model of vehicles, peds and other objects</li><li><b>TXD</b> \u2014 the texture file that goes with the DFF</li><li><b>timecyc.dat</b> \u2014 weather, sky and time of day</li><li><b>colorcycle.dat</b> \u2014 color grading (mobile)</li><li><b>weapon.dat</b> \u2014 weapon stats</li><li><b>handling.cfg</b> \u2014 vehicle speed and handling</li><li><b>pedstats.dat</b> \u2014 ped behavior and stats</li><li><b>ped.ifp</b> \u2014 character animations / movement</li></ul><p>XSS TXD works on iOS, Android and PC, and supports all GTA SA and SA-MP launchers / APKs. Your edits are saved in your browser session, so even if the page reloads, your work comes back.</p>",
       admAuthTitle: "Enter admin password",
       admAuthLabel: "Admin password",
       admConfirm: "Confirm",
@@ -5974,13 +5987,13 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   var legalBodyEl = document.getElementById("legalBody");
   var legalBtnEl = document.getElementById("legalContinue");
   var legalNoteEl = document.getElementById("legalNote");
-  var currentLang = "tl";
+  var currentLang = "en";
   try {
     var savedLang = localStorage.getItem(LANG_KEY);
     if (savedLang === "en" || savedLang === "tl") currentLang = savedLang;
   } catch(e){}
   function applyLang(lang){
-    currentLang = (lang === "en") ? "en" : "tl";
+    currentLang = (lang === "tl") ? "tl" : "en";
     var s = STRINGS[currentLang];
     if (tagEl) tagEl.textContent = s.tag;
     if (statusEl) statusEl.textContent = s.status;
@@ -6432,7 +6445,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
   ];
   var HOURS = [0, 5, 6, 7, 12, 19, 20, 22];
 
-  var tcLang = "tl";
+  var tcLang = "en";
   try {
     var savedLang = localStorage.getItem("mavs_txd_lang");
     if (savedLang === "en" || savedLang === "tl") tcLang = savedLang;
@@ -7450,7 +7463,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
 
   window.__tcOpen = openTc;
   window.__tcApplyLang = function(lang){
-    tcLang = (lang === "en") ? "en" : "tl";
+    tcLang = (lang === "tl") ? "tl" : "en";
     if (tcData && tcData.isDefault) tcData.name = S().defName;
     applyTcStrings();
   };
@@ -7554,7 +7567,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     "UNDERWATER","EXTRACOLOURS_1","EXTRACOLOURS_2"];
   var GROUP_DOTS = ["#ff5a4e", "#57d977", "#5aa2ff"];
 
-  var ccLang = "tl";
+  var ccLang = "en";
   try {
     var savedLang = localStorage.getItem("mavs_txd_lang");
     if (savedLang === "en" || savedLang === "tl") ccLang = savedLang;
@@ -8154,7 +8167,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
 
   window.__ccOpen = openCc;
   window.__ccApplyLang = function(lang){
-    ccLang = (lang === "en") ? "en" : "tl";
+    ccLang = (lang === "tl") ? "tl" : "en";
     if (ccData && ccData.isDefault) ccData.name = S().defName;
     applyCcStrings();
   };
@@ -8618,7 +8631,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
 
   /* ---------------- generic editor engine ---------------- */
   function createDatEditor(cfg){
-    var lang = "tl";
+    var lang = "en";
     try {
       var savedLang = localStorage.getItem("mavs_txd_lang");
       if (savedLang === "en" || savedLang === "tl") lang = savedLang;
@@ -9049,7 +9062,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     return {
       open: open,
       applyLang: function(l){
-        lang = (l === "en") ? "en" : "tl";
+        lang = (l === "tl") ? "tl" : "en";
         if (data && data.isDefault) data.name = S().defName;
         applyStrings();
       },
@@ -9556,7 +9569,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     }
   };
 
-  var animLang = "tl";
+  var animLang = "en";
   try {
     var savedLang = localStorage.getItem("mavs_txd_lang");
     if (savedLang === "en" || savedLang === "tl") animLang = savedLang;
@@ -11108,7 +11121,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
 
   window.__animOpen = openAnim;
   window.__animApplyLang = function(lang){
-    animLang = (lang === "en") ? "en" : "tl";
+    animLang = (lang === "tl") ? "tl" : "en";
     if (animFile && animFile.isDefault) animFile.name = S().defName;
     applyAnimStrings();
   };
