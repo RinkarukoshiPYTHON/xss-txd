@@ -11353,15 +11353,32 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
      Ginagamit ang parser/writer ng Timecyc Editor mismo
      (window.__tcDebug) sa isang BAGONG parse ng default text —
      ang naka-load na file at edits ng Timecyc Editor ay hindi
-     ginagalaw. Ang preset ay ina-apply sa lahat ng rows. */
+     ginagalaw. Ang preset ay ina-apply sa lahat ng rows.
+     Bukod sa preset, PINIPILIT ding laging nakikita ang ulap sa
+     BAWAT weather at oras (kahit anong preset, pati "normal"),
+     para ang SkyBox image (particle.txd cloud textures) ay lumabas
+     kahit anong weather/oras ang i-set ng server:
+       · LowClouds RGB (tokens 30-32) at BottomClouds RGB
+         (tokens 33-35) = 255 255 255 — walang dark tint na
+         nagpapadilim sa cloud texture, kahit hatinggabi.
+       · CloudAlpha (tokens 48-49: lower + upper clouds alpha ng
+         tunay na SA format, kasunod ng WaterRGBA 36-39 at ng
+         postfx block na Alpha1/RGB1 40-43, Alpha2/RGB2 44-47) =
+         255 255 — fully opaque ang ulap. Sa default sample ng
+         Timecyc Editor, 40 tokens lang ang bawat row (walang
+         extras), kaya dinaragdagan ang kulang na tokens hanggang
+         51 (postfx alphas/RGB = 0, ibig sabihin walang color
+         correction; token 50 = 0 tulad ng dati) para eksaktong
+         nasa puwesto ang CloudAlpha — parehong "40+ extras"
+         format na pinapanatili ng Timecyc Editor. */
   function buildTimecycText(presetId){
     var dbg = window.__tcDebug;
     if (!dbg || typeof dbg.parse !== "function" || typeof dbg.build !== "function") return null;
     var data = dbg.parse(dbg.defaultText());
     var P = SKY_PRESETS[presetId];
-    if (P){
-      data.sections.forEach(function(sec){
-        sec.rows.forEach(function(r){
+    data.sections.forEach(function(sec){
+      sec.rows.forEach(function(r){
+        if (P){
           Object.keys(P.colors).forEach(function(k){
             var idx = COLOR_INDEX[k], c = P.colors[k];
             r.tokens[idx] = String(c[0]);
@@ -11371,10 +11388,15 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
           Object.keys(P.sliders || {}).forEach(function(k){
             r.tokens[SLIDER_INDEX[k]] = String(P.sliders[k]);
           });
-          r.dirty = true;
-        });
+        }
+        /* Ulap: laging visible sa lahat ng weather at oras. */
+        r.tokens[30] = "255"; r.tokens[31] = "255"; r.tokens[32] = "255";
+        r.tokens[33] = "255"; r.tokens[34] = "255"; r.tokens[35] = "255";
+        while (r.tokens.length < 51) r.tokens.push("0");
+        r.tokens[48] = "255"; r.tokens[49] = "255";
+        r.dirty = true;
       });
-    }
+    });
     return dbg.build(data);
   }
 
