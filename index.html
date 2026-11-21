@@ -7,7 +7,7 @@
     <link rel="icon" href="data:," />
     <title>XSS TXD</title>
     <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#080405" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -28,48 +28,97 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Anton&family=Bebas+Neue&family=Montserrat:wght@500;700;900&family=Poppins:wght@500;700&family=Oswald:wght@500;700&family=Permanent+Marker&family=Bangers&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Russo+One&family=Anton&family=Bebas+Neue&family=Montserrat:wght@500;700;900&family=Poppins:wght@500;700&family=Oswald:wght@500;700&family=Permanent+Marker&family=Bangers&display=swap" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
+      /* ============================================================
+         XSS TXD — visual identity
+         Blood-and-black horror theme: deep black surfaces, one
+         blood-red accent, Archivo type system. Faint grid plus a
+         subtle red glow on the app background.
+         ============================================================ */
       :root{
-        --bg:#000; --panel:#101012; --panel2:#17171a; --line:#26262b;
-        --txt:#f2f2f4; --dim:#9a9aa3; --accent:#ffb02e; --accent2:#ff7847;
-        --danger:#ff5252; --ok:#52d273;
+        --bg:#080405; --panel:#110708; --panel2:#190b0d; --well:#0c0506;
+        --line:#2b1216; --line2:#4a2027;
+        --txt:#f3e9e7; --dim:#a89a9b;
+        --accent:#d92323; --accent-deep:#8f1216; --accent-ink:#fff2f2;
+        --accent2:#ff5340;
+        --danger:#ff7a45; --ok:#52d273;
+        --warn-bg:#200d06; --warn-line:#71351b; --warn-txt:#ffb59d;
+        --accent-tint:rgba(217,35,35,.13);
         --rail:64px;
         color-scheme: dark;
       }
       *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
       html,body{height:100%;}
       body{
-        margin:0; background:var(--bg); color:var(--txt);
-        font-family:ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+        margin:0; color:var(--txt);
+        background-color:var(--bg);
+        background-image:
+          radial-gradient(ellipse 90% 55% at 50% -8%, rgba(190,18,24,.16), rgba(190,18,24,0) 60%),
+          linear-gradient(rgba(243,233,231,.026) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(243,233,231,.026) 1px, transparent 1px);
+        background-size:100% 100%, 28px 28px, 28px 28px;
+        font-family:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
         overflow:hidden; display:flex; flex-direction:column; overscroll-behavior:none;
         padding-top:env(safe-area-inset-top);
       }
+      ::selection{background:rgba(217,35,35,.45); color:#fff;}
+      ::-webkit-scrollbar{width:10px; height:10px;}
+      ::-webkit-scrollbar-track{background:transparent;}
+      ::-webkit-scrollbar-thumb{background:#3d1a1f; border-radius:99px; border:2px solid var(--bg);}
       button{font-family:inherit; color:var(--txt); background:var(--panel2); border:1px solid var(--line);
-        border-radius:12px; min-height:44px; padding:0 14px; font-size:14px; font-weight:600; cursor:pointer;
-        display:inline-flex; align-items:center; justify-content:center; gap:7px;}
+        border-radius:10px; min-height:44px; padding:0 14px; font-size:14px; font-weight:600; cursor:pointer;
+        display:inline-flex; align-items:center; justify-content:center; gap:7px;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.045);
+        transition:background-color .15s ease, border-color .15s ease, transform .08s ease;}
       button:active{transform:scale(.97);}
       button:disabled{opacity:.38; pointer-events:none;}
-      button.primary{background:var(--accent); border-color:var(--accent); color:#161006;}
-      button.ghost{background:transparent;}
+      button.primary{background:var(--accent); border-color:var(--accent-deep); color:var(--accent-ink); font-weight:700;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.4), inset 0 -2px 0 rgba(0,0,0,.16);}
+      button.ghost{background:transparent; box-shadow:none;}
       button svg{width:19px; height:19px; flex:none;}
-      input[type=text]{background:var(--panel2); border:1px solid var(--line); color:var(--txt);
-        border-radius:10px; min-height:44px; padding:0 12px; font-size:15px; width:100%;}
-      select{background:var(--panel2); border:1px solid var(--line); color:var(--txt); border-radius:10px;
-        min-height:44px; padding:0 10px; font-size:14px; font-weight:600;}
+      @media (hover:hover){
+        button:hover{border-color:var(--line2);}
+        button.primary:hover{background:#e8302e; border-color:var(--accent-deep);}
+      }
+      button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible{
+        outline:2px solid var(--accent); outline-offset:2px;}
+      input[type=text], input[type=number]{background:var(--well); border:1px solid var(--line); color:var(--txt);
+        border-radius:10px; min-height:44px; padding:0 12px; font-size:15px; width:100%;
+        box-shadow:inset 0 1px 3px rgba(0,0,0,.35);}
+      input[type=text]:focus, input[type=number]:focus{border-color:var(--accent); outline:none;
+        box-shadow:0 0 0 3px rgba(217,35,35,.25);}
+      select{background-color:var(--panel2); border:1px solid var(--line); color:var(--txt); border-radius:10px;
+        min-height:44px; padding:0 32px 0 10px; font-size:14px; font-weight:600;
+        appearance:none; -webkit-appearance:none;
+        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%23a89a9b' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-repeat:no-repeat; background-position:right 11px center; background-size:12px 8px;}
       input[type=color]{width:44px; height:44px; border:1px solid var(--line); border-radius:10px; background:var(--panel2); padding:4px;}
-      input[type=range]{accent-color:var(--accent); height:44px;}
-      label.lbl{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.04em; text-transform:uppercase;}
+      input[type=range]{-webkit-appearance:none; appearance:none; background:transparent; height:44px; cursor:pointer; margin:0;}
+      input[type=range]::-webkit-slider-runnable-track{height:4px; border-radius:99px; background:#33161a;}
+      input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:22px; height:22px; margin-top:-9px;
+        border-radius:50%; background:var(--accent); border:2px solid #080405;
+        box-shadow:0 0 0 1px var(--line2), 0 2px 6px rgba(0,0,0,.55);}
+      input[type=range]::-moz-range-track{height:4px; border-radius:99px; background:#33161a;}
+      input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--accent);
+        border:2px solid #080405; box-shadow:0 0 0 1px var(--line2), 0 2px 6px rgba(0,0,0,.55);}
+      label.lbl{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.07em; text-transform:uppercase;}
+
+      /* ---------- brand mark (texture-tile logo) ---------- */
+      .brand-mark{flex:none; display:block;}
+      #brand .brand-mark{width:21px; height:21px;}
+      .gate-logo .brand-mark{width:38px; height:38px;}
+      .legal-logo .brand-mark{width:27px; height:27px;}
 
       /* ---------- top bar / toolbar ---------- */
-      header#topbar{display:flex; align-items:center; gap:6px; padding:8px; border-bottom:1px solid var(--line); background:var(--panel); flex-wrap:wrap; position:relative;}
-      #brand{font-family:"Russo One",sans-serif; font-size:16px; letter-spacing:.02em; white-space:nowrap; order:1; flex:1;}
-      #brand b{color:var(--accent);}
+      header#topbar{display:flex; align-items:center; gap:6px; padding:8px; border-bottom:1px solid var(--line); background:var(--panel); flex-wrap:wrap; position:relative; box-shadow:0 1px 0 rgba(0,0,0,.4);}
+      #brand{display:flex; align-items:center; gap:8px; font-weight:900; font-size:17px; letter-spacing:.03em; white-space:nowrap; order:1; flex:1;}
+      #brand b{color:var(--accent); font-weight:900;}
       .topbtns{display:flex; gap:6px; flex-wrap:wrap; align-items:center; order:2; width:100%;}
       .topbtns .spacer{flex:1;}
-      header#topbar .topbtns button{min-height:40px; padding:0 10px; font-size:13px; border-radius:10px; gap:6px;}
+      header#topbar .topbtns button{min-height:40px; padding:0 10px; font-size:13px; border-radius:9px; gap:6px;}
       header#topbar .topbtns button svg{width:17px; height:17px;}
       #topbar .topbtns button.dots-btn{font-size:18px;}
       /* ---------- ⓘ info buttons + guide bubbles ----------
@@ -77,34 +126,34 @@
          bilang maliit na bubble sa ilalim ng kinauukulang control pag
          pinindot ang katabing ⓘ. Ang .infopop ang bubble; ang button na
          may data-pop ang toggle nito. */
-      button.infobtn{width:26px; height:26px; min-height:26px; padding:0; border-radius:50%; background:transparent; color:var(--accent); flex:none;}
+      button.infobtn{width:26px; height:26px; min-height:26px; padding:0; border-radius:50%; background:transparent; color:var(--accent); flex:none; box-shadow:none;}
       button.infobtn svg{width:15px; height:15px;}
-      button.infobtn.on{background:#2b2008; border-color:var(--accent);}
+      button.infobtn.on{background:var(--accent-tint); border-color:var(--accent);}
       #topbar .topbtns button.infobtn{width:26px; height:26px; min-height:26px; padding:0; border-radius:50%;}
       #topbar .topbtns button.infobtn svg{width:15px; height:15px;}
       .infopop{display:none;}
       .infopop.open{display:block;}
-      #fileinfo{font-size:12.5px; color:var(--dim); width:100%; order:6; line-height:1.5; overflow-wrap:anywhere;
-        background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px 10px;}
-      #popZip{font-size:12.5px; color:var(--dim); width:100%; order:7; line-height:1.5; overflow-wrap:anywhere;
-        background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px 10px;}
+      #fileinfo{font-size:12.5px; color:var(--dim); width:100%; order:6; line-height:1.55; overflow-wrap:anywhere;
+        background:var(--well); border:1px solid var(--line); border-radius:10px; padding:8px 10px;}
+      #popZip{font-size:12.5px; color:var(--dim); width:100%; order:7; line-height:1.55; overflow-wrap:anywhere;
+        background:var(--well); border:1px solid var(--line); border-radius:10px; padding:8px 10px;}
       #glhint button.chip{color:var(--accent); padding:0 13px;}
       #glhint button.chip svg{width:17px; height:17px;}
-      #glhint button.chip.on{border-color:var(--accent); background:#2b2008;}
-      #glhint .glpop{flex:1 1 100%; order:5; background:var(--panel2); border:1px solid var(--line); border-radius:12px;
-        padding:8px 12px; font-size:12.5px; color:var(--dim); line-height:1.5;}
+      #glhint button.chip.on{border-color:var(--accent); background:var(--accent-tint);}
+      #glhint .glpop{flex:1 1 100%; order:5; background:var(--well); border:1px solid var(--line); border-radius:10px;
+        padding:8px 12px; font-size:12.5px; color:var(--dim); line-height:1.55;}
       .obj3d-head button.infobtn{width:26px; height:26px; min-height:26px; padding:0; border-radius:50%;}
       /* Edit Texture: ang mga guide text ng optbar ay nasa ⓘ bubbles na
          rin (tulad ng v23 sa 3D Preview) — sariling row sa ilalim ng mga
          control pag binuksan, para lumaki ang stage. */
-      #optbar .infopop{flex:1 1 100%; font-size:12.5px; color:var(--dim); line-height:1.5; overflow-wrap:anywhere;
-        background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px 10px;}
-      #optbar button.infobtn.on{background:#2b2008; border-color:var(--accent); color:var(--accent);}
+      #optbar .infopop{flex:1 1 100%; font-size:12.5px; color:var(--dim); line-height:1.55; overflow-wrap:anywhere;
+        background:var(--well); border:1px solid var(--line); border-radius:10px; padding:8px 10px;}
+      #optbar button.infobtn.on{background:var(--accent-tint); border-color:var(--accent); color:var(--accent);}
 
       /* ---------- tabs ---------- */
       #tabs{display:flex; gap:6px; padding:8px 10px 0;}
-      #tabs button{flex:1; border-radius:12px 12px 0 0; border-bottom:none; background:var(--panel); color:var(--dim); min-height:46px; font-size:15px;}
-      #tabs button.on{background:var(--panel2); color:var(--txt); box-shadow:inset 0 -3px 0 var(--accent);}
+      #tabs button{flex:1; border-radius:10px 10px 0 0; border-bottom:none; background:var(--panel); color:var(--dim); min-height:46px; font-size:15px; font-weight:600; box-shadow:none;}
+      #tabs button.on{background:var(--panel2); color:var(--txt); font-weight:700; box-shadow:inset 0 -3px 0 var(--accent);}
 
       main{flex:1; position:relative; min-height:0; background:var(--panel2); border-top:1px solid var(--line);}
       .pane{position:absolute; inset:0; display:none;}
@@ -117,10 +166,10 @@
          bar → 3D Objects panel. Ang buong column ang nag-i-scroll
          (overflow-y ng pane) pag hindi kasya sa screen. */
       #pane3d{flex-direction:column; overflow-y:auto; -webkit-overflow-scrolling:touch;}
-      #glwrap{flex:none; height:clamp(230px, 42vh, 400px); position:relative; overflow:hidden; background:#070708;}
+      #glwrap{flex:none; height:clamp(230px, 42vh, 400px); position:relative; overflow:hidden; background:#050203;}
       #glwrap canvas{display:block;}
       #glhint{display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:8px 10px; background:var(--panel); border-top:1px solid var(--line); flex:none;}
-      #glhint .chip{background:var(--panel2); border:1px solid var(--line); border-radius:999px; padding:8px 12px; font-size:12.5px; color:var(--dim); display:inline-flex; gap:7px; align-items:center; min-height:44px;}
+      #glhint .chip{background:var(--panel2); border:1px solid var(--line); border-radius:999px; padding:8px 12px; font-size:12.5px; font-weight:500; color:var(--dim); display:inline-flex; gap:7px; align-items:center; min-height:44px;}
       #glhint .chip input{width:20px; height:20px; accent-color:var(--accent);}
       #glempty{position:absolute; inset:0; display:none; align-items:center; justify-content:center; text-align:center; padding:24px; color:var(--dim); font-size:14.5px; line-height:1.55;}
 
@@ -135,34 +184,35 @@
         padding-top:env(safe-area-inset-top);}
       #rail{width:var(--rail); flex:none; background:var(--panel); border-right:1px solid var(--line);
         display:flex; flex-direction:column; align-items:center; padding:8px 0; gap:6px; overflow-y:auto;}
-      #rail button{width:52px; height:52px; min-height:52px; padding:0; border-radius:14px; background:transparent; border-color:transparent;}
+      #rail button{width:52px; height:52px; min-height:52px; padding:0; border-radius:12px; background:transparent; border-color:transparent; color:#d9cbca; box-shadow:none;}
       #rail button svg{width:23px; height:23px;}
-      #rail button.on{background:var(--accent); color:#161006; border-color:var(--accent);}
+      #rail button.on{background:var(--accent); color:var(--accent-ink); border-color:var(--accent-deep);
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.4), inset 0 -2px 0 rgba(0,0,0,.16);}
       #rail button:disabled{opacity:.3;}
       #rail .sep{width:26px; height:1px; background:var(--line); margin:3px 0;}
-      #rail .rlabel{font-size:9.5px; color:var(--dim); margin-top:-3px; font-weight:700;}
+      #rail .rlabel{font-size:9.5px; color:var(--dim); margin-top:-3px; font-weight:700; letter-spacing:.05em;}
       #editMain{flex:1; display:flex; flex-direction:column; min-width:0;}
       #optbar{display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; padding:8px 10px; background:var(--panel); border-bottom:1px solid var(--line); max-height:40vh; overflow-y:auto;}
-      #optbar button.on{background:var(--accent); border-color:var(--accent); color:#161006;}
+      #optbar button.on{background:var(--accent); border-color:var(--accent-deep); color:var(--accent-ink);}
       #optbar .grp{display:flex; flex-direction:column; gap:2px;}
       #optbar .row{display:flex; gap:8px; align-items:center;}
       #optbar:empty{display:none;}
       #optbar.collapsed{display:none;}
-      #shareWarn{display:flex; gap:8px; align-items:flex-start; padding:9px 12px; background:#2b2008; border-bottom:1px solid #7a5a14; color:#ffd98c; font-size:12.5px; line-height:1.5;}
+      #shareWarn{display:flex; gap:8px; align-items:flex-start; padding:9px 12px; background:var(--warn-bg); border-bottom:1px solid var(--warn-line); color:var(--warn-txt); font-size:12.5px; line-height:1.5;}
       #optHandle{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:4px 10px; background:var(--panel); border-bottom:1px solid var(--line); flex-wrap:wrap;}
-      #optHandle .htitle{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.04em; text-transform:uppercase;}
+      #optHandle .htitle{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.07em; text-transform:uppercase;}
       #btnOptToggle{min-height:44px; font-size:13px; padding:0 14px;}
       #btnBack3d{min-height:44px; font-size:13px; padding:0 12px; flex:none;}
       #btnTexLock{min-height:44px; font-size:13px; padding:0 14px;}
-      #btnTexLock.on{background:var(--accent); border-color:var(--accent); color:#161006;}
+      #btnTexLock.on{background:var(--accent); border-color:var(--accent-deep); color:var(--accent-ink);}
       /* zoom bar: dito lang ang zoom sa Edit mode (walang pinch) */
       #zoomBar{display:flex; align-items:center; gap:6px; padding:5px 10px; background:var(--panel); border-bottom:1px solid var(--line);}
       #zoomBar input[type=range]{flex:1; min-width:70px; height:44px;}
       #zoomBar button{min-height:44px; min-width:44px; padding:0 10px; font-size:16px; font-weight:700;}
-      #zoomBar #zoomPct{font-size:13px; font-weight:700; color:var(--txt); min-width:44px; text-align:center;}
+      #zoomBar #zoomPct{font-size:13px; font-weight:700; color:var(--txt); min-width:44px; text-align:center; font-variant-numeric:tabular-nums;}
       /* lock badge sa ibabaw ng stage: laging kita kung naka-lock ang texture */
       #stageLockBadge{position:absolute; top:10px; right:10px; z-index:6; pointer-events:none;
-        background:rgba(10,10,12,.88); border:1px solid var(--accent); color:var(--accent);
+        background:rgba(10,10,12,.9); border:1px solid var(--accent); color:var(--accent);
         border-radius:999px; padding:7px 12px; font-size:12px; font-weight:700; display:none; align-items:center; gap:6px;}
       #stageLockBadge.show{display:inline-flex;}
       #stageLockBadge.off{border-color:var(--line); color:var(--dim);}
@@ -171,8 +221,8 @@
       #partsBar .lbl, #editPartsBar .lbl{flex:none;}
       #partsList, #editPartsList{display:flex; gap:8px; overflow-x:auto; flex:1; min-width:0; padding:4px 18px 4px 2px; scroll-padding-right:18px; -webkit-overflow-scrolling:touch; scrollbar-width:none; align-items:center;}
       #partsList::-webkit-scrollbar, #editPartsList::-webkit-scrollbar{display:none;}
-      .partchip{flex:none; min-height:44px; font-size:13.5px; padding:0 16px; border-radius:999px;}
-      .partchip.on{background:var(--accent); border-color:var(--accent); color:#161006;}
+      .partchip{flex:none; min-height:44px; font-size:13.5px; font-weight:600; padding:0 16px; border-radius:999px;}
+      .partchip.on{background:var(--accent); border-color:var(--accent-deep); color:var(--accent-ink);}
       /* Ped pose bar (3D Preview): kita lang pag ped/skin model ang
          naka-load (may Skin plugin + bones na na-parse). */
       #poseBar{display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--panel); border-top:1px solid var(--line); flex:none; flex-wrap:wrap;}
@@ -181,11 +231,11 @@
       #poseList{display:flex; gap:6px; flex-wrap:wrap; flex:1;}
       /* Sticker packs (Edit Texture → IMAGE tool) */
       .stk-grid{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;}
-      .stk-grid button{width:58px; height:58px; min-height:58px; padding:5px; border-radius:12px; background:var(--panel2);}
+      .stk-grid button{width:58px; height:58px; min-height:58px; padding:5px; border-radius:10px; background:var(--panel2);}
       .stk-grid button img{width:100%; height:100%; object-fit:contain; display:block; pointer-events:none;}
       .stk-packbtns{display:flex; gap:6px; flex-wrap:wrap;}
       .stk-packbtns button{min-height:40px; padding:0 13px; border-radius:999px; font-size:13px;}
-      .stk-packbtns button.on{background:var(--accent); border-color:var(--accent); color:#161006;}
+      .stk-packbtns button.on{background:var(--accent); border-color:var(--accent-deep); color:var(--accent-ink);}
       #btnEditPart{flex:none; min-height:44px;}
       /* ---------- 3D objects (BETA) ---------- */
       #obj3dPanel{background:var(--panel); border-top:1px solid var(--line); padding:8px 10px calc(8px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:8px; flex:none;}
@@ -194,26 +244,26 @@
          canvas, tabs, o pills sa itaas. */
       #obj3dBody{display:flex; flex-direction:column; gap:8px; max-height:56vh; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:2px;}
       .obj3d-head{display:flex; align-items:center; gap:8px; cursor:pointer; -webkit-user-select:none; user-select:none; min-height:40px;}
-      .obj3d-title{font-size:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--txt); flex:1; display:flex; align-items:center; gap:8px; min-width:0;}
-      .beta-badge{background:var(--accent2); color:#161006; font-size:10px; font-weight:800; border-radius:6px; padding:2px 6px; letter-spacing:.05em; flex:none;}
+      .obj3d-title{font-size:12px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--txt); flex:1; display:flex; align-items:center; gap:8px; min-width:0;}
+      .beta-badge{background:var(--accent-tint); color:var(--accent); border:1px solid rgba(217,35,35,.5); font-size:9.5px; font-weight:800; border-radius:5px; padding:2px 5px; letter-spacing:.08em; flex:none;}
       .obj3d-head button{min-height:36px; font-size:12.5px; padding:0 10px; flex:none;}
-      .obj3d-note{margin:0; font-size:12px; color:var(--dim); line-height:1.5;}
+      .obj3d-note{margin:0; font-size:12px; color:var(--dim); line-height:1.55;}
       .obj3d-addrow{display:flex; gap:8px;}
       .obj3d-addrow select{flex:1; min-width:0;}
       .obj3d-addrow button{flex:none;}
       #obj3dList{display:flex; flex-direction:column; gap:6px;}
       #obj3dList:empty{display:none;}
-      .o3-item{display:flex; align-items:center; gap:8px; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:5px 8px; min-height:48px; cursor:pointer;}
-      .o3-item.on{border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent);}
-      .o3-swatch{width:22px; height:22px; border-radius:7px; border:1px solid var(--line); flex:none;}
+      .o3-item{display:flex; align-items:center; gap:8px; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:5px 8px; min-height:48px; cursor:pointer;}
+      .o3-item.on{border-color:var(--accent); background:var(--accent-tint); box-shadow:inset 0 0 0 1px var(--accent);}
+      .o3-swatch{width:22px; height:22px; border-radius:6px; border:1px solid var(--line2); flex:none;}
       .o3-name{flex:1; font-size:13.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;}
-      .o3-item button{min-height:40px; min-width:40px; width:40px; padding:0; flex:none; border-radius:10px; font-size:15px;}
-      .o3-empty{font-size:12.5px; color:var(--dim); line-height:1.5; padding:2px 2px 0;}
-      #obj3dEditor{display:flex; flex-direction:column; gap:1px; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:6px 10px 10px;}
+      .o3-item button{min-height:40px; min-width:40px; width:40px; padding:0; flex:none; border-radius:9px; font-size:15px;}
+      .o3-empty{font-size:12.5px; color:var(--dim); line-height:1.55; padding:2px 2px 0;}
+      #obj3dEditor{display:flex; flex-direction:column; gap:1px; background:var(--well); border:1px solid var(--line); border-radius:10px; padding:6px 10px 10px;}
       .o3-row{display:flex; align-items:center; gap:8px; min-height:40px;}
-      .o3-row .o3-lbl{width:58px; flex:none; font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.03em; text-transform:uppercase;}
+      .o3-row .o3-lbl{width:58px; flex:none; font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.05em; text-transform:uppercase;}
       .o3-row input[type=range]{flex:1; min-width:0; height:40px;}
-      .o3-row .o3-val{width:46px; flex:none; text-align:right; font-size:12.5px; font-weight:700;}
+      .o3-row .o3-val{width:46px; flex:none; text-align:right; font-size:12.5px; font-weight:700; font-variant-numeric:tabular-nums;}
       .o3-row input[type=color]{flex:none;}
       .o3-btnrow{display:flex; gap:8px; margin-top:7px;}
       .o3-btnrow button{flex:1;}
@@ -223,51 +273,52 @@
       .obj3d-dl.off{opacity:.45;}
       /* parts bar inside Edit mode + the part-focus banner */
       #editPartsBar{display:flex; align-items:center; gap:8px; padding:6px 10px; background:var(--panel); border-bottom:1px solid var(--line);}
-      #partFocus{display:flex; align-items:center; gap:10px; padding:8px 12px; background:#2b2008; border-bottom:1px solid #7a5a14; color:#ffd98c; font-size:13px; line-height:1.45;}
+      #partFocus{display:flex; align-items:center; gap:10px; padding:8px 12px; background:var(--warn-bg); border-bottom:1px solid var(--warn-line); color:var(--warn-txt); font-size:13px; line-height:1.45;}
       #partFocusTxt{flex:1; overflow-wrap:anywhere;}
-      #btnPartAll{flex:none; min-height:44px; background:var(--accent); border-color:var(--accent); color:#161006; font-size:13px;}
+      #btnPartAll{flex:none; min-height:44px; background:var(--accent); border-color:var(--accent-deep); color:var(--accent-ink); font-size:13px;}
       #glhint .chip input[type=color]{width:38px; height:28px; padding:2px;}
       #stageViewport{flex:1; position:relative; overflow:hidden; min-height:0; touch-action:none;
         background:
-          repeating-conic-gradient(#19191d 0% 25%, #101013 0% 50%) 0 0/22px 22px;}
+          repeating-conic-gradient(#1d1013 0% 25%, #110708 0% 50%) 0 0/22px 22px;}
       #stageWrap{position:absolute; left:0; top:0; transform-origin:0 0; box-shadow:0 8px 40px rgba(0,0,0,.65);}
       #stageWrap canvas{position:absolute; left:0; top:0; display:block;}
       #overlayCv{position:absolute; inset:0; pointer-events:none;}
-      #stageMsg{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--dim); font-size:14.5px; text-align:center; padding:20px; line-height:1.5;}
+      #stageMsg{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--dim); font-size:14.5px; text-align:center; padding:20px; line-height:1.55;}
       /* texture strip */
       #texstrip{display:flex; gap:10px; overflow-x:auto; padding:8px 12px calc(8px + env(safe-area-inset-bottom)); background:var(--panel); border-top:1px solid var(--line); min-height:84px; -webkit-overflow-scrolling:touch;}
       .texthumb{flex:none; width:88px; text-align:center; cursor:pointer;}
-      .texthumb .thumbbox{width:88px; height:50px; border-radius:10px; border:2px solid var(--line); overflow:hidden; position:relative; background:#000;}
+      .texthumb .thumbbox{width:88px; height:50px; border-radius:8px; border:2px solid var(--line); overflow:hidden; position:relative; background:#000;}
       .texthumb.on .thumbbox{border-color:var(--accent);}
       .texthumb canvas{width:100%; height:100%; object-fit:contain; display:block;}
-      .texthumb .tname{font-size:11px; color:var(--txt); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+      .texthumb .tname{font-size:11px; font-weight:600; color:var(--txt); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
       .texthumb .tsize{font-size:10.5px; color:var(--dim);}
       .texthumb .edot{position:absolute; top:4px; right:4px; width:9px; height:9px; border-radius:50%; background:var(--accent); display:none;}
       /* ---------- layers panel ---------- */
       #layersPanel{background:var(--panel); border-top:1px solid var(--line); display:flex; flex-direction:column; max-height:34vh;}
       #layersHead{display:flex; align-items:center; gap:8px; padding:6px 10px;}
-      #layersHead .ltitle{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.04em; text-transform:uppercase; flex:1;}
+      #layersHead .ltitle{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.07em; text-transform:uppercase; flex:1;}
       #layersHead button{min-height:44px; font-size:13px; padding:0 12px;}
       #layersList{overflow-y:auto; padding:0 8px 8px; display:flex; flex-direction:column; gap:6px;}
       #layersList:empty{display:none;}
-      .layer-row{display:flex; align-items:center; gap:6px; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:6px 8px; min-height:52px; cursor:pointer;}
-      .layer-row.on{border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent);}
+      .layer-row{display:flex; align-items:center; gap:6px; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:6px 8px; min-height:52px; cursor:pointer;}
+      .layer-row.on{border-color:var(--accent); background:var(--accent-tint); box-shadow:inset 0 0 0 1px var(--accent);}
       .layer-row.is-hidden{opacity:.45;}
       .layer-row .lname{flex:1; font-size:13.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;}
-      .layer-row .ltype{font-size:10.5px; color:var(--dim); font-weight:700; letter-spacing:.03em; text-transform:uppercase; flex:none;}
-      .layer-row button{min-height:44px; min-width:44px; width:44px; padding:0; font-size:16px; flex:none; border-radius:10px;}
-      .layer-empty{font-size:12.5px; color:var(--dim); padding:4px 6px 8px; line-height:1.5;}
+      .layer-row .ltype{font-size:10.5px; color:var(--dim); font-weight:700; letter-spacing:.05em; text-transform:uppercase; flex:none;}
+      .layer-row button{min-height:44px; min-width:44px; width:44px; padding:0; font-size:16px; flex:none; border-radius:9px;}
+      .layer-empty{font-size:12.5px; color:var(--dim); padding:4px 6px 8px; line-height:1.55;}
       /* export options row (compression) */
       #exportOpts{display:flex; align-items:center; gap:8px; padding:7px 10px; background:var(--panel); border-bottom:1px solid var(--line); flex-wrap:wrap;}
-      #exportOpts .lbl{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.04em; text-transform:uppercase;}
+      #exportOpts .lbl{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.07em; text-transform:uppercase;}
       #exportOpts select{flex:1; min-width:180px; max-width:420px;}
-      #exportOpts .ehint{font-size:12.5px; color:var(--dim); line-height:1.5; width:100%;
-        background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px 10px;}
+      #exportOpts .ehint{font-size:12.5px; color:var(--dim); line-height:1.55; width:100%;
+        background:var(--well); border:1px solid var(--line); border-radius:10px; padding:8px 10px;}
       .texthumb.edited .edot{display:block;}
 
       #toast{position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(20px);
-        background:#1e1e22; border:1px solid var(--line); color:var(--txt); padding:11px 18px; border-radius:999px;
-        font-size:13.5px; font-weight:600; opacity:0; pointer-events:none; transition:.25s; z-index:60; max-width:92vw; text-align:center;}
+        background:#1c0d10; border:1px solid var(--line2); color:var(--txt); padding:11px 18px; border-radius:999px;
+        font-size:13.5px; font-weight:600; opacity:0; pointer-events:none; transition:.25s; z-index:60; max-width:92vw; text-align:center;
+        box-shadow:0 10px 30px rgba(0,0,0,.55);}
       #toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
       .hidden{display:none !important;}
 
@@ -280,101 +331,120 @@
       body.gate-locked main{visibility:hidden; pointer-events:none;}
       /* ---------- download-all notice ---------- */
       #dlAllNotice{display:flex; flex-direction:column; gap:8px; padding:10px 12px;
-        background:#2b2008; border-bottom:1px solid #7a5a14; color:#ffd98c;
-        font-size:13px; line-height:1.5;}
+        background:var(--warn-bg); border-bottom:1px solid var(--warn-line); color:var(--warn-txt);
+        font-size:13px; line-height:1.55;}
       #dlAllNotice .dlall-btns{display:flex; gap:8px; flex-wrap:wrap;}
       #dlAllNotice .dlall-btns button{min-height:44px; font-size:13px; background:var(--panel2);}
       #dlAllNotice .dlall-btns button.ghost{background:transparent;}
-      #gate{position:fixed; inset:0; z-index:1000; background:#000; color:var(--txt);
+      #gate{position:fixed; inset:0; z-index:1000; color:var(--txt);
+        background-color:var(--bg);
+        background-image:
+          radial-gradient(ellipse 100% 60% at 50% 0%, rgba(190,18,24,.22), rgba(190,18,24,0) 62%),
+          linear-gradient(rgba(243,233,231,.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(243,233,231,.03) 1px, transparent 1px);
+        background-size:100% 100%, 28px 28px, 28px 28px;
         display:flex; padding:24px 18px calc(24px + env(safe-area-inset-bottom));
         opacity:1; transition:opacity .35s ease; overflow-y:auto; -webkit-overflow-scrolling:touch;}
       #gate.done{opacity:0; pointer-events:none;}
       .gate-card{width:100%; max-width:600px; margin:auto; text-align:center; display:flex; flex-direction:column; align-items:center; gap:14px;}
-      .gate-logo{font-family:"Russo One",sans-serif; font-size:40px; line-height:1.05; letter-spacing:.02em;}
+      .gate-logo{display:flex; align-items:center; justify-content:center; gap:12px; font-weight:900; font-size:42px; line-height:1.05; letter-spacing:.02em;}
       .gate-logo span{color:var(--accent);}
-      .gate-tag{font-size:13.5px; color:var(--dim); line-height:1.45; margin-top:-6px;}
+      .gate-tag{font-size:13.5px; color:var(--dim); line-height:1.5; margin-top:-6px;}
       .gate-spinner{width:46px; height:46px; border-radius:50%; margin-top:10px;
-        border:4px solid #26262b; border-top-color:var(--accent); animation:gateSpin .8s linear infinite;}
+        border:4px solid var(--line); border-top-color:var(--accent); animation:gateSpin .8s linear infinite;}
       @keyframes gateSpin{to{transform:rotate(360deg);}}
-      .gate-bar{width:200px; max-width:70vw; height:6px; border-radius:999px; background:#26262b; overflow:hidden;}
+      .gate-bar{width:200px; max-width:70vw; height:6px; border-radius:999px; background:var(--line); overflow:hidden;}
       .gate-bar-fill{height:100%; width:0; background:var(--accent); border-radius:999px; animation:gateFill 1.15s ease-out forwards;}
       @keyframes gateFill{to{width:100%;}}
       .gate-status{font-size:13.5px; color:var(--dim); margin:0; line-height:1.5;}
       #gateMain{width:100%; display:flex; flex-direction:column; gap:16px; margin-top:6px;}
-      .gate-btn{width:100%; min-height:56px; font-size:17px; font-weight:800; border-radius:12px;}
+      .gate-btn{width:100%; min-height:58px; font-size:17px; font-weight:800; letter-spacing:.02em; border-radius:12px;}
       /* ---------- Tungkol sa XSS TXD (welcome screen content) ---------- */
-      .gate-about{width:100%; text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:16px;
-        padding:20px 18px; display:flex; flex-direction:column; gap:12px;}
-      .gate-about h2{margin:0; font-size:19px; line-height:1.3; font-weight:800;}
-      .gate-about h3{margin:6px 0 0; font-size:13px; letter-spacing:.04em; text-transform:uppercase; color:var(--accent); font-weight:800;}
-      .gate-about p{margin:0; font-size:14px; line-height:1.65; color:#d8d8de;}
+      .gate-about{width:100%; text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:14px;
+        padding:22px 20px; display:flex; flex-direction:column; gap:12px;
+        box-shadow:0 18px 44px rgba(0,0,0,.45);}
+      .gate-about h2{margin:0; font-size:20px; line-height:1.3; font-weight:800; letter-spacing:.01em;}
+      .gate-about h3{margin:8px 0 0; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); font-weight:800;}
+      .gate-about p{margin:0; font-size:14px; line-height:1.65; color:#ddd0cf;}
       .gate-about ul, .gate-about ol{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:7px;}
-      .gate-about li{font-size:14px; line-height:1.6; color:#d8d8de;}
+      .gate-about li{font-size:14px; line-height:1.6; color:#ddd0cf;}
+      .gate-about li::marker{color:var(--accent); font-weight:700;}
       .gate-about b{color:var(--txt);}
       .gate-lang{display:flex; gap:10px; justify-content:center; align-items:stretch; margin-top:2px; flex-wrap:wrap;}
-      .gate-lang .lang-btn{min-height:52px; padding:8px 16px; border-radius:12px; background:var(--panel2); border:2px solid var(--line); display:inline-flex; align-items:center; gap:8px; font-size:14px; font-weight:700; line-height:1;}
+      .gate-lang .lang-btn{min-height:52px; padding:8px 16px; border-radius:10px; background:var(--panel2); border:1px solid var(--line2); display:inline-flex; align-items:center; gap:8px; font-size:14px; font-weight:700; line-height:1;}
       .gate-lang .lang-btn .flag{font-size:26px; line-height:1;}
-      .gate-lang .lang-btn.on{border-color:var(--accent); background:#2b2008; color:var(--txt); box-shadow:0 0 0 1px var(--accent);}
-      .gate-lang-label{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.05em; text-transform:uppercase; text-align:center; margin:0;}
+      .gate-lang .lang-btn.on{border-color:var(--accent); background:var(--accent-tint); color:var(--txt); box-shadow:0 0 0 1px var(--accent);}
+      .gate-lang-label{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.08em; text-transform:uppercase; text-align:center; margin:0;}
       .gate-shake{animation:gateShake .35s ease;}
       @keyframes gateShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-7px);}75%{transform:translateX(7px);}}
       /* ---------- Legal / Privacy popup (unang lumalabas, bago ang loading at welcome screen) ---------- */
-      #legalPopup{position:fixed; inset:0; z-index:2000; background:#000; color:var(--txt);
+      #legalPopup{position:fixed; inset:0; z-index:2000; color:var(--txt);
+        background-color:var(--bg);
+        background-image:
+          radial-gradient(ellipse 100% 60% at 50% 0%, rgba(190,18,24,.16), rgba(190,18,24,0) 62%),
+          linear-gradient(rgba(243,233,231,.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(243,233,231,.03) 1px, transparent 1px);
+        background-size:100% 100%, 28px 28px, 28px 28px;
         display:flex; align-items:center; justify-content:center; padding:18px 14px calc(18px + env(safe-area-inset-bottom));
         opacity:1; transition:opacity .3s ease; overflow-y:auto;}
       #legalPopup.done{opacity:0; pointer-events:none;}
-      .legal-card{width:100%; max-width:520px; background:var(--panel); border:1px solid var(--line); border-radius:16px;
-        padding:22px 20px 20px; display:flex; flex-direction:column; gap:14px; max-height:94dvh; margin:auto;}
-      .legal-logo{font-family:"Russo One",sans-serif; font-size:28px; line-height:1.05; letter-spacing:.02em; text-align:center;}
+      .legal-card{width:100%; max-width:520px; background:var(--panel); border:1px solid var(--line); border-radius:14px;
+        padding:24px 22px 20px; display:flex; flex-direction:column; gap:14px; max-height:94dvh; margin:auto;
+        box-shadow:0 24px 60px rgba(0,0,0,.6);}
+      .legal-logo{display:flex; align-items:center; justify-content:center; gap:9px; font-weight:900; font-size:27px; line-height:1.05; letter-spacing:.02em; text-align:center;}
       .legal-logo span{color:var(--accent);}
-      .legal-title{margin:0; font-size:19px; line-height:1.3; text-align:center; font-weight:800;}
+      .legal-title{margin:0; font-size:20px; line-height:1.3; text-align:center; font-weight:800; letter-spacing:.01em;}
       .legal-body{overflow-y:auto; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; gap:14px; padding-right:2px; min-height:0;}
-      .legal-body h3{margin:0 0 6px; font-size:13px; letter-spacing:.04em; text-transform:uppercase; color:var(--accent); font-weight:800;}
-      .legal-body p, .legal-body li{font-size:13.5px; line-height:1.6; color:#d8d8de;}
+      .legal-body h3{margin:0 0 6px; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); font-weight:800;}
+      .legal-body p, .legal-body li{font-size:13.5px; line-height:1.6; color:#ddd0cf;}
       .legal-body p{margin:0;}
       .legal-body ul{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:5px;}
-      .legal-credits{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:12px 14px; text-align:center;}
+      .legal-body li::marker{color:var(--accent);}
+      .legal-credits{background:var(--well); border:1px solid var(--line); border-radius:10px; padding:12px 14px; text-align:center;}
       .legal-credits p{margin:0; font-size:14px; line-height:1.6; color:var(--txt);}
       .legal-credits b{color:var(--accent);}
-      #legalContinue{width:100%; min-height:54px; font-size:15.5px; border-radius:12px; flex:none;}
-      .legal-note{margin:0; font-size:12px; color:var(--dim); text-align:center; line-height:1.5;}
+      #legalContinue{width:100%; min-height:54px; font-size:15.5px; border-radius:11px; flex:none;}
+      .legal-note{margin:0; font-size:12px; color:var(--dim); text-align:center; line-height:1.55;}
       /* ---------- Admin (•••) ---------- */
       .dots-btn{font-size:19px; line-height:1; letter-spacing:.14em; padding:0 10px;}
       .gate-dots{align-self:center; margin-top:2px; min-height:40px; padding:0 16px; font-size:17px; letter-spacing:.18em;
-        color:var(--dim); background:transparent; border-color:transparent;}
+        color:var(--dim); background:transparent; border-color:transparent; box-shadow:none;}
       .gate-dots:active{color:var(--txt);}
-      .admin-overlay{position:fixed; inset:0; z-index:3000; background:rgba(0,0,0,.78); color:var(--txt);
+      .admin-overlay{position:fixed; inset:0; z-index:3000; background:rgba(4,4,5,.82); color:var(--txt);
+        backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
         display:none; align-items:center; justify-content:center; padding:18px 14px calc(18px + env(safe-area-inset-bottom)); overflow-y:auto;}
       .admin-overlay.open{display:flex;}
-      .admin-card{width:100%; max-width:400px; background:var(--panel); border:1px solid var(--line); border-radius:16px;
-        padding:20px 18px 18px; display:flex; flex-direction:column; gap:12px; max-height:94dvh; overflow-y:auto; margin:auto;}
-      .admin-title{margin:0; font-size:18px; line-height:1.3; text-align:center; font-weight:800;}
+      .admin-card{width:100%; max-width:400px; background:var(--panel); border:1px solid var(--line); border-radius:14px;
+        padding:20px 18px 18px; display:flex; flex-direction:column; gap:12px; max-height:94dvh; overflow-y:auto; margin:auto;
+        box-shadow:0 24px 60px rgba(0,0,0,.6);}
+      .admin-title{margin:0; font-size:19px; line-height:1.3; text-align:center; font-weight:800; letter-spacing:.01em;}
       .admin-card form{display:flex; flex-direction:column; gap:10px;}
-      .admin-card label{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.04em; text-transform:uppercase;}
-      .admin-card input[type=password], .admin-card input[type=text]{background:var(--panel2); border:1px solid var(--line); color:var(--txt);
-        border-radius:10px; min-height:48px; padding:0 12px; font-size:16px; width:100%;}
-      .admin-card input:focus{outline:2px solid var(--accent); outline-offset:1px;}
+      .admin-card label{font-size:11px; color:var(--dim); font-weight:700; letter-spacing:.07em; text-transform:uppercase;}
+      .admin-card input[type=password], .admin-card input[type=text]{background:var(--well); border:1px solid var(--line); color:var(--txt);
+        border-radius:10px; min-height:48px; padding:0 12px; font-size:16px; width:100%;
+        box-shadow:inset 0 1px 3px rgba(0,0,0,.35);}
+      .admin-card input:focus{border-color:var(--accent); outline:none; box-shadow:0 0 0 3px rgba(217,35,35,.25);}
       .admin-sec{border-top:1px solid var(--line); padding-top:12px; display:flex; flex-direction:column; gap:10px;}
-      .admin-sec h3{margin:0; font-size:12.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--accent); font-weight:800;}
+      .admin-sec h3{margin:0; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); font-weight:800;}
       .admin-cur{margin:0; font-size:14px; line-height:1.5;}
       .admin-cur b{color:var(--accent); letter-spacing:.06em;}
       .admin-note{margin:0; font-size:12px; color:var(--dim); line-height:1.55;}
       .admin-msg{margin:0; font-size:13px; line-height:1.5; border-radius:10px; padding:9px 11px; display:none;}
-      .admin-msg.ok{display:block; color:#b9f2c0; background:#10260f; border:1px solid #2c5a2e;}
-      .admin-msg.err{display:block; color:#ff8a8a; background:#2b1010; border:1px solid #6e2222;}
+      .admin-msg.ok{display:block; color:#b9f2c0; background:#0f2413; border:1px solid #2c5a2e;}
+      .admin-msg.err{display:block; color:#ff9a9a; background:#2a1010; border:1px solid #6e2222;}
       .admin-btnrow{display:flex; gap:10px;}
       .admin-btnrow button{flex:1;}
       .admin-danger{border-color:#6e2222; color:#ff9a9a;}
       .admin-danger.armed{background:#6e2222; color:#fff;}
-      .admin-info{margin:0; font-size:13px; line-height:1.7; color:#d8d8de;}
+      .admin-info{margin:0; font-size:13px; line-height:1.7; color:#ddd0cf;}
       .admin-info b{color:var(--txt);}
       /* ---------- ••• dropdown menu (header ng editor) ---------- */
       #dotsMenu{position:absolute; top:calc(100% + 6px); right:8px; z-index:950; min-width:216px;
-        background:var(--panel2); border:1px solid var(--line); border-radius:14px; padding:6px;
+        background:var(--panel2); border:1px solid var(--line2); border-radius:12px; padding:6px;
         display:flex; flex-direction:column; gap:4px; box-shadow:0 16px 44px rgba(0,0,0,.65);}
       #dotsMenu.hidden{display:none;}
       #dotsMenu button{justify-content:flex-start; min-height:48px; padding:0 14px; font-size:14.5px;
-        background:transparent; border-color:transparent; border-radius:10px;}
+        background:transparent; border-color:transparent; border-radius:9px; box-shadow:none;}
       #dotsMenu button:active{background:var(--panel); transform:none;}
       /* ---------- Timecyc Editor panel ---------- */
       .tc-card{max-width:520px;}
@@ -391,48 +461,48 @@
          button lang. Ang file na in-upload dito ang siyang naka-load
          sa preview at sa lahat ng editors sa ilalim. */
       .tc-upload-big{width:100%; min-height:78px; font-size:17.5px; font-weight:800; line-height:1.3;
-        border:2px dashed var(--accent); background:#2b2008; color:var(--txt); border-radius:14px; padding:16px 14px;}
+        border:2px dashed rgba(217,35,35,.55); background:var(--accent-tint); color:var(--txt); border-radius:12px; padding:16px 14px; box-shadow:none;}
       .tc-upload-big:active{transform:scale(.98);}
-      .tc-upload-sub{margin:0; font-size:12.5px; color:var(--dim); line-height:1.5; text-align:center;}
+      .tc-upload-sub{margin:0; font-size:12.5px; color:var(--dim); line-height:1.55; text-align:center;}
       /* Status ng naka-load na file: pangalan + bilang ng weathers/rows */
-      .tc-loaded{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:10px 12px;
+      .tc-loaded{background:var(--well); border:1px solid var(--line); border-radius:10px; padding:10px 12px;
         display:flex; flex-direction:column; gap:3px;}
       .tc-loaded-name{margin:0; font-size:14px; font-weight:700; line-height:1.45; overflow-wrap:anywhere;}
       .tc-loaded-name b{color:var(--accent);}
-      .tc-loaded-meta{margin:0; font-size:12.5px; color:var(--dim); line-height:1.5;}
+      .tc-loaded-meta{margin:0; font-size:12.5px; color:var(--dim); line-height:1.55;}
       /* Malaking save/download button — isa sa itaas (ilalim ng upload
          area) at isa sa baba ng panel; parehong function. */
-      .tc-save-big{width:100%; min-height:56px; font-size:16px; font-weight:800; border-radius:12px;}
+      .tc-save-big{width:100%; min-height:56px; font-size:16px; font-weight:800; border-radius:11px;}
       .tc-sec{display:flex; flex-direction:column; gap:6px;}
       .tc-sec select{width:100%;}
       .tc-chips{display:flex; flex-wrap:wrap; gap:6px;}
       .tc-chips button{min-height:40px; padding:0 13px; border-radius:999px; font-size:13px;}
-      .tc-chips button.on{background:var(--accent); border-color:var(--accent); color:#161006;}
+      .tc-chips button.on{background:var(--accent); border-color:var(--accent-deep); color:var(--accent-ink);}
       /* Banner ng sakop pag naka-batch (select-all) mode sa Timecyc /
          Colorcycle: laging kita kung ilang rows ang maaapektuhan. */
-      .tc-batch-banner{background:#2b2008; border:1px solid var(--accent); color:var(--txt);
+      .tc-batch-banner{background:var(--warn-bg); border:1px solid var(--warn-line); color:var(--warn-txt);
         border-radius:10px; padding:9px 12px; font-size:13px; font-weight:700; line-height:1.45;}
       .tc-batch-banner.hidden{display:none;}
-      #tcCanvas{width:100%; height:212px; flex:none; display:block; border-radius:12px; border:1px solid var(--line); background:#000;}
+      #tcCanvas{width:100%; height:212px; flex:none; display:block; border-radius:10px; border:1px solid var(--line); background:#000;}
       .tc-colors{display:flex; flex-direction:column; gap:4px;}
       .tc-crow{display:flex; align-items:center; gap:10px; min-height:48px;}
       .tc-crow .tc-clbl{flex:1; font-size:13.5px; font-weight:600; min-width:0;}
       .tc-crow .tc-hex{font-size:12px; color:var(--dim); width:62px; text-align:right; flex:none; font-variant-numeric:tabular-nums;}
       .tc-crow input[type=color]{flex:none;}
-      .tc-sliders{display:flex; flex-direction:column; gap:1px; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:6px 10px 10px;}
+      .tc-sliders{display:flex; flex-direction:column; gap:1px; background:var(--well); border:1px solid var(--line); border-radius:10px; padding:6px 10px 10px;}
       .tc-sliders .o3-lbl{width:108px; font-size:11.5px;}
       /* 3D scene preview ng Timecyc (Three.js): parehong ideya sa DFF
          3D Preview — totoong scene (sky dome, araw, ulap, tubig, kotse)
          na naiilawan ng values ng napiling row. Pag hindi available
          ang WebGL/Three.js, ang #tcCanvas (2D) ang mananatiling kita. */
-      #tcGlWrap{width:100%; height:212px; flex:none; border-radius:12px; border:1px solid var(--line); background:#000; overflow:hidden;}
+      #tcGlWrap{width:100%; height:212px; flex:none; border-radius:10px; border:1px solid var(--line); background:#000; overflow:hidden;}
       #tcGlWrap canvas{display:block; width:100%; height:100%;}
       #tcGlWrap.hidden{display:none;}
       /* ---------- Colorcycle Editor panel ---------- */
-      #ccCanvas{width:100%; height:auto; flex:none; display:block; border-radius:12px; border:1px solid var(--line); background:#000; image-rendering:auto;}
+      #ccCanvas{width:100%; height:auto; flex:none; display:block; border-radius:10px; border:1px solid var(--line); background:#000; image-rendering:auto;}
       .cc-groups{display:flex; flex-direction:column; gap:10px;}
-      .cc-group{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:8px 10px 10px;}
-      .cc-group h4{margin:0 0 4px; font-size:12.5px; font-weight:800; letter-spacing:.03em; display:flex; align-items:center; gap:7px;}
+      .cc-group{background:var(--well); border:1px solid var(--line); border-radius:10px; padding:8px 10px 10px;}
+      .cc-group h4{margin:0 0 4px; font-size:12.5px; font-weight:800; letter-spacing:.05em; display:flex; align-items:center; gap:7px;}
       .cc-group h4 .cc-dot{width:11px; height:11px; border-radius:50%; flex:none;}
       .cc-vrow{display:flex; align-items:center; gap:8px; min-height:44px;}
       .cc-vrow .cc-vlbl{width:58px; flex:none; font-size:12px; font-weight:700; color:var(--dim);}
@@ -446,10 +516,10 @@
          mahaba ang label. */
       .cheats-list{display:flex; flex-direction:column; gap:8px;}
       .cheat-item{display:flex; align-items:center; gap:9px; width:100%; min-height:56px;
-        padding:0 14px; font-size:15.5px; font-weight:700; text-align:left; border-radius:12px;}
+        padding:0 14px; font-size:15.5px; font-weight:700; text-align:left; border-radius:10px;}
       .cheat-item .beta-badge{margin-left:auto;}
-      .de-fields{display:flex; flex-direction:column; gap:2px; background:var(--panel2);
-        border:1px solid var(--line); border-radius:12px; padding:6px 10px 10px;}
+      .de-fields{display:flex; flex-direction:column; gap:2px; background:var(--well);
+        border:1px solid var(--line); border-radius:10px; padding:6px 10px 10px;}
       .de-row{display:flex; align-items:center; gap:8px; min-height:44px;}
       .de-row .de-lbl{width:118px; flex:none; font-size:12px; font-weight:700; color:var(--dim); line-height:1.25;}
       .de-row input[type=range]{flex:1; min-width:0;}
@@ -463,7 +533,7 @@
          sa itaas, labas ng kahit anong group. */
       .de-group{border-top:1px solid var(--line); margin-top:6px;}
       .de-group summary{min-height:44px; display:flex; align-items:center; gap:8px; cursor:pointer;
-        font-size:13px; font-weight:800; letter-spacing:.03em; color:var(--text); list-style:none;}
+        font-size:13px; font-weight:800; letter-spacing:.05em; color:var(--txt); list-style:none;}
       .de-group summary::-webkit-details-marker{display:none;}
       .de-group summary::after{content:"▾"; margin-left:auto; color:var(--dim); font-size:15px;}
       .de-group:not([open]) summary::after{transform:rotate(-90deg);}
@@ -474,8 +544,8 @@
          canvas na may play/pause at timeline, at ang compact card
          ng "I-edit ang galaw" (bone rotation offsets). */
       .anim-list{display:flex; flex-direction:column; gap:6px; max-height:264px; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:2px;}
-      .anim-item{display:flex; align-items:center; gap:8px; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:8px 10px; min-height:48px; cursor:pointer; text-align:left; width:100%;}
-      .anim-item.on{border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent);}
+      .anim-item{display:flex; align-items:center; gap:8px; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px 10px; min-height:48px; cursor:pointer; text-align:left; width:100%;}
+      .anim-item.on{border-color:var(--accent); background:var(--accent-tint); box-shadow:inset 0 0 0 1px var(--accent);}
       .anim-item .a-name{flex:1; font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;}
       .anim-item .a-meta{font-size:11px; color:var(--dim); flex:none; font-variant-numeric:tabular-nums;}
       .anim-item .a-dot{width:9px; height:9px; border-radius:50%; background:var(--accent); display:none; flex:none;}
@@ -484,11 +554,11 @@
       .anim-slotrow .s-lbl{width:86px; flex:none; font-size:12.5px; font-weight:700; color:var(--dim); line-height:1.25;}
       .anim-slotrow select{flex:1; min-width:0;}
       .anim-slotrow .s-cur{font-size:11px; color:var(--accent); flex:none; max-width:92px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-      #animCanvas{width:100%; height:212px; flex:none; display:block; border-radius:12px; border:1px solid var(--line); background:#070708;}
+      #animCanvas{width:100%; height:212px; flex:none; display:block; border-radius:10px; border:1px solid var(--line); background:#050203;}
       /* 3D ped preview ng Animation Editor (Three.js): totoong 3D
          skeleton na gumagalaw ayon sa keyframes. Pag walang WebGL/
          Three.js, ang #animCanvas (2D) ang fallback. */
-      #animGlWrap{width:100%; height:212px; flex:none; border-radius:12px; border:1px solid var(--line); background:#070708; overflow:hidden;}
+      #animGlWrap{width:100%; height:212px; flex:none; border-radius:10px; border:1px solid var(--line); background:#050203; overflow:hidden;}
       #animGlWrap canvas{display:block; width:100%; height:100%;}
       #animGlWrap.hidden{display:none;}
       .anim-playrow{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
@@ -499,7 +569,7 @@
       .anim-timeline input[type=range]{flex:1; min-width:0;}
       /* I-edit ang galaw card: bone picker + X/Y/Z offset sliders.
          Isang compact na card lang sa ilalim ng preview controls. */
-      .anim-edit-card{border:1px solid var(--line); border-radius:12px; padding:10px; background:var(--panel2); display:flex; flex-direction:column; gap:6px;}
+      .anim-edit-card{border:1px solid var(--line); border-radius:10px; padding:10px; background:var(--well); display:flex; flex-direction:column; gap:6px;}
       .anim-rotrow{display:flex; align-items:center; gap:8px; min-height:44px;}
       .anim-rotrow .r-lbl{width:52px; flex:none; font-size:12.5px; font-weight:700; color:var(--dim);}
       .anim-rotrow input[type=range]{flex:1; min-width:0;}
@@ -510,25 +580,26 @@
          totoong Three.js scene (malaking flat plane sa itaas,
          camera sa lupa na nakatingala). Pag walang WebGL, ang
          #skyFallback (ang sky image mismo) ang ipinapakita. */
-      #skyGlWrap{width:100%; height:212px; flex:none; border-radius:12px; border:1px solid var(--line); background:#000; overflow:hidden; touch-action:none;}
+      #skyGlWrap{width:100%; height:212px; flex:none; border-radius:10px; border:1px solid var(--line); background:#000; overflow:hidden; touch-action:none;}
       #skyGlWrap canvas{display:block; width:100%; height:100%;}
       #skyGlWrap.hidden{display:none;}
-      #skyFallback{width:100%; height:212px; flex:none; display:block; border-radius:12px; border:1px solid var(--line); object-fit:cover; background:#2a0a4a;}
+      #skyFallback{width:100%; height:212px; flex:none; display:block; border-radius:10px; border:1px solid var(--line); object-fit:cover; background:#0d0507;}
       @media (prefers-reduced-motion: reduce){
         .gate-spinner{animation-duration:2.4s;}
         .gate-bar-fill{animation:none; width:100%;}
         .gate-shake{animation:none;}
         #gate{transition:none;}
+        button{transition:none;}
       }
       @media (max-width:430px){
-        #brand{font-size:15px;}
+        #brand{font-size:16px;}
         header#topbar button{padding:0 10px; font-size:13px;}
       }
       /* Landscape phone: maikling screen — paliitin ang mga bar para
          mas malaki ang natitira sa canvas / 3D view. */
       @media (orientation:landscape) and (max-height:520px){
         header#topbar{padding:4px 10px; gap:6px;}
-        #brand{font-size:15px;}
+        #brand{font-size:16px;}
         #fileinfo{font-size:10.5px;}
         #tabs{padding-top:4px;}
         #tabs button{min-height:42px; font-size:14.5px;}
@@ -550,7 +621,7 @@
          loading, tapos ang welcome screen na may Enter button. -->
     <div id="legalPopup" role="dialog" aria-modal="true" aria-labelledby="legalTitle">
       <div class="legal-card">
-        <div class="legal-logo">XSS <span>TXD</span></div>
+        <div class="legal-logo"><svg class="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="2.5" y="2.5" width="12" height="12" rx="3" fill="#e02626"/><rect x="17.5" y="2.5" width="12" height="12" rx="3" stroke="#4d1d24" stroke-width="2.4"/><rect x="2.5" y="17.5" width="12" height="12" rx="3" stroke="#4d1d24" stroke-width="2.4"/><rect x="17.5" y="17.5" width="12" height="12" rx="3" fill="#7d1015"/></svg>XSS <span>TXD</span></div>
         <h2 class="legal-title" id="legalTitle">Privacy, Legal &amp; Credits</h2>
         <div class="legal-body" id="legalBody">
           <section>
@@ -589,7 +660,7 @@
          sinusuportahang file. -->
     <div id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
       <div class="gate-card" id="gateCard">
-        <div class="gate-logo" id="gateTitle">XSS <span>TXD</span></div>
+        <div class="gate-logo" id="gateTitle"><svg class="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="2.5" y="2.5" width="12" height="12" rx="3" fill="#e02626"/><rect x="17.5" y="2.5" width="12" height="12" rx="3" stroke="#4d1d24" stroke-width="2.4"/><rect x="2.5" y="17.5" width="12" height="12" rx="3" stroke="#4d1d24" stroke-width="2.4"/><rect x="17.5" y="17.5" width="12" height="12" rx="3" fill="#7d1015"/></svg>XSS <span>TXD</span></div>
         <p class="gate-lang-label" id="gateLangLabel">Choose language</p>
         <div class="gate-lang" role="group" aria-label="Language / Wika">
           <button type="button" id="langEn" class="lang-btn on" aria-pressed="true"><span class="flag" aria-hidden="true">🇺🇸</span><span>English</span></button>
@@ -1036,7 +1107,7 @@
       </div>
     </div>
     <header id="topbar">
-      <div id="brand">XSS <b>TXD</b></div>
+      <div id="brand"><svg class="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="2.5" y="2.5" width="12" height="12" rx="3" fill="#e02626"/><rect x="17.5" y="2.5" width="12" height="12" rx="3" stroke="#4d1d24" stroke-width="2.4"/><rect x="2.5" y="17.5" width="12" height="12" rx="3" stroke="#4d1d24" stroke-width="2.4"/><rect x="17.5" y="17.5" width="12" height="12" rx="3" fill="#7d1015"/></svg>XSS <b>TXD</b></div>
       <div class="topbtns">
         <button id="btnDff" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>DFF</button>
         <button id="btnTxd" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-9 9"/></svg>TXD</button>
@@ -4633,7 +4704,7 @@ $("#btnOptToggle").addEventListener("click", () => {
 
 /* ---------------- UV editor + locks ----------------
    UV mode lives inside the Edit Texture pane: the model's UV triangles
-   for the current texture are drawn over it (faint blue = lahat, amber =
+   for the current texture are drawn over it (faint blue = lahat, red =
    napiling parte). The user picks Parte A / Parte B — the two halves of
    a mirrored unwrap, split by RW.texGeoParts — then drags their UVs,
    flips/scales them, or one-taps Un-mirror to move them onto the half
@@ -4879,7 +4950,7 @@ function uvWireFor(tex, selected){
       }
     }
     if (selected){
-      g.strokeStyle = "#ffb02e"; g.lineWidth = Math.max(1.2, tex.width / 420); g.stroke();
+      g.strokeStyle = "#f02626"; g.lineWidth = Math.max(1.2, tex.width / 420); g.stroke();
     } else {
       g.strokeStyle = "rgba(130,190,255,.30)"; g.lineWidth = 1; g.stroke();
     }
@@ -4893,7 +4964,7 @@ function drawUVOverlay(g, r){
   const all = uvWireFor(tex, false), sel = uvWireFor(tex, true);
   if (all) g.drawImage(all, x, y, w, h);
   if (sel) g.drawImage(sel, x, y, w, h);
-  const label = "UV mode · Part " + (state.uvSide === "all" ? "All" : state.uvSide) + " selected (amber) — drag to move the UV";
+  const label = "UV mode · Part " + (state.uvSide === "all" ? "All" : state.uvSide) + " selected (red) — drag to move the UV";
   g.font = "600 12px sans-serif";
   const tw = g.measureText(label).width;
   g.fillStyle = "rgba(10,10,12,.85)";
@@ -6421,7 +6492,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       allTimeWord: "LAHAT ng oras",
       batchBanner: function(w, t, n){ return "Ina-edit: " + w + " · " + t + " — " + n + " rows ang maaapektuhan ng edit mo"; },
       presetsLbl: "Presets — isang tap, buong look",
-      presetNames: { golden: "🌅 Golden Hour", foggy: "🌫️ Foggy Night", sunset: "🌇 Sunset Vibes", rainy: "🌧️ Rainy Mood" },
+      presetNames: { golden: "🌅 Golden Hour", foggy: "🌫️ Foggy Night", sunset: "🌇 Sunset Vibes", rainy: "🌧️ Rainy Mood", clouds: "☁️ Always Clouds" },
       presetApplied: function(n){ return "Preset na in-apply: " + n; },
       times: ["Hatinggabi", "5AM", "6AM", "7AM", "Tanghali", "7PM", "8PM", "10PM"],
       colors: { skytop: "Sky Top", skybot: "Sky Bottom", suncore: "Sun Core", suncorona: "Sun Corona", amb: "Ambient", ambobj: "Ambient Object", dir: "Directional Light", lowcloud: "Low Clouds", botcloud: "Bottom Clouds", water: "Water" },
@@ -6455,7 +6526,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       allTimeWord: "ALL times",
       batchBanner: function(w, t, n){ return "Editing: " + w + " · " + t + " — " + n + " rows will be changed by your edit"; },
       presetsLbl: "Presets — one tap, full look",
-      presetNames: { golden: "🌅 Golden Hour", foggy: "🌫️ Foggy Night", sunset: "🌇 Sunset Vibes", rainy: "🌧️ Rainy Mood" },
+      presetNames: { golden: "🌅 Golden Hour", foggy: "🌫️ Foggy Night", sunset: "🌇 Sunset Vibes", rainy: "🌧️ Rainy Mood", clouds: "☁️ Always Clouds" },
       presetApplied: function(n){ return "Preset applied: " + n; },
       times: ["Midnight", "5AM", "6AM", "7AM", "Midday", "7PM", "8PM", "10PM"],
       colors: { skytop: "Sky Top", skybot: "Sky Bottom", suncore: "Sun Core", suncorona: "Sun Corona", amb: "Ambient", ambobj: "Ambient Object", dir: "Directional Light", lowcloud: "Low Clouds", botcloud: "Bottom Clouds", water: "Water" },
@@ -6739,15 +6810,27 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     });
     return out;
   }
+  /* Lahat ng rows ng lahat ng weather — para sa Always Clouds,
+     na laging sakop ang buong file anuman ang napiling scope. */
+  function allTcRows(){
+    var out = [];
+    if (!tcData) return out;
+    tcData.sections.forEach(function(s, si){
+      s.rows.forEach(function(r, ri){
+        out.push({ sec: si, row: ri, obj: r });
+      });
+    });
+    return out;
+  }
   function rowAt(sec, row){
     var s = tcData ? tcData.sections[sec] : null;
     return s ? (s.rows[row] || null) : null;
   }
   /* Tawagin bago ang unang mutation ng isang edit gesture: kinukunan
      ng snapshot ang lahat ng target rows para sa batch undo. */
-  function beginEdit(){
+  function beginEdit(tg){
     if (editBase) return;
-    editBase = targetRows().map(function(t){
+    editBase = (tg || targetRows()).map(function(t){
       return { sec: t.sec, row: t.row, tokens: t.obj.tokens.slice(),
         dirty: t.obj.tokens.join(" ") !== t.obj.orig.join(" ") };
     });
@@ -6973,7 +7056,16 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
       sliders: { sunSz: 2.4, sprBght: 0.85, farClp: 1300, fogSt: 500, log: 0.95 } },
     { id: "rainy",
       colors: { skytop: [52,58,66], skybot: [88,94,102], suncore: [150,155,160], suncorona: [110,115,120], amb: [80,84,90], ambobj: [74,78,84], dir: [150,155,160], lowcloud: [96,102,110], botcloud: [84,90,98], water: [45,58,70] },
-      sliders: { sunSz: 1.0, sprSz: 2.6, sprBght: 0.4, farClp: 600, fogSt: 60, log: 0.8, shdw: 2 } }
+      sliders: { sunSz: 1.0, sprSz: 2.6, sprBght: 0.4, farClp: 600, fogSt: 60, log: 0.8, shdw: 2 } },
+    /* Always Clouds: ulap lang ang binabago, hindi ang kulay ng
+       langit — kaya pwedeng i-tap pagkatapos ng kahit anong sky
+       preset. Laging sa LAHAT ng rows (lahat ng weather at oras),
+       anuman ang napiling scope, para lumabas ang SkyBox image
+       (particle.txd cloud textures) kahit anong weather/oras ang
+       i-set ng server. */
+    { id: "clouds", allRows: true, cloudAlpha: true,
+      colors: { lowcloud: [255,255,255], botcloud: [255,255,255] },
+      sliders: {} }
   ];
   var lastTcPreset = "";
   function buildTcPresets(){
@@ -6994,8 +7086,12 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     info.textContent = lastTcPreset && S().presetApplied ? S().presetApplied(lastTcPreset) : "";
   }
   function applyTcPreset(p){
-    var targets = targetRows(); if (!targets.length) return;
-    beginEdit();
+    /* Ang Always Clouds ay laging sa LAHAT ng rows (lahat ng weather
+       at oras), anuman ang napiling scope — isang tap lang, tapos
+       pwedeng i-tap pagkatapos ng kahit anong sky preset nang hindi
+       binabago ang kulay ng langit. */
+    var targets = p.allRows ? allTcRows() : targetRows(); if (!targets.length) return;
+    beginEdit(targets);
     targets.forEach(function(t){
       COLOR_FIELDS.forEach(function(f){
         var c = p.colors[f.k]; if (!c) return;
@@ -7004,9 +7100,21 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
         setTok(t.obj, f.i + 2, c[2], true);
       });
       SLIDERS.forEach(function(f){
-        if (!(f.k in p.sliders)) return;
+        if (!p.sliders || !(f.k in p.sliders)) return;
         setTok(t.obj, f.i, p.sliders[f.k], f.step >= 1);
       });
+      if (p.cloudAlpha){
+        /* CloudAlpha (tokens 48-49: lower + upper clouds alpha) =
+           255 255 — fully opaque ang ulap, kaya lumalabas ang
+           SkyBox image kahit anong weather/oras. Ang default rows
+           ay 40 tokens lang, kaya pinupunan muna hanggang 51
+           (postfx alphas/RGB = 0, walang color correction) para
+           eksaktong nasa puwesto ang CloudAlpha — tulad ng dati
+           sa Sky Editor bago ito naging images-only. */
+        while (t.obj.tokens.length < 51) t.obj.tokens.push("0");
+        setTok(t.obj, 48, 255, true);
+        setTok(t.obj, 49, 255, true);
+      }
     });
     commitEdit();
     lastTcPreset = (S().presetNames && S().presetNames[p.id]) || p.id;
@@ -10897,7 +11005,7 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     var dur = animDuration(e);
     var groundY = 312, SC = 148, cx = W / 2;
     /* lupa */
-    ctx.strokeStyle = "rgba(255,176,46,0.25)";
+    ctx.strokeStyle = "rgba(217,35,35,0.30)";
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(30, groundY); ctx.lineTo(W - 30, groundY); ctx.stroke();
     ctx.fillStyle = "rgba(255,255,255,0.05)";
@@ -10927,13 +11035,13 @@ window.addEventListener("resize", () => { resizeGL(); drawOverlay(); });
     pose.segs.forEach(function(sg){
       var hot = selRole && sg.role === selRole;
       var a = proj(sg.a), b = proj(sg.b);
-      ctx.strokeStyle = hot ? "#ffb02e" : "#e8e4da";
+      ctx.strokeStyle = hot ? "#f02626" : "#e8e4da";
       ctx.lineWidth = hot ? 9 : 7;
       ctx.lineCap = "round";
       ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
     });
     /* mga joint */
-    ctx.fillStyle = "#ffb02e";
+    ctx.fillStyle = "#f02626";
     Object.keys(pose.joints).forEach(function(k){
       var p = proj(pose.joints[k]);
       ctx.beginPath(); ctx.arc(p[0], p[1], 3.4, 0, 6.2832); ctx.fill();
